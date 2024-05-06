@@ -1,0 +1,83 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px; /* Added padding for overall alignment */
+  background-color: #27323A;
+  position: fixed;      /* Fix navbar's position */
+  top: 0;               /* Align top edge at the top of the viewport */
+  left: 0;              /* Align left edge at the left of the viewport */
+  width: 100%;          /* Make navbar extend full width of the viewport */
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar__logo img {
+  height: 40px; /* Example height for logo */
+}
+
+.navbar__nav {
+  display: flex;
+  justify-content: center;
+  gap: 20px; /* Adjust spacing between links */
+}
+
+.navbar__nav a { /* Targeting links directly within the navbar navigation */
+  color: #ECECEC; /* Set font color to white */
+  text-decoration: none; /* Remove underline */
+  font-weight:400;
+  padding: 10px; /* Optional: add padding for better click area and appearance */
+  transition: color 0.3s; /* Smooth transition for hover effects */
+}
+
+.navbar__nav a:hover {
+  color: #F2B705; /* Lighter color on hover */
+  text-decoration: none; /* Ensure underline doesn't reappear on hover */
+}
+
+.navbar__user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Adjust spacing between user info elements */
+}
+
+.navbar__user-details {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* Aligns the level and completion text below the username */
+}
+
+.navbar__avatar {
+  width: 30px; /* Size of the avatar */
+  height: 30px; /* Maintain aspect ratio */
+  border-radius: 50%; /* Circular avatar */
+}
+
+.navbar__logout {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #F2B705; /* Or set a specific color */
+  display: flex;
+  align-items: center;
+}
+
+.navbar__logout:hover {
+  color: #b80303; /* Change color on hover if needed */
+}
+
+.navbar__username, .navbar__level, .navbar__completion {
+  color: #ECECEC; /* Text color for user info */
+  font-weight:300;
+  font-size: small;
+}
+
+.link {
+  text-decoration: none;
+  color: #ECECEC; /* Example link color */
+  font-weight: bold;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
