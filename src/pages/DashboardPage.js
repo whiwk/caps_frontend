@@ -26,7 +26,7 @@ import ConfigurationPanel from '../components/TryComponentConfig';
 function DashboardPage() {
   return (
     <div>
-      <PageSection>
+      <PageSection style={{overflowX: 'hidden'}}>
         <Grid hasGutter>
 
           <GridItem span={8} rowSpan={6} style={{marginTop: '-10px', marginLeft: '-14px'}}>
@@ -52,10 +52,10 @@ function DashboardPage() {
           <GridItem span={4} rowSpan={6} style={{
             marginTop: '-10px',
             marginLeft: '-10px',
-            marginRight: '-16px'
+            marginRight: '-10px',
           }}>
             <Card ouiaId="BasicCard" style={{ 
-              height: '550px', 
+              height: '568px', 
               borderRadius: '6px'
               }}>
               <CardTitle style={{ 
@@ -65,7 +65,7 @@ function DashboardPage() {
               }}
               >Configuration Panel</CardTitle>
               <CardBody style={{ 
-                overflowY: 'auto', // Enables vertical scrolling
+                overflowX: 'hidden', // Enables vertical scrolling
                 maxHeight: '700px', // Limits the maximum height
                 marginTop: '-16px', 
                 marginLeft: '-24px',

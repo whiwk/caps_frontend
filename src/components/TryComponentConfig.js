@@ -6,8 +6,6 @@ import {
   CardBody,
   CardHeader,
   CardFooter,
-  Form,
-  FormGroup,
   TextInput,
   Grid,
   GridItem, Title
@@ -57,10 +55,10 @@ const ConfigurationPanel = () => {
     setValues(componentData[componentKey]);
   };
 
-  const shouldScroll = selectedComponent === 'DU' || selectedComponent === 'CU';
+  const shouldScroll = selectedComponent === 'DU' || selectedComponent === 'CU' || selectedComponent === 'DU1' || selectedComponent === 'DU2' ;
 
   return (
-    <Card ouiaId="BasicCard" style={{borderRadius: '6px', height: '522px'}}>
+    <Card ouiaId="BasicCard" style={{borderRadius: '6px', height: '540px'}}>
       <CardHeader title="Configuration Panel" style={{marginTop: '-20px', marginLeft: '-17px', marginRight: '-17px'}}>
         <Grid hasGutter>
           <GridItem span={12} style={{ display: 'flex', justifyContent: 'space-between', height: '30px' }}>
@@ -78,7 +76,7 @@ const ConfigurationPanel = () => {
           <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-30px' }}>Current Value</Title>
           <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem' }}>Set Value</Title>
         </div>
-        <div style={shouldScroll ? { display: 'absolute', overflowY: 'auto', maxHeight: '360px', width: '400px' } : {}}>
+        <div style={shouldScroll ? { position: 'relative', overflowY: 'auto', maxHeight: '360px', width: '420px', paddingLeft: '15px', paddingRight: '20px', marginLeft: '-15px', overflowX: 'hidden', } : {}}>
           {Object.entries(values).map(([key, value]) => (
             <div key={key} style={{ display: 'flex', paddingTop: '10px', marginLeft: '-15px', marginRight: '-15px' }}>
               <span style={{ width: '240px', textAlign: 'left', fontSize: '0.75rem', marginTop: '6px' }}>{key}</span>
@@ -87,14 +85,14 @@ const ConfigurationPanel = () => {
                 value={value}
                 type="text"
                 isReadOnly
-                style={{ flex: 1, margin: '0 0px', fontSize: '0.75rem', }}
+                style={{ flex: 1, margin: '0 0px', fontSize: '0.75rem', boxSizing: 'border-box' }}
               />
               <TextInput
                 id={`${key}-new`}
                 value={value}
                 type="text"
                 onChange={(e) => setValues({ ...values, [key]: e.target.value })}
-                style={{ flex: 1, fontSize: '0.75rem'}}
+                style={{ flex: 1, fontSize: '0.75rem', boxSizing: 'border-box'}}
               />
             </div>
           ))}

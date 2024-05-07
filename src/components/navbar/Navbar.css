@@ -25,7 +25,8 @@
 .navbar__nav a { /* Targeting links directly within the navbar navigation */
   color: #ECECEC; /* Set font color to white */
   text-decoration: none; /* Remove underline */
-  font-weight:400;
+  font-weight:300;
+  font-size: medium;
   padding: 10px; /* Optional: add padding for better click area and appearance */
   transition: color 0.3s; /* Smooth transition for hover effects */
 }
