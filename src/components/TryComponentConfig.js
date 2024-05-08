@@ -31,7 +31,7 @@ const levelComponents = {
 const fetchUserLevel = async () => {
     try {
       const response = await api.get('user/information/');
-      return response.data.level; // Ensure this matches the response structure from your API
+      return response.data.level; 
     } catch (error) {
       console.error('Failed to fetch user level:', error);
       return 1; // Default level in case of error
