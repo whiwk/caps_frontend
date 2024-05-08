@@ -3,6 +3,7 @@ import React from 'react';
 import { Grid, GridItem, PageSection, Card, CardTitle, CardBody } from '@patternfly/react-core';
 import TopologyCustomEdgeDemo from '../components/Topology.tsx';
 import ConfigurationPanel from '../components/TryComponentConfig'; 
+import Wireshark from '../components/wireshark/Wireshark.tsx';
 
 <Grid hasGutter>
   <GridItem span={8}>span = 8</GridItem>
@@ -29,8 +30,8 @@ function DashboardPage() {
       <PageSection style={{overflowX: 'hidden'}}>
         <Grid hasGutter>
 
-          <GridItem span={8} rowSpan={6} style={{marginTop: '-10px', marginLeft: '-14px'}}>
-            <Card ouiaId="BasicCard" style={{height: '300px', borderRadius: '6px'}}>
+          <GridItem span={12} rowSpan={6} style={{marginTop: '-10px', marginLeft: '-14px'}}>
+            <Card ouiaId="BasicCard" style={{height: '500px', borderRadius: '6px'}}>
               <CardTitle style={{ 
                 marginTop: '-20px', 
                 marginLeft: '-16px',
@@ -74,6 +75,16 @@ function DashboardPage() {
               }}>
                 <ConfigurationPanel />
               </CardBody>
+            </Card>
+          </GridItem>
+
+          <GridItem span={8} rowSpan={6} >
+            <Card ouiaId="BasicCard" style={{height: '300px'}}>
+              <CardTitle>
+                <CardBody>
+                  <Wireshark />
+                </CardBody>
+              </CardTitle>
             </Card>
           </GridItem>
         </Grid>
