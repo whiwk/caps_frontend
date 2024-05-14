@@ -238,7 +238,7 @@ const ConfigurationPanel = () => {
           <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-30px' }}>Current Value</Title>
           <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem' }}>Set Value</Title>
         </div>
-        <div style={shouldScroll ? { position: 'relative', overflowY: 'auto', maxHeight: '360px', width: '420px', paddingLeft: '15px', paddingRight: '20px', marginLeft: '-15px', overflowX: 'hidden', } : {}}>
+        <div style={shouldScroll ? { position: 'relative', overflowY: 'auto', maxHeight: '360px', width: '400px', paddingLeft: '15px', paddingRight: '20px', marginLeft: '-15px', overflowX: 'hidden', } : {}}>
           {Object.entries(componentData[selectedComponent]).map(([key, _]) => (
             <div key={key} style={{ display: 'flex', paddingTop: '10px', marginLeft: '-15px', marginRight: '-15px' }}>
               <span style={{ width: '240px', textAlign: 'left', fontSize: '0.75rem', marginTop: '6px' }}>{key}</span>
@@ -246,7 +246,7 @@ const ConfigurationPanel = () => {
                 id={`${key}-current`}
                 value={values[key] || ''}
                 type="text"
-                isReadOnly
+                isreadonly="true"
                 style={{ flex: 1, margin: '0 0px', fontSize: '0.75rem', boxSizing: 'border-box' }}
               />
               <TextInput
