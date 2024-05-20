@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import api from '../services/apiService';
-import { Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
+import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
 
 function UserManagementPage() {
@@ -16,6 +16,7 @@ function UserManagementPage() {
   const [passwordError, setPasswordError] = useState('');
   const [numUsers, setNumUsers] = useState(1);
   const [creatingUsers, setCreatingUsers] = useState(false);
+  const [editingUser, setEditingUser] = useState(false);
   const [removingUser, setRemovingUser] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -107,6 +108,7 @@ function UserManagementPage() {
       setPasswordError('Password is required.');
       return;
     }
+    setEditingUser(true);
     try {
       const response = await api.put(`user/update/${currentUser.id}/`, {
         username: newUsername,
@@ -123,6 +125,8 @@ function UserManagementPage() {
     } catch (error) {
       console.error('Failed to update user:', error);
       showErrorSnackbar("Failed to update user: " + (error.message || ""));
+    } finally {
+      setEditingUser(false)
     }
   };
 
@@ -164,13 +168,30 @@ function UserManagementPage() {
     }
   };
 
+  const cancelButtonStyles = {
+    backgroundColor: '#E3AE14',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#E39514',
+      color: '#fff'
+    }
+  };
+
+  const removeButtonStyles = {
+    backgroundColor: '#FF1F19', // Red color
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#CC1914', // Darker red color
+      color: '#fff'
+    }
+  };
+
   return (
     <>
-      <h4 style={{ margin: '20px' }}>List Users</h4>
-      <Button variant="contained" color="primary" onClick={() => setCreateModalOpen(true)} style={{ margin: '20px' }}>
+      <Button variant="contained" color="primary" onClick={() => setCreateModalOpen(true)} style={{ margin: '20px', }}>
         Create User
       </Button>
-      <TableContainer component={Paper} style={{ margin: '20px', width: 'auto' }}>
+      <TableContainer component={Paper} style={{ margin: '20px', width: 'auto', marginTop: '-5px' }}>
         {loading ? <CircularProgress style={{ display: 'block', margin: '20px auto' }} /> : (
           <Table aria-label="simple table">
             <TableHead style={{ backgroundColor: '#e0e0e0' }}>
@@ -189,7 +210,7 @@ function UserManagementPage() {
                   <TableCell align="right">{user.profile.completion}%</TableCell>
                   <TableCell align="right">
                     <Button color="primary" onClick={() => handleEdit(user)}>Edit</Button>
-                    <Button color="secondary" onClick={() => handleRemove(user)}>Remove</Button>
+                    <Button  onClick={() => handleRemove(user)} style={{color: '#CC1914'}}>Remove</Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -202,13 +223,7 @@ function UserManagementPage() {
           open={!!successMessage}
           autoHideDuration={3000}
           onClose={() => setSuccessMessage('')}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-          style={{
-            position: 'absolute',
-            top: `50%`,
-            left: `50%`,
-            transform: 'translate(-50%, -50%)'
-          }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         >
           <MuiAlert elevation={6} variant="filled" onClose={() => setSuccessMessage('')} severity="success">
             {successMessage}
@@ -252,9 +267,11 @@ function UserManagementPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setCreateModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleCreateUsers} disabled={creatingUsers}>
-              {creatingUsers ? <CircularProgress size={24} /> : 'Create'}
+            <Button sx={cancelButtonStyles} onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+            <Button variant="contained" color="primary" onClick={handleCreateUsers} disabled={creatingUsers} style={{ minWidth: '80px' }}>
+              <Box display="flex" alignItems="center" justifyContent="center">
+                {creatingUsers ? <CircularProgress size={20} color="inherit" /> : 'Create'}
+              </Box>
             </Button>
           </DialogActions>
         </Dialog>
@@ -296,8 +313,12 @@ function UserManagementPage() {
             />
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeEditModal}>Cancel</Button>
-            <Button onClick={confirmEdit}>Confirm</Button>
+            <Button sx={cancelButtonStyles} onClick={closeEditModal}>Cancel</Button>
+            <Button variant="contained" color="primary" onClick={confirmEdit} disabled={editingUser} style={{ minWidth: '80px' }}>
+              <Box display="flex" alignItems="center" justifyContent="center">
+                {editingUser ? <CircularProgress size={20} color="inherit"/> : 'Confirm'}
+              </Box>
+            </Button>
           </DialogActions>
         </Dialog>
 
@@ -308,9 +329,11 @@ function UserManagementPage() {
             <DialogContentText>Are you sure you want to remove {currentUser?.username}?</DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={closeRemoveModal}>Cancel</Button>
-            <Button onClick={confirmRemove} color="secondary" disabled={removingUser}>
-              {removingUser ? <CircularProgress size={24} /> : 'Remove'}
+            <Button sx={cancelButtonStyles} onClick={closeRemoveModal}>Cancel</Button>
+            <Button sx={removeButtonStyles} onClick={confirmRemove} disabled={removingUser} autoFocus style={{ minWidth: '80px' }}>
+              <Box display="flex" alignItems="center" justifyContent="center">
+                {removingUser ? <CircularProgress size={20} color="inherit" /> : 'Remove'}
+              </Box>
             </Button>
           </DialogActions>
         </Dialog>

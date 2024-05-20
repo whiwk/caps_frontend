@@ -11,20 +11,20 @@ import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import CircularProgress from '@mui/material/CircularProgress';
 
 const defaultTheme = createTheme();
 
 const getGreeting = () => {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good Morning!';
-  if (hour < 18) return 'Good Afternoon!';
-  return 'Good Evening!';
+  if (hour < 12) return 'Welcome Back!';
+  if (hour < 18) return `Let's Get Started!`;
+  return 'Ready to Dive in?';
 };
 
 export default function SignInSide() {
   const navigate = useNavigate();
-  const [loading, setLoading] = React.useState(false);
+  const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState('');
   const [formError, setFormError] = useState({
     username: '',
@@ -112,7 +112,7 @@ export default function SignInSide() {
               alignItems: 'center',
             }}
           >
-          <Avatar sx={{ m: 1, bgcolor: 'ffffff' }} src="/login.png">
+          <Avatar sx={{ m: 1, bgcolor: 'ffffff' }} src="/padlock.png">
             {/* If the image fails to load, LockOutlinedIcon will show as a fallback */}
             <LockOutlinedIcon />
           </Avatar>
@@ -146,7 +146,8 @@ export default function SignInSide() {
                 onChange={(e) => setUsername(e.target.value)}
                 error={!!formError.username}
                 helperText={formError.username}
-                style={{borderRadius: '20px'}}
+                style={{borderRadius: '26px'}}
+                sx={{ borderRadius: '26px', '& .MuiOutlinedInput-root': { borderRadius: '26px' } }}
               />
               <TextField
                 margin="normal"
@@ -161,6 +162,7 @@ export default function SignInSide() {
                 onChange={(e) => setPassword(e.target.value)}
                 error={!!formError.password}
                 helperText={formError.password}
+                sx={{ borderRadius: '26px', '& .MuiOutlinedInput-root': { borderRadius: '26px' } }}
               />
               <Typography color="error" sx={{ mt: 1, height: '24px', visibility: apiError ? 'visible' : 'hidden' }}>
                 {apiError || ' '}
@@ -177,9 +179,11 @@ export default function SignInSide() {
                   '&:hover': {
                     backgroundColor: '#27323A',  // Darker shade for hover
                     color: '#fff'  // Keep the font color orange even on hover
-                  }
+                  },
+                  borderRadius: '20px', '& .MuiOutlinedInput-root': { borderRadius: '20px' }
                 }}
                 disabled={loading}
+                startIcon={loading && <CircularProgress size={20} />}
               >
                 {loading ? 'Logging in...' : 'Login'}
               </Button>

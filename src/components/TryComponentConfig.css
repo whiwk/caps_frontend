@@ -7,3 +7,13 @@ div::-webkit-scrollbar-thumb {
     background-color: darkgrey;  /* color of the scroll thumb */
     border-radius: 15px;  /* roundness of the scroll thumb */
 }
+
+.cancelButtonStyles {
+    background-color: '#E3AE14';
+    color: #fff;
+}
+
+.cancelButtonStyles:hover {
+    background-color: '#E39514';
+    color: #fff;
+}

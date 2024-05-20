@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import './Navbar.css';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
@@ -16,6 +16,7 @@ const Navbar = () => {
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     setLoading(true);
@@ -61,23 +62,27 @@ const Navbar = () => {
     }
   };
 
+  const isActive = (path) => {
+    return location.pathname === path;
+  };
+
   return (
     <header className="navbar">
       {loading ? <CircularProgress /> : (
       <>
         <div className="navbar__logo">
           <Link to="/">
-            <img src="" alt="Logo" />
+            <img src="/Asset 8.png" alt="Logo" />
           </Link>
         </div>
         <nav className="navbar__nav">
           {user.isAdmin ? (
-            <Link to="/user-management">User Management</Link>
+            <Link to="/user-management" className={isActive('/user-management') ? 'active' : ''}>User Management</Link>
           ) : (
             <>
-              <Link to="/introduction">Introduction</Link>
-              <Link to="/dashboard">Dashboard</Link>
-              <Link to="/monitoring">Monitoring</Link>
+              <Link to="/introduction" className={isActive('/introduction') ? 'active' : ''}>Introduction</Link>
+              <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>Dashboard</Link>
+              <Link to="/monitoring" className={isActive('/monitoring') ? 'active' : ''}>Monitoring</Link>
             </>
           )}
         </nav>

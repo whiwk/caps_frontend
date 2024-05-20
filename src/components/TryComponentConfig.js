@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './TryComponentConfig.css'
 import {
-  Button,
   Card,
   CardBody,
   CardHeader,
@@ -10,6 +9,16 @@ import {
   Grid,
   GridItem, Title
 } from '@patternfly/react-core';
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import api from '../services/apiService';
 
 const componentData = {
@@ -30,28 +39,29 @@ const levelComponents = {
 
 const ConfigurationPanel = () => {
   const [userLevel, setUserLevel] = useState(1);
-  const [selectedComponent, setSelectedComponent] = useState('UE');
+  const [selectedComponent, setSelectedComponent] = useState(null);
   const [values, setValues] = useState({});
+  const [setValuesState, setSetValuesState] = useState({});
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState('success');
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const handleComponentSelection = (componentKey) => {
-      setSelectedComponent(componentKey);
-      setValues(componentData[componentKey]);
-    };
-
     const fetchUserLevel = async () => {
       try {
         const response = await api.get('user/information/');
-        return response.data.level; 
+        return response.data.level;
       } catch (error) {
         console.error('Failed to fetch user level:', error);
         return 1; // Default level in case of error
       }
     };
-  
+
     fetchUserLevel().then(level => {
       setUserLevel(level);
-      handleComponentSelection(levelComponents[level][0]);
+      // Do not automatically select a component here
     });
   }, []);
 
@@ -172,52 +182,80 @@ const ConfigurationPanel = () => {
       'UE2': 'multi_ue2'
   };
 
+  const handleDialogOpen = () => {
+    setDialogOpen(true);
+  };
+
+  const handleDialogClose = () => {
+    setDialogOpen(false);
+  };
+
   const handleSubmit = async () => {
-    const payload = transformDataForAPI(values);
-    
+    setLoading(true);
+    const payload = transformDataForAPI(setValuesState);
+
     console.log("Payload to be sent:", payload); // Confirm what is being sent
-  
+
     if (Object.keys(payload).length === 0) {
-      alert('No changes to submit.');
+      setAlertMessage('No changes to submit.');
+      setAlertSeverity('warning');
+      setSnackbarOpen(true);
+      setLoading(false);
       return;
     }
-  
-    const componentApiVariable = componentToApiMap[selectedComponent];
-    const apiUrl = `http://10.30.1.221:8000/api/v1/oai/config_${componentApiVariable}/`;
-    const authToken = localStorage.getItem('authToken');
-    
-    console.log("Sending payload to:", apiUrl); // Debug API endpoint
-  
+
+    const apiEndpoint = componentToApiMap[selectedComponent];
+
+    if (!apiEndpoint) {
+      setAlertMessage('No API endpoint found for the selected component.');
+      setAlertSeverity('error');
+      setSnackbarOpen(true);
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json', 
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify(payload) // Ensure the payload is stringified
-      });
-  
-      const responseData = await response.json(); // Assuming response is also JSON
-      console.log('API Response:', responseData); // Debug the actual response
-  
-      if (response.ok) {
-        alert('Configuration updated successfully!');
+      const response = await api.post(`oai/config_${apiEndpoint}/`, payload);
+
+      console.log('API Response:', response.data); // Debug the actual response
+
+      if (response.status === 200) {
+        setAlertMessage('Configuration updated successfully!');
+        setAlertSeverity('success');
         const updatedValues = await fetchComponentValues(selectedComponent);
         setValues({
           ...componentData[selectedComponent],
           ...updatedValues
         });
+        setSetValuesState({}); // Reset set values state
       } else {
         throw new Error('Failed to update due to server error');
       }
     } catch (error) {
       console.error('Failed to update configuration:', error);
-      alert('Failed to update configuration: ' + (error.response ? error.response.data.detail : 'No details'));
+      setAlertMessage('Failed to update configuration: ' + (error.response ? error.response.data.detail : 'No details'));
+      setAlertSeverity('error');
+    } finally {
+      setSnackbarOpen(true);
+      setLoading(false); 
+      handleDialogClose();
     }
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
   
   const shouldScroll = ['DU', 'CU', 'DU1', 'DU2'].includes(selectedComponent);
+
+  const cancelButtonStyles = {
+    backgroundColor: '#E3AE14',
+    color: '#fff',
+    '&:hover': {
+      backgroundColor: '#E39514',
+      color: '#fff'
+    }
+  };
 
   return (
     <Card ouiaId="BasicCard" style={{borderRadius: '6px', height: '540px'}}>
@@ -225,7 +263,17 @@ const ConfigurationPanel = () => {
         <Grid hasGutter>
           <GridItem span={12} style={{ display: 'flex', justifyContent: 'space-between', height: '30px' }}>
             {levelComponents[userLevel].map(component => (
-              <Button key={component} variant="primary" isInline onClick={() => handleComponentSelection(component)} style={{margin: '1px', width: '180px', fontSize: '10px'}}>
+              <Button 
+                key={component} 
+                variant="contained" 
+                onClick={() => handleComponentSelection(component)} 
+                style={{
+                  margin: '1px', 
+                  width: '180px', 
+                  fontSize: '10px',
+                  backgroundColor: selectedComponent === component ? '#004080' : '',
+                  color: selectedComponent === component ? '#fff' : '',
+                  }}>
                 {component}
               </Button>
             ))}
@@ -233,6 +281,8 @@ const ConfigurationPanel = () => {
         </Grid>
       </CardHeader>
       <CardBody>
+      {selectedComponent ? (
+          <>
         <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid #ccc', marginLeft: '-15px', marginRight: '-15px' }}>
           <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-40px' }}>Key</Title>
           <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-30px' }}>Current Value</Title>
@@ -252,18 +302,46 @@ const ConfigurationPanel = () => {
               <TextInput
                 id={`${key}-new`}
                 type="text"
-                onChange={(e) => setValues({ ...values, [key]: e.target.value })}
+                value={setValuesState[key] || ''}
+                onChange={(e) => setSetValuesState({ ...setValuesState, [key]: e.target.value })}
                 style={{ flex: 1, fontSize: '0.75rem', boxSizing: 'border-box'}}
               />
             </div>
           ))}
         </div>
+      </>
+      ) : (
+        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '1.2rem' }}>Select a component above</div>
+      )}  
       </CardBody>
-      <CardFooter style={{borderRadius: '6px'}}>
-      <Button variant="primary" onClick={handleSubmit} style={{width: '107.5%', marginLeft: '-15px', marginBottom: '-10px'}}>
-            Submit
+      <CardFooter>
+        <Button variant="contained" color="primary" onClick={handleDialogOpen} style={{ width: '107.5%', marginLeft: '-15px', marginBottom: '-10px', }}>
+          Submit
         </Button>
       </CardFooter>
+      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+        <MuiAlert elevation={6} variant="filled" onClose={handleSnackbarClose} severity={alertSeverity}>
+          {alertMessage}
+        </MuiAlert>
+      </Snackbar>
+      <Dialog open={dialogOpen} onClose={handleDialogClose}>
+        <DialogTitle>Confirm Configuration</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to submit the configuration changes?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button sx={cancelButtonStyles} onClick={handleDialogClose}>
+            Cancel
+          </Button>
+          <Button variant="contained" color="primary" onClick={handleSubmit} autoFocus>
+          <Box display="flex" alignItems="center" justifyContent="center" width="80px">
+              {loading ? <CircularProgress size={20} color="inherit"/> : 'Confirm'}
+            </Box>
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 };
