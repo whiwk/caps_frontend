@@ -67,7 +67,7 @@ const Navbar = () => {
       <>
         <div className="navbar__logo">
           <Link to="/">
-            <img src="/netra_logo.png" alt="Logo" />
+            <img src="" alt="Logo" />
           </Link>
         </div>
         <nav className="navbar__nav">

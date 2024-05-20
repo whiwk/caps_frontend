@@ -11,7 +11,7 @@ export const Wireshark: React.FunctionComponent = () => {
 
   return (
     <Tabs activeKey={activeTabKey} onSelect={handleTabClick}>
-      <Tab eventKey={0} title="wireshark">
+      <Tab eventKey={0} title="Wireshark">
         <Tabsatu />
       </Tab>
       <Tab eventKey={1} title="Files">

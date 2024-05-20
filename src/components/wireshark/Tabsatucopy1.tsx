@@ -20,6 +20,7 @@ const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
       <Table variant={TableVariant.compact} aria-label="Wireshark Data Table">
         <Thead>
           <tr>
+           
             <Th>Timestamp</Th>
             <Th>Protocol Info</Th>
           </tr>
@@ -27,6 +28,7 @@ const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
         <Tbody>
           {data.map((item, index) => (
             <Tr key={index}>
+              
               <Td>{item.timestamp}</Td>
               <Td>{item.protocolInfo}</Td>
             </Tr>
@@ -40,7 +42,8 @@ const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
 export const Tabsatu: React.FunctionComponent = () => {
 //textinput and filter
 const [value, setValue] = React.useState('');
-const [filteredData, setFilteredData] = useState<string[]>([]);
+const [filteredData, setFilteredData] = useState<string[]>([]); // State to hold filtered data (replace string[] with your data type)
+
 //button start/stop
 const [isRunning, setIsRunning] = useState(false);
 
@@ -71,93 +74,41 @@ const stopAction = () => {
   const [isOpen, setIsOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<string>('Select Component');
   const [data, setData] = useState<any>([]); // State to store data from the backend
-  const [podsName, setPodsName] = useState<string | null>(null); 
-  const [pods, setPods] = useState<any[]>([])
-  
+
   useEffect(() => {
-    fetchPods(); // Fetch the pods when the component mounts
-  }, []);
+    if (selected !== ''){
+    fetchData(selected); // Fetch data when component mounts or selected option changes
+    }
+  }, [selected]);
 
-  const fetchPods = async () => {
-    const authToken = localStorage.getItem('authToken');
-    console.log('Fetching pods with authToken:', authToken);
-
+  const fetchData = async (selectedOption: string) => {
     try {
-      const response = await axios.get('http://10.30.1.221:8000/api/v1/kube/pods/', {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-      console.log('Pods API response status:', response.status);
-      console.log('Pods API response data:', response.data);
-
-      if (response.data && Array.isArray(response.data.pods)) {
-        const podNames = response.data.pods.map((pod: any) => pod.name);
-        console.log('Extracted pod names:', podNames);
-        setPods(response.data.pods);
-      } else {
-        console.error('API response does not contain pods array:', response.data);
-      }
+      const response = await axios.get(`http://10.30.1.221:8000/api/v1/kube/pods/${selectedOption}`); // Replace YOUR_API_ENDPOINT with the actual endpoint
+      setData(response.data); // Set the data received from the backend
     } catch (error) {
-      console.error('Error fetching pods:', error.message);
+      console.error('Error fetching data:', error);
     }
   };
-
-  const filterPods = (pods: any[], selectedComponent: string) => {
-    if (!selectedComponent) {
-      console.error('Selected component is undefined');
-      return;
-    }
-    console.log('Filtering pods for component:', selectedComponent);
-    const searchPattern = `${selectedComponent.toLowerCase()}-level1`;
-    console.log('Search pattern:', searchPattern);
-
-    const selectedPods = pods.filter(pod => pod.name && pod.name.toLowerCase().includes(searchPattern));
-    if (selectedPods.length > 0) {
-      console.log('Selected pods:', selectedPods);
-      setPodsName(selectedPods[0].name); // Assuming name is the field in the response
-    } else {
-      console.log('No pods found for the selected component');
-      setPodsName(null);
-    }
-  };
-
-  useEffect(() => {
-    if (selected !== '') {
-      console.log('Selected component changed:', selected);
-      filterPods(pods, selected); // Filter pods based on selected component
-    }
-  }, [selected, pods]);
 
   const handleStartClick = async () => {
-    const authToken = localStorage.getItem('authToken');
-    
-    if (!isRunning && podsName) {
-      console.log('Starting sniff packet for pod:', podsName);
+    if (!isRunning && selected) {
       try {
-        const response = await axios.get(`http://10.30.1.221:8000/api/v1/shark/testv1/${podsName}/`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
-        console.log('Sniff packet API response:', response.data); // Log the response
-        setData(response.data); // Assuming response.data contains the Wireshark data
+        const response = await axios.get(`http://10.30.1.221:8000/api/v1/shark/testv1/${selected}`);
+        console.log(response.data); // Do something with the response
         setIsRunning(true);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     } else {
-      console.log('Stopping sniff packet');
       setIsRunning(false);
     }
-  };  
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-redeclare
   const handleFilter = () => {
-    console.log('Filtering data with value:', value);
     // Implement your filtering logic here
     // For demonstration purposes, let's assume you have an array of data called 'data' that you want to filter
-    const filteredResult = data.filter(item => item.protocolInfo && item.protocolInfo.includes(value));
+    const filteredResult = data.filter(item => item.includes(value));
     setFilteredData(filteredResult);
   };
 
@@ -166,10 +117,11 @@ const stopAction = () => {
   };
 
   const onSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
-    console.log('Selected value from dropdown:', value);
+    // eslint-disable-next-line no-console
+    // console.log('selected', value);
     setSelected(value as string);
     setIsOpen(false);
-  };
+    };
 
   const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
     <MenuToggle
@@ -212,17 +164,17 @@ const stopAction = () => {
         <SelectList>
           <SelectOption value="AMF">AMF</SelectOption>
           <SelectOption value="UPF">UPF</SelectOption>
-          <SelectOption value="cu">CU</SelectOption>
-          <SelectOption value="du">DU</SelectOption>
+          <SelectOption value="CU">CU</SelectOption>
+          <SelectOption value="DU">DU</SelectOption>
         </SelectList>
     </Select>
     <br />
     <br />
     {/* Empty container or card with dimensions */}
     <div style={{ height: '400px', border: '1px solid #ccc', padding: '16px', marginBottom: '16px' }}>
-    {selected &&
+    {selected && (
       <WiresharkDataTable data={data} /> 
-    }
+    )}
     </div>
     </div>
 
@@ -241,7 +193,7 @@ const stopAction = () => {
       <ul>
         {filteredData.map((item, index) => (
           // eslint-disable-next-line no-sequences
-          <li key={index}>{item}</li>
+          <li key={index}>{item, index}</li>
         ))}
       </ul>
     </div>

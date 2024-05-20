@@ -34,3 +34,7 @@
     white-space: nowrap; /* prevent content from wrapping */
     border: 0;
   }
+
+  .pf-topology__node__label__background {
+    filter: none;
+  }

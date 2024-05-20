@@ -4,6 +4,7 @@
   align-items: center;
   padding: 0 20px; /* Added padding for overall alignment */
   background-color: #27323A;
+  /* background-color: #17252a; */
   position: fixed;      /* Fix navbar's position */
   top: 0;               /* Align top edge at the top of the viewport */
   left: 0;              /* Align left edge at the left of the viewport */

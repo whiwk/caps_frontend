@@ -40,7 +40,7 @@ const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
 export const Tabsatu: React.FunctionComponent = () => {
 //textinput and filter
 const [value, setValue] = React.useState('');
-const [filteredData, setFilteredData] = useState<string[]>([]);
+const [filteredData, setFilteredData] = useState<any[]>([]);
 //button start/stop
 const [isRunning, setIsRunning] = useState(false);
 
@@ -70,7 +70,7 @@ const stopAction = () => {
 //dropdown component
   const [isOpen, setIsOpen] = React.useState(false);
   const [selected, setSelected] = React.useState<string>('Select Component');
-  const [data, setData] = useState<any>([]); // State to store data from the backend
+  const [data, setData] = useState<any[]>([]); // State to store data from the backend
   const [podsName, setPodsName] = useState<string | null>(null); 
   const [pods, setPods] = useState<any[]>([])
   
@@ -92,9 +92,10 @@ const stopAction = () => {
       console.log('Pods API response data:', response.data);
 
       if (response.data && Array.isArray(response.data.pods)) {
-        const podNames = response.data.pods.map((pod: any) => pod.name);
+        const podNames = response.data.pods.map((pod: any) => pod.name); // Extract pod names
         console.log('Extracted pod names:', podNames);
-        setPods(response.data.pods);
+        setPods(podNames);
+        filterPods(response.data.pods, selected);
       } else {
         console.error('API response does not contain pods array:', response.data);
       }
@@ -103,16 +104,14 @@ const stopAction = () => {
     }
   };
 
+
   const filterPods = (pods: any[], selectedComponent: string) => {
     if (!selectedComponent) {
       console.error('Selected component is undefined');
       return;
     }
     console.log('Filtering pods for component:', selectedComponent);
-    const searchPattern = `${selectedComponent.toLowerCase()}-level1`;
-    console.log('Search pattern:', searchPattern);
-
-    const selectedPods = pods.filter(pod => pod.name && pod.name.toLowerCase().includes(searchPattern));
+    const selectedPods = pods.filter(pod => pod.name && pod.name.toLowerCase().includes(selectedComponent.toLowerCase()));
     if (selectedPods.length > 0) {
       console.log('Selected pods:', selectedPods);
       setPodsName(selectedPods[0].name); // Assuming name is the field in the response
@@ -130,34 +129,28 @@ const stopAction = () => {
   }, [selected, pods]);
 
   const handleStartClick = async () => {
-    const authToken = localStorage.getItem('authToken');
-    
     if (!isRunning && podsName) {
       console.log('Starting sniff packet for pod:', podsName);
       try {
-        const response = await axios.get(`http://10.30.1.221:8000/api/v1/shark/testv1/${podsName}/`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
+        const response = await axios.get(`http://10.30.1.221:8000/api/v1/shark/testv1/${podsName}`);
         console.log('Sniff packet API response:', response.data); // Log the response
         setData(response.data); // Assuming response.data contains the Wireshark data
         setIsRunning(true);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error fetching data:', error.message);
       }
     } else {
       console.log('Stopping sniff packet');
       setIsRunning(false);
     }
-  };  
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-redeclare
   const handleFilter = () => {
     console.log('Filtering data with value:', value);
     // Implement your filtering logic here
     // For demonstration purposes, let's assume you have an array of data called 'data' that you want to filter
-    const filteredResult = data.filter(item => item.protocolInfo && item.protocolInfo.includes(value));
+    const filteredResult = data.filter(item => item && item.protocolInfo && item.protocolInfo.includes(value));
     setFilteredData(filteredResult);
   };
 
@@ -212,8 +205,8 @@ const stopAction = () => {
         <SelectList>
           <SelectOption value="AMF">AMF</SelectOption>
           <SelectOption value="UPF">UPF</SelectOption>
-          <SelectOption value="cu">CU</SelectOption>
-          <SelectOption value="du">DU</SelectOption>
+          <SelectOption value="CU">CU</SelectOption>
+          <SelectOption value="DU">DU</SelectOption>
         </SelectList>
     </Select>
     <br />

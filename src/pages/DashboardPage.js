@@ -25,66 +25,47 @@ import Wireshark from '../components/wireshark/Wireshark.tsx';
 </Grid>
 
 function DashboardPage() {
+
+  
   return (
     <div>
-      <PageSection style={{overflowX: 'hidden'}}>
+      {/* <PageSection style={{overflowX: 'hidden'}}> */}
+      <PageSection>
         <Grid hasGutter>
 
-          <GridItem span={12} rowSpan={6} style={{marginTop: '-10px', marginLeft: '-14px'}}>
-            <Card ouiaId="BasicCard" style={{height: '500px', borderRadius: '6px'}}>
-              <CardTitle style={{ 
-                marginTop: '-20px', 
-                marginLeft: '-16px',
-                marginRight: '-16px', 
-              }}>
+          <GridItem span={12} rowSpan={6}>
+            <Card ouiaId="BasicCard" style={{height: '500px', borderRadius: '8px'}}>
+              <CardTitle style={{ backgroundColor: '#0A7373', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
                 Topology Graph
               </CardTitle>
-              <CardBody style={{ 
-                marginTop: '-16px', 
-                marginLeft: '-24px',
-                marginRight: '-24px',
-                marginBottom: '-24px', 
-              }}>
+              <CardBody>
                 <TopologyCustomEdgeDemo />
               </CardBody>
             </Card>
           </GridItem>
 
-          <GridItem span={4} rowSpan={6} style={{
-            marginTop: '-10px',
-            marginLeft: '-10px',
-            marginRight: '-10px',
-          }}>
-            <Card ouiaId="BasicCard" style={{ 
-              height: '568px', 
-              borderRadius: '6px'
-              }}>
-              <CardTitle style={{ 
-                marginTop: '-20px', 
-                marginLeft: '-16px',
-                marginRight: '-16px',
-              }}
-              >Configuration Panel</CardTitle>
-              <CardBody style={{ 
-                overflowX: 'hidden', // Enables vertical scrolling
-                maxHeight: '700px', // Limits the maximum height
-                marginTop: '-16px', 
-                marginLeft: '-24px',
-                marginRight: '-24px',
-                marginBottom: '-24px', 
-              }}>
+          <GridItem span={5} rowSpan={6}>
+            <Card ouiaId="BasicCard" style={{ height: '700px', borderRadius: '8px' }}>
+              <CardTitle style={{ backgroundColor: '#0A7373', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
+                Configuration Panel
+              </CardTitle>
+              {/* <CardBody style={{ overflowX: 'hidden', // Enables vertical scrolling, 
+              maxHeight: '700px', // Limits the maximum height
+              }}> */}
+              <CardBody>
                 <ConfigurationPanel />
               </CardBody>
             </Card>
           </GridItem>
 
-          <GridItem span={8} rowSpan={6} >
-            <Card ouiaId="BasicCard" style={{height: '300px'}}>
-              <CardTitle>
-                <CardBody>
-                  <Wireshark />
-                </CardBody>
+          <GridItem span={7} rowSpan={6} >
+            <Card ouiaId="BasicCard" style={{height: '700px', borderRadius: '8px'}}>
+              <CardTitle style={{ backgroundColor: '#0A7373', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
+                Wireshark
               </CardTitle>
+              <CardBody>
+                <Wireshark />
+              </CardBody>
             </Card>
           </GridItem>
         </Grid>
