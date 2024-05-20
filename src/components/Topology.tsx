@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import '@patternfly/patternfly/patternfly.css';
 import './Topology.css'
 import api from '../services/apiService';
@@ -94,6 +94,16 @@ const CustomNode: React.FC<CustomNodeProps & WithSelectionProps & WithDragNodePr
   ...rest
 }) => {
   const nodeId = element.getId();
+  // let Icon;
+
+  // if (nodeId === 'UE') {
+  //   Icon = Icon1;
+  // } else if (['RRU', 'DU', 'CU'].includes(nodeId)) {
+  //   Icon = Icon2;
+  // } else if (['AMF', 'UPF'].includes(nodeId)) {
+  //   Icon = Icon3;
+  // }
+
   let iconSrc = '';
 
   if (nodeId === 'UE') {
@@ -162,37 +172,39 @@ const createContextMenuItems = (
 export const TopologyCustomEdgeDemo: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [deployments, setDeployments] = useState<Deployment[]>([]);
+  const [nodes, setNodes] = useState<NodeModel[]>([]);
+  const [edges, setEdges] = useState<EdgeModel[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalAction, setModalAction] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [showSideBar, setShowSideBar] = useState(false);
 
-  const fetchDeployments = useCallback(async () => {
-    try {
-      const response = await api.get('kube/deployments/');
-      const deploymentsData = response.data.map((deployment: any) => ({
-        deployment_name: deployment.deployment_name,
-        replicas: deployment.replicas
-      }));
-      setDeployments(deploymentsData);
-    } catch (error) {
-      console.error('Failed to fetch deployments:', error);
-    }
+  useEffect(() => {
+    const fetchDeployments = async () => {
+      try {
+        const response = await api.get('kube/deployments/');
+        const deploymentsData = response.data.map((deployment: any) => ({
+          deployment_name: deployment.deployment_name,
+          replicas: deployment.replicas
+        }));
+        setDeployments(deploymentsData);
+        const { nodes: updatedNodes, edges: updatedEdges } = updateNodeStatuses(deploymentsData);
+        setNodes(updatedNodes);
+        setEdges(updatedEdges);
+        setIsDataLoaded(true);
+      } catch (error) {
+        console.error('Failed to fetch deployments:', error);
+      }
+    };
+    fetchDeployments();
   }, []);
 
-  useEffect(() => {
-    fetchDeployments();
-  }, [fetchDeployments]);
 
-  const determineNodeStatus = useCallback((nodeName: string) => {
-    const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(nodeName.toLowerCase()));
-    return deployment && deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
-  }, [deployments]);
-
-  const nodes = useMemo(() => {
+  const updateNodeStatuses = (deploymentsData) => {
     const NODE_DIAMETER = 80;
-    return [
+    const NODES_INIT: NodeModel[] = [
       {
         id: 'UE',
         type: 'node',
@@ -201,7 +213,7 @@ export const TopologyCustomEdgeDemo: React.FC = () => {
         width: NODE_DIAMETER,
         height: NODE_DIAMETER,
         shape: NodeShape.rect,
-        status: determineNodeStatus('UE'),
+        status: determineNodeStatus('UE', deploymentsData),
         x: 90,
         y: 130
       },
@@ -213,7 +225,7 @@ export const TopologyCustomEdgeDemo: React.FC = () => {
         width: NODE_DIAMETER,
         height: NODE_DIAMETER,
         shape: NodeShape.rect,
-        status: determineNodeStatus('RRU'),
+        status: determineNodeStatus('RRU', deploymentsData),
         x: 300,
         y: 130
       },
@@ -225,7 +237,7 @@ export const TopologyCustomEdgeDemo: React.FC = () => {
         width: NODE_DIAMETER,
         height: NODE_DIAMETER,
         shape: NodeShape.rect,
-        status: determineNodeStatus('DU'),
+        status: determineNodeStatus('DU', deploymentsData),
         x: 400,
         y: 130
       },
@@ -237,7 +249,7 @@ export const TopologyCustomEdgeDemo: React.FC = () => {
         width: NODE_DIAMETER,
         height: NODE_DIAMETER,
         shape: NodeShape.rect,
-        status: determineNodeStatus('CU'),
+        status: determineNodeStatus('CU', deploymentsData),
         x: 550,
         y: 130
       },
@@ -296,10 +308,8 @@ export const TopologyCustomEdgeDemo: React.FC = () => {
         }
       }
     ];
-  }, [determineNodeStatus]);
 
-  const edges = useMemo(() => {
-    return [
+    const EDGES: EdgeModel[] = [
       {
         id: `UE to RRU`,
         type: 'data-edge',
@@ -341,7 +351,24 @@ export const TopologyCustomEdgeDemo: React.FC = () => {
         animationSpeed: EdgeAnimationSpeed.mediumSlow
       }
     ];
-  }, []);
+
+    return { nodes: NODES_INIT, edges: EDGES };
+  };
+
+  const determineNodeStatus = (nodeName, deploymentsData) => {
+    let matchPart = nodeName.toLowerCase().substring(0, 2);
+
+    if (nodeName === 'DU' || nodeName === 'RRU') {
+      const duDeployment = deploymentsData.find(d => d.deployment_name.toLowerCase().startsWith('oai-du-level1'));
+      if (duDeployment) {
+        return duDeployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
+      }
+    }
+
+    const deployment = deploymentsData.find(d => d.deployment_name.toLowerCase().includes(matchPart));
+    if (!deployment) return NodeStatus.danger;
+    return deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
+  };
 
   const customComponentFactory: ComponentFactory = (kind: ModelKind, type: string) => {
     switch (type) {
@@ -370,19 +397,22 @@ export const TopologyCustomEdgeDemo: React.FC = () => {
   };
 
   const controller = useMemo(() => {
+    if (!isDataLoaded) return undefined;
+
     const newController = new Visualization();
     newController.registerLayoutFactory(customLayoutFactory);
     newController.registerComponentFactory(customComponentFactory);
     newController.addEventListener(SELECTION_EVENT, ids => {
+      console.log('Selection event, IDs:', ids);
       setSelectedIds(ids);
-      setShowSideBar(true);
+      setShowSideBar(true); // Show sidebar on selection event
     });
 
     const model = { nodes, edges, graph: { id: 'g1', type: 'graph', layout: 'Cola' } };
     newController.fromModel(model, true);
 
     return newController;
-  }, [nodes, edges]);
+  }, [nodes, edges, isDataLoaded]);
 
   const handleContextMenuAction = (action: string) => {
     console.log('Context menu action:', action);
