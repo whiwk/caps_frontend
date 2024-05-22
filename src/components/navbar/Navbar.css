@@ -3,7 +3,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 20px; /* Added padding for overall alignment */
-  background-color: #27323A;
+  background-color: #049BAC;
   /* background-color: #17252a; */
   position: fixed;      /* Fix navbar's position */
   top: 0;               /* Align top edge at the top of the viewport */
@@ -25,22 +25,22 @@
 }
 
 .navbar__nav a { /* Targeting links directly within the navbar navigation */
-  color: #ECECEC; /* Set font color to white */
+  color: #fff; /* Set font color to white */
   text-decoration: none; /* Remove underline */
-  font-weight:300;
+  font-weight:500;
   font-size: medium;
   padding: 10px; /* Optional: add padding for better click area and appearance */
   transition: color 0.3s; /* Smooth transition for hover effects */
 }
 
 .navbar__nav a:hover {
-  color: #F2B705; /* Lighter color on hover */
+  color: #083E4A; /* Lighter color on hover */
   text-decoration: none; /* Ensure underline doesn't reappear on hover */
 }
 
 
 .navbar__nav a.active {
-  color: #F2B705; /* Active link text color */
+  color: #083E4A; /* Active link text color */
   text-decoration: none; /* Ensure underline doesn't reappear on hover */
 }
 
@@ -67,25 +67,25 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #F2B705; /* Or set a specific color */
+  color: #fff; /* Or set a specific color */
   display: flex;
   align-items: center;
 }
 
 .navbar__logout:hover {
-  color: #b80303; /* Change color on hover if needed */
+  color: #d30000; /* Change color on hover if needed */
 }
 
 .navbar__username, .navbar__level, .navbar__completion {
-  color: #ECECEC; /* Text color for user info */
-  font-weight:300;
+  color: #fff; /* Text color for user info */
+  font-weight:500;
   font-size: small;
 }
 
 .link {
   text-decoration: none;
-  color: #ECECEC; /* Example link color */
-  font-weight: bold;
+  color: #fff; /* Example link color */
+  font-weight: 500;
 }
 
 .link:hover {

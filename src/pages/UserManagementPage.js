@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import api from '../services/apiService';
 import { Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Paper, Snackbar, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
+import { Helmet } from 'react-helmet';
+
 
 function UserManagementPage() {
   const [users, setUsers] = useState([]);
@@ -188,7 +190,10 @@ function UserManagementPage() {
 
   return (
     <>
-      <Button variant="contained" color="primary" onClick={() => setCreateModalOpen(true)} style={{ margin: '20px', }}>
+      <Helmet>
+        <title>Orca | User Management</title>
+      </Helmet>
+      <Button variant="contained" color="primary" onClick={() => setCreateModalOpen(true)} style={{ margin: '20px',borderRadius: '20px' }}>
         Create User
       </Button>
       <TableContainer component={Paper} style={{ margin: '20px', width: 'auto', marginTop: '-5px' }}>
@@ -250,14 +255,14 @@ function UserManagementPage() {
 
         {/* Create User Modal */}
         <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)}>
-          <DialogTitle>Create Users</DialogTitle>
+          <DialogTitle>Create User</DialogTitle>
           <DialogContent>
             <DialogContentText>Enter the number of users you want to create:</DialogContentText>
             <TextField
               autoFocus
               margin="dense"
               id="numUsers"
-              label="Number of Users"
+              label=""
               type="number"
               fullWidth
               variant="standard"

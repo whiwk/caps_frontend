@@ -12,6 +12,7 @@ import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import CircularProgress from '@mui/material/CircularProgress';
+import { Helmet } from 'react-helmet';
 
 const defaultTheme = createTheme();
 
@@ -86,23 +87,47 @@ export default function SignInSide() {
 
   return (
     <ThemeProvider theme={defaultTheme}>
-      <Grid container component="main" sx={{ height: '100vh' }}>
+      <Helmet>
+        <title>Orca | Login</title>
+      </Helmet>
+      <Grid container component="main" sx={{ height: '100vh', position: 'relative' }}>
         <CssBaseline />
         <Grid
           item
-          xs={false}
-          sm={4}
-          md={7}
+          xs={12}
           sx={{
-            backgroundImage: 'url(/login-bg3.jpg)',
+            backgroundImage: 'url(/login-orca-full.png)',
             backgroundRepeat: 'no-repeat',
             backgroundColor: (t) =>
               t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
             backgroundSize: 'cover',
             backgroundPosition: 'center',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: -1,
           }}
         />
-        <Grid item xs={12} sm={8} md={5} component={Paper} elevation={6} square >
+        <Grid 
+          item 
+          xs={12} 
+          sm={8} 
+          md={5} 
+          component={Paper} 
+          elevation={6} 
+          square
+          sx={{ 
+            borderRadius: '16px',
+            margin: 'auto',
+            maxWidth: '360px',
+            zIndex: 1,
+            position: 'relative',
+            marginLeft: 'auto',
+            marginRight: '50px',
+          }} 
+        >
           <Box
             sx={{
               my: 8,
@@ -119,6 +144,8 @@ export default function SignInSide() {
 
             <Typography component="h1" variant="h4" sx={{
               mt: 1,
+              color: '#19686F',
+              fontWeight: 700,
               animation: 'fadeIn 6s',
               '@keyframes fadeIn': {
                 '0%': {
@@ -146,8 +173,7 @@ export default function SignInSide() {
                 onChange={(e) => setUsername(e.target.value)}
                 error={!!formError.username}
                 helperText={formError.username}
-                style={{borderRadius: '26px'}}
-                sx={{ borderRadius: '26px', '& .MuiOutlinedInput-root': { borderRadius: '26px' } }}
+                sx={{ borderRadius: '20px', '& .MuiOutlinedInput-root': { borderRadius: '20px' } }}
               />
               <TextField
                 margin="normal"
@@ -162,7 +188,7 @@ export default function SignInSide() {
                 onChange={(e) => setPassword(e.target.value)}
                 error={!!formError.password}
                 helperText={formError.password}
-                sx={{ borderRadius: '26px', '& .MuiOutlinedInput-root': { borderRadius: '26px' } }}
+                sx={{ borderRadius: '20px', '& .MuiOutlinedInput-root': { borderRadius: '20px' } }}
               />
               <Typography color="error" sx={{ mt: 1, height: '24px', visibility: apiError ? 'visible' : 'hidden' }}>
                 {apiError || ' '}
@@ -174,13 +200,13 @@ export default function SignInSide() {
                 sx={{
                   mt: 1,
                   mb: 2,
-                  backgroundColor: '#30475E',  // Dark blue background or choose another if you like
+                  backgroundColor: '#19686F',  // Dark blue background or choose another if you like
                   color: '#fff',  // Setting the font color to orange
                   '&:hover': {
-                    backgroundColor: '#27323A',  // Darker shade for hover
+                    backgroundColor: '#083E4A',  // Darker shade for hover
                     color: '#fff'  // Keep the font color orange even on hover
                   },
-                  borderRadius: '20px', '& .MuiOutlinedInput-root': { borderRadius: '20px' }
+                  borderRadius: '16px', '& .MuiOutlinedInput-root': { borderRadius: '16px' }
                 }}
                 disabled={loading}
                 startIcon={loading && <CircularProgress size={20} />}

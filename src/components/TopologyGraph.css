@@ -1,0 +1,16 @@
+/* Custom styles for the Zoom Out button in the topology toolbar */
+
+.pf-v5-u-screen-reader {
+  position: absolute !important;
+  height: 1px; 
+  width: 1px;
+  overflow: hidden;
+  clip: rect(1px, 1px, 1px, 1px);
+  clip-path: inset(50%);
+  white-space: nowrap; /* prevent content from wrapping */
+  border: 0;
+}
+
+.pf-topology__node__label__background {
+  filter: none;
+}

@@ -1,9 +1,11 @@
 // src/pages/DashboardPage.js
 import React from 'react';
 import { Grid, GridItem, PageSection, Card, CardTitle, CardBody } from '@patternfly/react-core';
-import TopologyCustomEdgeDemo from '../components/Topology.tsx';
+import TopologyCustomEdgeDemo from '../components/TopologyGraph.js';
 import ConfigurationPanel from '../components/TryComponentConfig'; 
 import Wireshark from '../components/wireshark/Wireshark.tsx';
+import { Helmet } from 'react-helmet';
+import './DashboardPage.css'
 
 <Grid hasGutter>
   <GridItem span={8}>span = 8</GridItem>
@@ -29,6 +31,9 @@ function DashboardPage() {
   
   return (
     <div>
+      <Helmet>
+        <title>Orca | Dashboard</title>
+      </Helmet>
       {/* <PageSection style={{overflowX: 'hidden'}}> */}
       <PageSection>
         <Grid hasGutter>
