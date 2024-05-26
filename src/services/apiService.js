@@ -1,4 +1,3 @@
-// src/services/apiService.js
 import axios from 'axios';
 import { getNewToken, isTokenExpired } from '../utils/tokenService';
 
@@ -18,6 +17,20 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && error.response.status === 307) {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/auth/login'; // Use window.location.href for redirection
+    }
     return Promise.reject(error);
   }
 );

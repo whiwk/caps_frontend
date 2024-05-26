@@ -12,9 +12,7 @@ function UserManagementPage() {
   const [removeModalOpen, setRemoveModalOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [usernameError, setUsernameError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [numUsers, setNumUsers] = useState(1);
   const [creatingUsers, setCreatingUsers] = useState(false);
@@ -39,10 +37,8 @@ function UserManagementPage() {
 
   const handleEdit = (user) => {
     setCurrentUser(user);
-    setNewUsername(user.username);
     setNewPassword('');
     setEditModalOpen(true);
-    setUsernameError('');
     setPasswordError('');
   };
 
@@ -53,7 +49,6 @@ function UserManagementPage() {
 
   const closeEditModal = () => {
     setEditModalOpen(false);
-    setUsernameError('');
     setPasswordError('');
   };
 
@@ -102,10 +97,6 @@ function UserManagementPage() {
   };
   
   const confirmEdit = async () => {
-    if (!newUsername.trim()) {
-      setUsernameError('Username is required.');
-      return;
-    }
     if (!newPassword.trim()) {
       setPasswordError('Password is required.');
       return;
@@ -113,11 +104,11 @@ function UserManagementPage() {
     setEditingUser(true);
     try {
       const response = await api.put(`user/update/${currentUser.id}/`, {
-        username: newUsername,
+        username: currentUser.username,
         password: newPassword
       });
       if (response && response.status === 200) {
-        const updatedUsers = users.map(user => user.id === currentUser.id ? {...user, username: newUsername} : user);
+        const updatedUsers = users.map(user => user.id === currentUser.id ? {...user, username: currentUser.username} : user);
         setUsers(updatedUsers);
         closeEditModal();
         showSuccessSnackbar("User updated successfully!");
@@ -289,17 +280,12 @@ function UserManagementPage() {
               autoFocus
               margin="dense"
               id="username"
-              label="New Username"
+              label="Username"
               type="text"
               fullWidth
               variant="standard"
-              value={newUsername}
-              onChange={(e) => {
-                setNewUsername(e.target.value);
-                setUsernameError('');
-              }}
-              error={!!usernameError}
-              helperText={usernameError}
+              value={currentUser?.username || ''}
+              InputProps={{ readOnly: true }}
             />
             <TextField
               margin="dense"

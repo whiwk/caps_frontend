@@ -46,6 +46,13 @@ import {
   Alert,
   CircularProgress,
   Box,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
 
 const BadgeColors = [{
@@ -147,6 +154,8 @@ export const TopologyCustomEdgeDemo = () => {
     const [showSideBar, setShowSideBar] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
     const [actionLoading, setActionLoading] = React.useState(false);
+    const [logs, setLogs] = React.useState('');
+    const [pods, setPods] = React.useState([]);
 
     const fetchDeployments = React.useCallback(async () => {
       try {
@@ -169,9 +178,55 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, []);
 
+    const fetchPods = React.useCallback(async () => {
+      try {
+        const response = await api.get('kube/pods/');
+        // console.log('fetchPods response:', response.data);
+        const podsData = response.data.pods.map((pod) => ({
+          name: pod.name,
+        }));
+        setPods(podsData);
+        // console.log('pod name:', podsData )
+      } catch (error) {
+        console.error('Failed to fetch pods:', error);
+      }
+    }, []);
+
     React.useEffect(() => {
-    fetchDeployments();
-    }, [fetchDeployments]);
+      fetchDeployments();
+      fetchPods();
+    }, [fetchDeployments, fetchPods]);
+
+    const fetchLogs = React.useCallback(async (nodeId) => {
+      try {
+        // console.log('Fetching logs for nodeId:', nodeId);
+        // console.log('Current pods:', pods);
+        const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
+        const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
+        // console.log('Found pod:', pod);
+        if (pod) {
+          const response = await api.get(`kube/pods/${pod.name}/logs/`);
+          // console.log('fetchLogs response:', response.data);
+          if (Array.isArray(response.data)) {
+            setLogs(response.data);
+          } else {
+            setLogs([]);
+          }
+        } else {
+          // console.log(`No matching pod found for nodeId: ${nodeId}`);
+          setLogs([]);
+        }
+      } catch (error) {
+        console.error('Failed to fetch logs:', error);
+        setLogs([]);
+      }
+    }, [pods]);
+
+    React.useEffect(() => {
+      if (selectedIds.length > 0) {
+        fetchLogs(selectedIds[0]);
+      }
+    }, [selectedIds, fetchLogs]);
 
     const determineNodeStatus = React.useCallback((nodeName) => {
         const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(nodeName.toLowerCase()));
@@ -355,8 +410,8 @@ export const TopologyCustomEdgeDemo = () => {
 
     React.useEffect(() => {
       if (!loading) {
-        console.log('Nodes:', nodes);
-        console.log('Edges:', edges);
+        // console.log('Nodes:', nodes);
+        // console.log('Edges:', edges);
       }
     }, [loading, nodes, edges]);
 
@@ -421,7 +476,7 @@ export const TopologyCustomEdgeDemo = () => {
 
       React.useEffect(() => {
         if (controller) {
-          console.log('Updating Controller with new Nodes and Edges');
+          // console.log('Updating Controller with new Nodes and Edges');
           controller.fromModel({
             graph: {
               id: 'g1',
@@ -522,7 +577,30 @@ export const TopologyCustomEdgeDemo = () => {
           show={showSideBar && selectedIds.length > 0}
           onClose={() => setSelectedIds([])}
         >
-          <div style={{ marginTop: 27, marginLeft: 20, height: '800px' }}>{selectedIds[0]}</div>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Timestamp</TableCell>
+                  <TableCell>Logs</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {logs.length > 0 ? (
+                  logs.map((log, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{log.timestamp}</TableCell>
+                      <TableCell>{log.log}</TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={2}>No logs available</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </TopologySideBar>
     );
 

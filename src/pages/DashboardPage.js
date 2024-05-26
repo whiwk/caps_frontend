@@ -1,10 +1,11 @@
 // src/pages/DashboardPage.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Grid, GridItem, PageSection, Card, CardTitle, CardBody } from '@patternfly/react-core';
 import TopologyCustomEdgeDemo from '../components/TopologyGraph.js';
 import ConfigurationPanel from '../components/TryComponentConfig'; 
 import Wireshark from '../components/wireshark/Wireshark.tsx';
 import { Helmet } from 'react-helmet';
+import axios from 'axios';
 import './DashboardPage.css'
 
 <Grid hasGutter>
@@ -27,6 +28,29 @@ import './DashboardPage.css'
 </Grid>
 
 function DashboardPage() {
+  useEffect(() => {
+    const setReplicaSet = async () => {
+      try {
+        const token = localStorage.getItem('authToken'); // Get the token from local storage
+        const headers = {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        };
+        
+        const response = await axios.post('http://10.30.1.221:8000/api/v1/kube/set_replicaset/', {}, { headers });
+
+        if (response.status === 200) {
+          // console.log('ReplicaSet updated successfully');
+        } else {
+          console.error('Failed to update ReplicaSet:', response.data);
+        }
+      } catch (error) {
+        console.error('Failed to update ReplicaSet:', error);
+      }
+    };
+
+    setReplicaSet();
+  }, []);
 
   
   return (
