@@ -25,9 +25,9 @@ function App() {
         <Route path="/monitoring" element={<ProtectedRoute><Layout><MonitoringPage /></Layout></ProtectedRoute>} />
         <Route path="/user-management" element={<ProtectedRoute><Layout><UserManagementPage /></Layout></ProtectedRoute>} />
         <Route path='/5g-implementation-overview' element={<ProtectedRoute><Layout><ImplementationPage /></Layout></ProtectedRoute>} />
-        <Route path='/lab-one-guidance-part-one' element={<ProtectedRoute><Layout><LabonePage /></Layout></ProtectedRoute>} />
-        <Route path='/lab-two-guidance' element={<ProtectedRoute><Layout><LabtwoPage /></Layout></ProtectedRoute>} />
-        <Route path='/lab-three-guidance' element={<ProtectedRoute><Layout><LabthreePage /></Layout></ProtectedRoute>} />
+        <Route path='/lab-one-guidance' element={<ProtectedRoute><Layout><LabonePage /></Layout></ProtectedRoute>} />
+        <Route path='/cluster-topology' element={<ProtectedRoute><Layout><LabtwoPage /></Layout></ProtectedRoute>} />
+        <Route path='/management-subscriber' element={<ProtectedRoute><Layout><LabthreePage /></Layout></ProtectedRoute>} />
         <Route path='/behind-the-technology' element={<ProtectedRoute><Layout><BehindPage /></Layout></ProtectedRoute>} />
       </Routes>
     </Router>

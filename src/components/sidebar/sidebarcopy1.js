@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
 import './Sidebar.css';
-import { Nav, NavList, NavItem, NavExpandable, PageSidebar, PageSidebarBody } from '@patternfly/react-core';
+import { Nav, NavList, NavItem, NavExpandable, PageSidebar, PageSidebarBody, Button} from '@patternfly/react-core';
 import { NavLink } from 'react-router-dom';
+import BarsIcon from '@patternfly/react-icons/dist/esm/icons/bars-icon';
 
 const Sidebar = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -20,9 +21,11 @@ const Sidebar = () => {
     };    
 
     return (
-        <div style={{ width: '200px' }}> {/* Adjust width as needed */}
-          <button onClick={toggleSidebar}>{isSidebarOpen ? 'Hide' : 'Show'}</button>
-          {isSidebarOpen && (
+        <div style={{ display: 'flex' }}>
+        <Button variant="plain" onClick={toggleSidebar} aria-label="Toggle navigation" style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}>
+          <BarsIcon />
+        </Button>
+        <div style={{ width: '200px', display: isSidebarOpen ? 'block' : 'none' }}> {/* Adjust width as needed */}
             <PageSidebar theme="dark" style={{ width: '200px' }}>
             <PageSidebarBody>
             <Nav id="nav-primary-simple" theme="dark" onSelect={({ groupId }) => setActiveGroup(groupId)}>
@@ -60,7 +63,7 @@ const Sidebar = () => {
             </Nav>
             </PageSidebarBody>
             </PageSidebar>
-          )}
+        </div>
         </div>
     );
 };

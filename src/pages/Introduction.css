@@ -1,0 +1,25 @@
+/* .page-container {
+    background-color: #f0f0f0; /* Change to your desired background color 
+  } 
+*/
+/* DashboardPage.css */
+
+/* Customize the scrollbar */
+::-webkit-scrollbar {
+    width: 8px;  /* Adjust the width for vertical scrollbars */
+    height: 8px; /* Adjust the height for horizontal scrollbars */
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1; /* Track color */
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #888; /* Thumb color */
+    border-radius: 10px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Thumb hover color */
+  }

@@ -3,11 +3,16 @@ import Sidebar from '../components/sidebar/Sidebar'; // Adjust the import path a
 
 function LabonePage() {
   return (
-    <div style={{ display: 'flex' }}>
+    <div style={{ display: 'flex', backgroundColor: '#' }}>
       <Sidebar />
-      <main style={{ flexGrow: 1, padding: '1rem' }}> {/* Main content */}
-        <h1>Lab 1 Guidance: Gather All 7 Dragon Balls Page</h1>
-          {/* Your other components or content */}
+      <main style={{ flexGrow: 1, padding: '1rem' }}>
+        <h1 style={{ fontSize: '36px', marginBottom: '24px',}}>ORCA: Dashboard</h1>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <img src="/Dashboard1.png" alt="dashboard1" style={{ marginBottom: '24px', width: '650px'}}/>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <img src="/Dashboard2.png" alt="dashboard2" style={{ marginBottom: '24px', width: '650px'}}/>
+        </div>
       </main>
         </div>
   );

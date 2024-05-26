@@ -20,7 +20,7 @@ const Sidebar = () => {
     };    
 
     return (
-        <div style={{ width: '200px' }}> {/* Adjust width as needed */}
+        <div style={{ width: '200px' }} className="sidebar-container"> {/* Adjust width as needed */}
           {/* <button onClick={toggleSidebar}>{isSidebarOpen ? 'Hide' : 'Show'}</button> */}
           {isSidebarOpen && (
             <PageSidebar theme="light" style={{ width: '200px' }} className="custom-sidebar">
