@@ -157,7 +157,6 @@ export const TopologyCustomEdgeDemo = () => {
     const [logs, setLogs] = React.useState('');
     const [pods, setPods] = React.useState([]);
     const [sidebarContent, setSidebarContent] = React.useState('logs');
-    const [sidebarLoading, setSidebarLoading] = React.useState(false);
 
     const fetchDeployments = React.useCallback(async () => {
       try {
@@ -201,7 +200,6 @@ export const TopologyCustomEdgeDemo = () => {
 
     const fetchLogs = React.useCallback(async (nodeId) => {
       try {
-        setSidebarLoading(true);
         // console.log('Fetching logs for nodeId:', nodeId);
         // console.log('Current pods:', pods);
         const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
@@ -222,14 +220,11 @@ export const TopologyCustomEdgeDemo = () => {
       } catch (error) {
         console.error('Failed to fetch logs:', error);
         setLogs([]);
-      } finally {
-        setSidebarLoading(false);
       }
     }, [pods]);
 
     const pingGoogle = React.useCallback(async () => {
       try {
-        setSidebarLoading(true);
         const response = await api.post('kube/ping_google/');
         if (response.data && response.data.output) {
           setLogs([{ timestamp: new Date().toISOString(), log: response.data.output }]);
@@ -239,14 +234,11 @@ export const TopologyCustomEdgeDemo = () => {
       } catch (error) {
         console.error('Failed to ping Google:', error);
         setLogs([]);
-      } finally {
-        setSidebarLoading(false);
       }
     }, []);
 
     const curlGoogle = React.useCallback(async () => {
       try {
-        setSidebarLoading(true);
         const response = await api.post('kube/curl_google/');
         if (response.data && response.data.output) {
           setLogs([{ timestamp: new Date().toISOString(), log: response.data.output }]);
@@ -256,8 +248,6 @@ export const TopologyCustomEdgeDemo = () => {
       } catch (error) {
         console.error('Failed to curl Google:', error);
         setLogs([]);
-      } finally {
-        setSidebarLoading(false);
       }
     }, []);
 
@@ -627,31 +617,16 @@ export const TopologyCustomEdgeDemo = () => {
           onClose={() => setSelectedIds([])}
         >
           <Box p={2}>
-            <Button 
-                variant="contained" 
-                color="primary"
-                onClick={() => handleSidebarContentChange('logs')} 
-                style={{marginRight: '10px'}}
-            >
-                {sidebarLoading && sidebarContent === 'logs' ? <CircularProgress size={24} color="inherit" /> : 'Fetch Logs'}
+            <Button variant="contained" onClick={() => handleSidebarContentChange('logs')} style={{ marginRight: 10 }}>
+              Fetch Logs
             </Button>
             {selectedIds.length > 0 && selectedIds[0] === 'UE' && (
               <>
-                <Button 
-                  variant="contained" 
-                  color="primary"
-                  onClick={() => handleSidebarContentChange('pingGoogle')} 
-                  style={{marginRight: '10px'}}
-                >
-                  {sidebarLoading && sidebarContent === 'pingGoogle' ? <CircularProgress size={24} color="inherit" /> : 'Ping Google'}
+                <Button variant="contained" onClick={() => handleSidebarContentChange('pingGoogle')} style={{ marginRight: 10 }}>
+                  Ping Google
                 </Button>
-                <Button 
-                  variant="contained" 
-                  color="primary"
-                  onClick={() => handleSidebarContentChange('curlGoogle')} 
-                  style={{marginRight: '10px'}}
-                >
-                  {sidebarLoading && sidebarContent === 'curlGoogle' ? <CircularProgress size={24} color="inherit" /> : 'Curl Google'}
+                <Button variant="contained" onClick={() => handleSidebarContentChange('curlGoogle')}>
+                  Curl Google
                 </Button>
               </>
             )}
