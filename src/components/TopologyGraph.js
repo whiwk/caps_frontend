@@ -158,6 +158,7 @@ export const TopologyCustomEdgeDemo = () => {
     const [pods, setPods] = React.useState([]);
     const [sidebarContent, setSidebarContent] = React.useState('logs');
     const [sidebarLoading, setSidebarLoading] = React.useState(false);
+    const [currentLogIndex, setCurrentLogIndex] = React.useState(0);
 
     const fetchDeployments = React.useCallback(async () => {
       try {
@@ -232,7 +233,9 @@ export const TopologyCustomEdgeDemo = () => {
         setSidebarLoading(true);
         const response = await api.post('kube/ping_google/');
         if (response.data && response.data.output) {
-          setLogs([{ timestamp: new Date().toISOString(), log: response.data.output }]);
+          const lines = response.data.output.split('\n').map(line => ({ log: line }));
+          setLogs(lines);
+          setCurrentLogIndex(0);
         } else {
           setLogs([]);
         }
@@ -272,6 +275,15 @@ export const TopologyCustomEdgeDemo = () => {
         }
       }
     }, [selectedIds, sidebarContent, fetchLogs, pingGoogle, curlGoogle]);
+
+    React.useEffect(() => {
+      if (sidebarContent === 'pingGoogle' && logs.length > 0 && currentLogIndex < logs.length) {
+        const timer = setTimeout(() => {
+          setCurrentLogIndex(currentLogIndex + 1);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    }, [currentLogIndex, logs, sidebarContent]);
 
     const determineNodeStatus = React.useCallback((nodeName) => {
         const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(nodeName.toLowerCase()));
@@ -620,66 +632,135 @@ export const TopologyCustomEdgeDemo = () => {
       setSidebarContent(content);
     };
 
+    const renderLogsTable = () => (
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell align="center" style={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>Timestamp</TableCell>
+              <TableCell align="center" style={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>Logs</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {sidebarLoading ? (
+              <TableRow>
+                <TableCell colSpan={2} align="center">
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : logs.length > 0 ? (
+              logs.map((log, index) => (
+                <TableRow key={index}>
+                  <TableCell style={{fontFamily: 'monospace'}} >{log.timestamp}</TableCell>
+                  <TableCell style={{fontFamily: 'monospace'}}>{log.log}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={2}>No logs available</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+
+    const renderPingGoogleTable = () => (
+      <TableContainer component={Paper}>
+        <Table>
+          <TableBody>
+            {sidebarLoading ? (
+              <TableRow>
+                <TableCell colSpan={1} align="center">
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : (
+              logs.slice(0, currentLogIndex + 1).map((log, index) => (
+                <TableRow key={index}>
+                  <TableCell style={{ backgroundColor: '#c0c0c0', fontFamily: 'monospace' }}>{log.log}</TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+
+    const renderCurlGoogleOutput = () => (
+      <Box p={2} component={Paper} style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', backgroundColor: '#f0f0f0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        {sidebarLoading ? (
+          <CircularProgress />
+        ) : logs.length > 0 ? (
+          logs.map((log, index) => (
+            <Box key={index}>{log.log}</Box>
+          ))
+        ) : (
+          'No curl output available'
+        )}
+      </Box>
+    );
+
+    const renderSidebarContent = () => {
+      switch (sidebarContent) {
+        case 'logs':
+          return renderLogsTable();
+        case 'pingGoogle':
+          return renderPingGoogleTable();
+        case 'curlGoogle':
+          return renderCurlGoogleOutput();
+        default:
+          return null;
+      }
+    };
+
+
     const topologySideBar = (
         <TopologySideBar
           className="topology-example-sidebar"
           show={showSideBar && selectedIds.length > 0}
           onClose={() => setSelectedIds([])}
         >
-          <Box p={2}>
-            <Button 
-                variant="contained" 
+        <Box p={2}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleSidebarContentChange('logs')}
+            style={{
+              marginRight: '10px',
+              backgroundColor: sidebarContent === 'logs' ? '#004080' : undefined
+            }}
+          >
+            Fetch Logs
+          </Button>
+          {selectedIds.length > 0 && selectedIds[0] === 'UE' && (
+            <>
+              <Button
+                variant="contained"
                 color="primary"
-                onClick={() => handleSidebarContentChange('logs')} 
-                style={{marginRight: '10px'}}
-            >
-                {sidebarLoading && sidebarContent === 'logs' ? <CircularProgress size={24} color="inherit" /> : 'Fetch Logs'}
-            </Button>
-            {selectedIds.length > 0 && selectedIds[0] === 'UE' && (
-              <>
-                <Button 
-                  variant="contained" 
-                  color="primary"
-                  onClick={() => handleSidebarContentChange('pingGoogle')} 
-                  style={{marginRight: '10px'}}
-                >
-                  {sidebarLoading && sidebarContent === 'pingGoogle' ? <CircularProgress size={24} color="inherit" /> : 'Ping Google'}
-                </Button>
-                <Button 
-                  variant="contained" 
-                  color="primary"
-                  onClick={() => handleSidebarContentChange('curlGoogle')} 
-                  style={{marginRight: '10px'}}
-                >
-                  {sidebarLoading && sidebarContent === 'curlGoogle' ? <CircularProgress size={24} color="inherit" /> : 'Curl Google'}
-                </Button>
-              </>
-            )}
-          </Box>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Timestamp</TableCell>
-                  <TableCell>Logs</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {logs.length > 0 ? (
-                  logs.map((log, index) => (
-                    <TableRow key={index}>
-                      <TableCell>{log.timestamp}</TableCell>
-                      <TableCell>{log.log}</TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={2}>No logs available</TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                onClick={() => handleSidebarContentChange('pingGoogle')}
+                style={{
+                  marginRight: '10px',
+                  backgroundColor: sidebarContent === 'pingGoogle' ? '#2E3B55' : undefined,
+                }}
+              >
+                Ping Google
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => handleSidebarContentChange('curlGoogle')}
+                style={{
+                  marginRight: '10px',
+                  backgroundColor: sidebarContent === 'curlGoogle' ? '#2E3B55' : undefined,
+                }}
+              >
+                Curl Google
+              </Button>
+            </>
+          )}
+        </Box>
+        {renderSidebarContent()}  
         </TopologySideBar>
     );
 

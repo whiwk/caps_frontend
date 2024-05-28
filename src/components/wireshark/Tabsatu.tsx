@@ -3,32 +3,41 @@ import {
   Select,
   SelectOption,
   SelectList,
-  // SelectGroup,
   MenuToggle,
   MenuToggleElement,
-  // Divider,
   Button,
   TextInput,
+  Spinner,
 } from '@patternfly/react-core';
-import axios from 'axios'; //Import axios for making HTTP requests
+import api from '../../services/apiService'
 import { Table, Tbody, Td, Th, Thead, Tr, TableVariant } from '@patternfly/react-table';
 
-//container to show wireshark data in table
 const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
+  const tableCellStyle = {
+    height: '50px', // Customize the height
+    verticalAlign: 'middle', // Center content vertically
+    padding: '8px' // Adjust padding as needed
+  };
   return (
     <div>
       <Table variant={TableVariant.compact} aria-label="Wireshark Data Table">
         <Thead>
-          <tr>
-            <Th>Timestamp</Th>
-            <Th>Protocol Info</Th>
-          </tr>
+          <Tr>
+            <Th style={tableCellStyle}>No.</Th>
+            <Th style={tableCellStyle}>Timestamp</Th>
+            <Th style={tableCellStyle}>IP src</Th>
+            <Th style={tableCellStyle}>IP dst</Th>
+            <Th style={tableCellStyle}>Protocol Info</Th>
+          </Tr>
         </Thead>
         <Tbody>
           {data.map((item, index) => (
             <Tr key={index}>
-              <Td>{item.timestamp}</Td>
-              <Td>{item.protocolInfo}</Td>
+              <Td style={tableCellStyle}>{index + 1}</Td>
+              <Td style={tableCellStyle}>{item.frame?.time || 'N/A'}</Td>
+              <Td style={tableCellStyle}>{item.ip?.src || 'N/A'}</Td>
+              <Td style={tableCellStyle}>{item.ip?.dst || 'N/A'}</Td>
+              <Td style={tableCellStyle}>{item.frame?.protocols || 'N/A'}</Td>
             </Tr>
           ))}
         </Tbody>
@@ -38,11 +47,10 @@ const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
 };
 
 export const Tabsatu: React.FunctionComponent = () => {
-//textinput and filter
 const [value, setValue] = React.useState('');
 const [filteredData, setFilteredData] = useState<string[]>([]);
-//button start/stop
 const [isRunning, setIsRunning] = useState(false);
+const [loading, setLoading] = useState(false);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const handleClick = () => {
@@ -83,7 +91,7 @@ const stopAction = () => {
     console.log('Fetching pods with authToken:', authToken);
 
     try {
-      const response = await axios.get('http://10.30.1.221:8000/api/v1/kube/pods/', {
+      const response = await api.get('kube/pods/', {
         headers: {
           Authorization: `Bearer ${authToken}`,
         },
@@ -129,35 +137,51 @@ const stopAction = () => {
     }
   }, [selected, pods]);
 
-  const handleStartClick = async () => {
+  const fetchData = async (podsName: string) => {
     const authToken = localStorage.getItem('authToken');
-    
-    if (!isRunning && podsName) {
-      console.log('Starting sniff packet for pod:', podsName);
-      try {
-        const response = await axios.get(`http://10.30.1.221:8000/api/v1/shark/testv1/${podsName}/`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
+    try {
+      const response = await api.get(`shark/testv1/${podsName}/`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+      if (response.data && Array.isArray(response.data)) {
+        const parsedData = response.data.map((item: any) => ({
+          frame: {
+            time: item._source.layers.frame["frame.time"],
+            protocols: item._source.layers.frame["frame.protocols"],
           },
-        });
-        console.log('Sniff packet API response:', response.data); // Log the response
-        setData(response.data); // Assuming response.data contains the Wireshark data
-        setIsRunning(true);
-      } catch (error) {
-        console.error('Error fetching data:', error);
+          ip: {
+            src: item._source.layers.ip["ip.src"],
+            dst: item._source.layers.ip["ip.dst"]
+          }
+        }));
+        console.log('Parsed Data:', parsedData); // Console log the parsed data
+
+        // Display data one by one
+        for (let i = 0; i < parsedData.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // Delay for 1 second
+          setData(prevData => [...prevData, parsedData[i]]);
+        }
       }
-    } else {
-      console.log('Stopping sniff packet');
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const handleStartClick = async () => {
+    if (!isRunning && podsName) {
+      setIsRunning(true);
+      setLoading(true);
+      setData([]); // Clear previous data
+      await fetchData(podsName);
+      setLoading(false);
       setIsRunning(false);
     }
-  };  
+  };
 
-  // eslint-disable-next-line @typescript-eslint/no-redeclare
   const handleFilter = () => {
-    console.log('Filtering data with value:', value);
-    // Implement your filtering logic here
-    // For demonstration purposes, let's assume you have an array of data called 'data' that you want to filter
-    const filteredResult = data.filter(item => item.protocolInfo && item.protocolInfo.includes(value));
+    const filteredResult = data.filter(item => item.frame.protocols && item.frame.protocols.includes(value));
     setFilteredData(filteredResult);
   };
 
@@ -191,60 +215,54 @@ const stopAction = () => {
 
   return (
     <React.Fragment>
-    <Button
-        variant={isRunning ? "danger" : "primary"} // Change variant based on state
-        size="sm"
-        onClick={handleStartClick}
-    >
-    
-    {isRunning ? 'Stop' : 'Start'} {/* Change button label based on state */}
-    </Button>{' '}
-    <div>
-    <Select
-      id="single-grouped-select"
-      isOpen={isOpen}
-      selected={selected}
-      onSelect={onSelect}
-      onOpenChange={(isOpen) => setIsOpen(isOpen)}
-      toggle={toggle}
-      shouldFocusToggleOnSelect
-    >
-        <SelectList>
-          <SelectOption value="AMF">AMF</SelectOption>
-          <SelectOption value="UPF">UPF</SelectOption>
-          <SelectOption value="cu">CU</SelectOption>
-          <SelectOption value="du">DU</SelectOption>
-        </SelectList>
-    </Select>
-    <br />
-    <br />
-    {/* Empty container or card with dimensions */}
-    <div style={{ height: '400px', border: '1px solid #ccc', padding: '16px', marginBottom: '16px' }}>
-    {selected &&
-      <WiresharkDataTable data={data} /> 
-    }
-    </div>
-    </div>
-
-    <div style={{ display: 'flex', alignItems: 'center' }}>
-      <Button variant="secondary" size="sm" onClick={handleFilter}>
-        Filter
-      </Button>
-      <TextInput
-        value={value}
-        type="text"
-        onChange={(_event, value) => setValue(value)}
-        aria-label="text input example"
-        style={{ marginLeft: '8px' }} // Adjust margin as needed
-      />
-      {/* Display filtered data here */}
-      <ul>
-        {filteredData.map((item, index) => (
-          // eslint-disable-next-line no-sequences
-          <li key={index}>{item}</li>
-        ))}
-      </ul>
-    </div>
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
+        <Button
+          variant={isRunning ? "danger" : "primary"}
+          size="sm"
+          onClick={handleStartClick}
+          style={{ marginRight: '10px' }}
+        >
+          {isRunning ? 'Stop' : 'Start'}
+        </Button>
+        <Select
+          id="single-grouped-select"
+          isOpen={isOpen}
+          selected={selected}
+          onSelect={onSelect}
+          onOpenChange={(isOpen) => setIsOpen(isOpen)}
+          toggle={toggle}
+          shouldFocusToggleOnSelect
+        >
+          <SelectList>
+            <SelectOption value="CU">CU</SelectOption>
+            <SelectOption value="DU">DU</SelectOption>
+            <SelectOption value="UE">UE</SelectOption>
+          </SelectList>
+        </Select>
+      </div>
+      <div style={{ height: '385px', border: '1px solid #ccc', padding: '16px', marginBottom: '10px', marginTop: '10px', overflow: 'auto', position: 'relative' }}>
+        {loading && <Spinner size="xl" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />}
+        {selected && <WiresharkDataTable data={filteredData.length > 0 ? filteredData : data} />}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <Button variant="secondary" size="sm" onClick={handleFilter}>
+          Filter
+        </Button>
+        <TextInput
+          value={value}
+          type="text"
+          onChange={(_event, value) => setValue(value)}
+          aria-label="text input example"
+          style={{ marginLeft: '8px' }}
+        />
+        <div>
+          <ul>
+            {filteredData.map((item, index) => (
+              <li key={index}>{item.frame.protocols}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </React.Fragment>
   );
 };

@@ -5,7 +5,7 @@ import TopologyCustomEdgeDemo from '../components/TopologyGraph.js';
 import ConfigurationPanel from '../components/TryComponentConfig'; 
 import Wireshark from '../components/wireshark/Wireshark.tsx';
 import { Helmet } from 'react-helmet';
-import axios from 'axios';
+import api from '../services/apiService.js'
 import './DashboardPage.css'
 
 <Grid hasGutter>
@@ -37,7 +37,7 @@ function DashboardPage() {
           'Content-Type': 'application/json'
         };
         
-        const response = await axios.post('http://10.30.1.221:8000/api/v1/kube/set_replicaset/', {}, { headers });
+        const response = await api.post('http://10.30.1.221:8000/api/v1/kube/set_replicaset/', {}, { headers });
 
         if (response.status === 200) {
           // console.log('ReplicaSet updated successfully');
@@ -74,7 +74,7 @@ function DashboardPage() {
           </GridItem>
 
           <GridItem span={5} rowSpan={6}>
-            <Card ouiaId="BasicCard" style={{ height: '700px', borderRadius: '8px' }}>
+            <Card ouiaId="BasicCard" style={{ height: '610px', borderRadius: '8px' }}>
               <CardTitle style={{ backgroundColor: '#0A7373', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
                 Configuration Panel
               </CardTitle>
@@ -88,7 +88,7 @@ function DashboardPage() {
           </GridItem>
 
           <GridItem span={7} rowSpan={6} >
-            <Card ouiaId="BasicCard" style={{height: '700px', borderRadius: '8px'}}>
+            <Card ouiaId="BasicCard" style={{height: '610px', borderRadius: '8px'}}>
               <CardTitle style={{ backgroundColor: '#0A7373', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
                 Wireshark
               </CardTitle>

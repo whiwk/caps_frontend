@@ -311,7 +311,7 @@ const ConfigurationPanel = () => {
         </div>
       </>
       ) : (
-        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '1.2rem' }}>Select a component above</div>
+        <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '1rem', fontStyle: 'italic' }}>Select a component above</div>
       )}  
       </CardBody>
       <CardFooter>
