@@ -145,19 +145,21 @@ const stopAction = () => {
           Authorization: `Bearer ${authToken}`,
         },
       });
-      if (response.data && Array.isArray(response.data)) {
-        const parsedData = response.data.map((item: any) => ({
+      
+      // Check if the response data has the expected structure
+      if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
+        const parsedData = response.data.packets.map((item: any) => ({
           frame: {
             time: item._source.layers.frame["frame.time"],
             protocols: item._source.layers.frame["frame.protocols"],
           },
           ip: {
             src: item._source.layers.ip["ip.src"],
-            dst: item._source.layers.ip["ip.dst"]
-          }
+            dst: item._source.layers.ip["ip.dst"],
+          },
         }));
         console.log('Parsed Data:', parsedData); // Console log the parsed data
-
+  
         // Display data one by one
         for (let i = 0; i < parsedData.length; i++) {
           await new Promise(resolve => setTimeout(resolve, 1000)); // Delay for 1 second
@@ -255,13 +257,6 @@ const stopAction = () => {
           aria-label="text input example"
           style={{ marginLeft: '8px' }}
         />
-        <div>
-          <ul>
-            {filteredData.map((item, index) => (
-              <li key={index}>{item.frame.protocols}</li>
-            ))}
-          </ul>
-        </div>
       </div>
     </React.Fragment>
   );

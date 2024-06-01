@@ -1,5 +1,6 @@
 import React from 'react';
 import Sidebar from '../components/sidebar/Sidebar'; // Adjust the import path as needed
+import './Introduction.css'
 
 function ImplementationPage() {
   return (

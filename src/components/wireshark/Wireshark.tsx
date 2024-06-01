@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Tabs, Tab } from '@patternfly/react-core';
 import Tabsatu from'./Tabsatu.tsx';
+import FilesTab from './tabdua.tsx'
 
 export const Wireshark: React.FunctionComponent = () => {
   const [activeTabKey, setActiveTabKey] = useState(0);
@@ -15,7 +16,7 @@ export const Wireshark: React.FunctionComponent = () => {
         <Tabsatu />
       </Tab>
       <Tab eventKey={1} title="Files">
-        Content of Tab 2
+        <FilesTab />
       </Tab>
     </Tabs>
   );
