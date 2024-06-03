@@ -179,12 +179,20 @@ function UserManagementPage() {
     }
   };
 
+  const createButtonStyles = {
+    textTransform: 'none' // Prevent text from being uppercased
+  };
+
   return (
     <>
       <Helmet>
         <title>Orca | User Management</title>
       </Helmet>
-      <Button variant="contained" color="primary" onClick={() => setCreateModalOpen(true)} style={{ margin: '20px',borderRadius: '20px' }}>
+      <Button 
+        variant="contained" 
+        color="primary" 
+        onClick={() => setCreateModalOpen(true)} 
+        style={{ margin: '20px',borderRadius: '20px', ...createButtonStyles }}>
         Create User
       </Button>
       <TableContainer component={Paper} style={{ margin: '20px', width: 'auto', marginTop: '-5px' }}>
@@ -262,9 +270,9 @@ function UserManagementPage() {
               InputProps={{ inputProps: { min: 1 } }}
             />
           </DialogContent>
-          <DialogActions>
-            <Button sx={cancelButtonStyles} onClick={() => setCreateModalOpen(false)}>Cancel</Button>
-            <Button variant="contained" color="primary" onClick={handleCreateUsers} disabled={creatingUsers} style={{ minWidth: '80px' }}>
+          <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+            <Button sx={cancelButtonStyles} onClick={() => setCreateModalOpen(false)} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>Cancel</Button>
+            <Button variant="contained" color="primary" onClick={handleCreateUsers} disabled={creatingUsers} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
               <Box display="flex" alignItems="center" justifyContent="center">
                 {creatingUsers ? <CircularProgress size={20} color="inherit" /> : 'Create'}
               </Box>
@@ -303,9 +311,9 @@ function UserManagementPage() {
               helperText={passwordError}
             />
           </DialogContent>
-          <DialogActions>
-            <Button sx={cancelButtonStyles} onClick={closeEditModal}>Cancel</Button>
-            <Button variant="contained" color="primary" onClick={confirmEdit} disabled={editingUser} style={{ minWidth: '80px' }}>
+          <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+            <Button sx={cancelButtonStyles} onClick={closeEditModal} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>Cancel</Button>
+            <Button variant="contained" color="primary" onClick={confirmEdit} disabled={editingUser} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
               <Box display="flex" alignItems="center" justifyContent="center">
                 {editingUser ? <CircularProgress size={20} color="inherit"/> : 'Confirm'}
               </Box>
@@ -319,9 +327,9 @@ function UserManagementPage() {
           <DialogContent>
             <DialogContentText>Are you sure you want to remove {currentUser?.username}?</DialogContentText>
           </DialogContent>
-          <DialogActions>
-            <Button sx={cancelButtonStyles} onClick={closeRemoveModal}>Cancel</Button>
-            <Button sx={removeButtonStyles} onClick={confirmRemove} disabled={removingUser} autoFocus style={{ minWidth: '80px' }}>
+          <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+            <Button sx={cancelButtonStyles} onClick={closeRemoveModal} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>Cancel</Button>
+            <Button sx={removeButtonStyles} onClick={confirmRemove} disabled={removingUser} autoFocus style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
               <Box display="flex" alignItems="center" justifyContent="center">
                 {removingUser ? <CircularProgress size={20} color="inherit" /> : 'Remove'}
               </Box>

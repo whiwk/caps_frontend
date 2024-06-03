@@ -257,6 +257,10 @@ const ConfigurationPanel = () => {
     }
   };
 
+  const createButtonStyles = {
+    textTransform: 'none' // Prevent text from being uppercased
+  };
+
   return (
     <Card ouiaId="BasicCard" style={{borderRadius: '6px', height: '540px'}}>
       <CardHeader title="Configuration Panel" style={{marginTop: '-20px', marginLeft: '-17px', marginRight: '-17px'}}>
@@ -268,11 +272,12 @@ const ConfigurationPanel = () => {
                 variant="contained" 
                 onClick={() => handleComponentSelection(component)} 
                 style={{
-                  margin: '1px', 
+                  margin: '7px', 
                   width: '180px', 
-                  fontSize: '10px',
+                  fontSize: '12px',
                   backgroundColor: selectedComponent === component ? '#004080' : '',
                   color: selectedComponent === component ? '#fff' : '',
+                  borderRadius: '20px'
                   }}>
                 {component}
               </Button>
@@ -315,7 +320,7 @@ const ConfigurationPanel = () => {
       )}  
       </CardBody>
       <CardFooter>
-        <Button variant="contained" color="primary" onClick={handleDialogOpen} style={{ width: '107.5%', marginLeft: '-15px', marginBottom: '-10px', }}>
+        <Button variant="contained" color="primary" onClick={handleDialogOpen} style={{ width: '106%', marginLeft: '-15px', marginBottom: '-10px', borderRadius: '20px', ...createButtonStyles}}>
           Submit
         </Button>
       </CardFooter>
@@ -331,11 +336,11 @@ const ConfigurationPanel = () => {
             Are you sure you want to submit the configuration changes?
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button sx={cancelButtonStyles} onClick={handleDialogClose}>
+        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+          <Button sx={cancelButtonStyles} onClick={handleDialogClose} style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
             Cancel
           </Button>
-          <Button variant="contained" color="primary" onClick={handleSubmit} autoFocus>
+          <Button variant="contained" color="primary" onClick={handleSubmit} autoFocus style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
           <Box display="flex" alignItems="center" justifyContent="center" width="80px">
               {loading ? <CircularProgress size={20} color="inherit"/> : 'Confirm'}
             </Box>

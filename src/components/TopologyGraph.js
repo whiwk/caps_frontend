@@ -728,10 +728,11 @@ export const TopologyCustomEdgeDemo = () => {
             onClick={() => handleSidebarContentChange('logs')}
             style={{
               marginRight: '10px',
-              backgroundColor: sidebarContent === 'logs' ? '#004080' : undefined
+              backgroundColor: sidebarContent === 'logs' ? '#004080' : undefined,
+              borderRadius: '20px'
             }}
           >
-            Fetch Logs
+            Logs
           </Button>
           {selectedIds.length > 0 && selectedIds[0] === 'UE' && (
             <>
@@ -742,9 +743,10 @@ export const TopologyCustomEdgeDemo = () => {
                 style={{
                   marginRight: '10px',
                   backgroundColor: sidebarContent === 'pingGoogle' ? '#2E3B55' : undefined,
+                  borderRadius: '20px'
                 }}
               >
-                Ping Google
+                Ping
               </Button>
               <Button
                 variant="contained"
@@ -753,9 +755,10 @@ export const TopologyCustomEdgeDemo = () => {
                 style={{
                   marginRight: '10px',
                   backgroundColor: sidebarContent === 'curlGoogle' ? '#2E3B55' : undefined,
+                  borderRadius: '20px'
                 }}
               >
-                Curl Google
+                Curl
               </Button>
             </>
           )}
@@ -798,6 +801,10 @@ export const TopologyCustomEdgeDemo = () => {
         }
     };
 
+    const createButtonStyles = {
+      textTransform: 'none' // Prevent text from being uppercased
+    };
+
   return (
     <TopologyView sideBar={topologySideBar} controlBar={<TopologyControlBar controlButtons={controlButtons} />}>
       {loading ? (
@@ -821,11 +828,11 @@ export const TopologyCustomEdgeDemo = () => {
         <DialogContent>
           Are you sure you want to {modalAction} {selectedNodeId}?
         </DialogContent>
-        <DialogActions>
-          <Button sx={cancelButtonStyles} onClick={handleModalClose} color="primary">
+        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+          <Button sx={cancelButtonStyles} onClick={handleModalClose} color="primary" style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleModalConfirm} color="primary" autoFocus disabled={actionLoading} style={{ minWidth: '80px' }}>
+          <Button variant="contained" onClick={handleModalConfirm} color="primary" autoFocus disabled={actionLoading} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
             <Box display="flex" alignItems="center" justifyContent="center">
                 {actionLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm'}
             </Box>

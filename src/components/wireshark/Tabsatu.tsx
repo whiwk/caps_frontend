@@ -183,8 +183,12 @@ const stopAction = () => {
   };
 
   const handleFilter = () => {
-    const filteredResult = data.filter(item => item.frame.protocols && item.frame.protocols.includes(value));
-    setFilteredData(filteredResult);
+    if (value.trim() === '') {
+      setFilteredData([]); // Reset the filter if the input is empty
+    } else {
+      const filteredResult = data.filter(item => item.frame.protocols && item.frame.protocols.includes(value));
+      setFilteredData(filteredResult);
+    }
   };
 
   const onToggleClick = () => {
@@ -222,7 +226,7 @@ const stopAction = () => {
           variant={isRunning ? "danger" : "primary"}
           size="sm"
           onClick={handleStartClick}
-          style={{ marginRight: '10px' }}
+          style={{ marginRight: '10px', minWidth: '80px', borderRadius: '20px' }}
         >
           {isRunning ? 'Stop' : 'Start'}
         </Button>
