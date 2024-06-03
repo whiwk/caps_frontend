@@ -3,7 +3,6 @@ id: Design
 title: Design with PatternFly
 section: get-started
 ---
-import './doc.css';
 
 To start designing with PatternFly, you will need to install our design kits and libraries. These resources give you full access to PatternFly's visual design system and enable you to create consistent and usable product experiences.
 

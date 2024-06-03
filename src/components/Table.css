@@ -1,0 +1,13 @@
+/* styles.css */
+.odd-row-class {
+    background-color: #f0f0f0;
+  }
+  
+.even-row-class {
+    background-color: #dcdcdc;
+  }
+
+.title-row-class {
+    background-color: #a9a9a9;
+}
+  
