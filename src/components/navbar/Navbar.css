@@ -15,13 +15,15 @@
 
 .navbar__logo img {
   height: 32px;
-  margin-top: 5px; /* Example height for logo */
+  margin-top: 5px;
+  margin-left: 10px; /* Example height for logo */
 }
 
 .navbar__nav {
   display: flex;
   justify-content: center;
-  gap: 20px; /* Adjust spacing between links */
+  gap: 20px;
+  margin-left: -600px;
 }
 
 .navbar__nav a { /* Targeting links directly within the navbar navigation */
@@ -30,7 +32,7 @@
   font-weight:500;
   font-size: medium;
   padding: 10px; /* Optional: add padding for better click area and appearance */
-  transition: color 0.3s; /* Smooth transition for hover effects */
+  transition: color 0.3s;
 }
 
 .navbar__nav a:hover {

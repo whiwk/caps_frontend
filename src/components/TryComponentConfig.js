@@ -341,7 +341,7 @@ const ConfigurationPanel = () => {
             Cancel
           </Button>
           <Button variant="contained" color="primary" onClick={handleSubmit} autoFocus style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
-          <Box display="flex" alignItems="center" justifyContent="center" width="80px">
+          <Box display="flex" alignItems="center" justifyContent="center">
               {loading ? <CircularProgress size={20} color="inherit"/> : 'Confirm'}
             </Box>
           </Button>

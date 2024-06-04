@@ -72,7 +72,7 @@ const Navbar = () => {
       <>
         <div className="navbar__logo">
           <Link to="/">
-            <img src="/logo-orca-white.png" alt="Logo" />
+            <img src="/logo-orca-black.png" alt="Logo" />
           </Link>
         </div>
         <nav className="navbar__nav">

@@ -90,6 +90,7 @@ const CustomNode = React.memo(({
   onContextMenu,
   contextMenuOpen,
   setShowSideBar,
+  onStatusDecoratorClick,
   ...rest
 }) => {
   const nodeId = element.getId();
@@ -133,6 +134,7 @@ const CustomNode = React.memo(({
       badgeBorderColor={badgeColors?.badgeBorderColor}
       onContextMenu={shouldShowContextMenu ? handleContextMenu : undefined}
       contextMenuOpen={contextMenuOpen}
+      onStatusDecoratorClick={() => onStatusDecoratorClick(nodeId)}
     >
       <g transform={`translate(15, 15)`}>
         <image href={iconSrc} width={70} height={70} />
@@ -159,6 +161,8 @@ export const TopologyCustomEdgeDemo = () => {
     const [sidebarContent, setSidebarContent] = React.useState('logs');
     const [sidebarLoading, setSidebarLoading] = React.useState(false);
     const [currentLogIndex, setCurrentLogIndex] = React.useState(0);
+    const [statusModalOpen, setStatusModalOpen] = React.useState(false);
+    const [statusModalContent, setStatusModalContent] = React.useState({ podName: '', state: '' });
 
     const fetchDeployments = React.useCallback(async () => {
       try {
@@ -187,6 +191,7 @@ export const TopologyCustomEdgeDemo = () => {
         // console.log('fetchPods response:', response.data);
         const podsData = response.data.pods.map((pod) => ({
           name: pod.name,
+          state: pod.state,
         }));
         setPods(podsData);
         // console.log('pod name:', podsData )
@@ -290,6 +295,48 @@ export const TopologyCustomEdgeDemo = () => {
         return deployment && deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
     }, [deployments]);
 
+
+    const handleStatusDecoratorClick = React.useCallback(async (nodeId) => {
+      try {
+        console.log('handleStatusDecoratorClick nodeId:', nodeId);
+    
+        if (typeof nodeId !== 'string') {
+          console.error('nodeId is not a string:', nodeId);
+          return;
+        }
+    
+        const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
+        const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
+    
+        if (pod) {
+          console.log('Found pod:', pod);
+          setStatusModalContent({
+            podName: pod.name,
+            state: pod.state || 'Unknown',
+          });
+        } else {
+          console.log('No matching pod found for nodeId:', nodeId);
+          setStatusModalContent({
+            podName: 'Unknown',
+            state: 'Pod not found',
+          });
+        }
+      } catch (error) {
+        console.error('Failed to fetch pod status:', error);
+        setStatusModalContent({
+          podName: 'Unknown',
+          state: 'Error occurred',
+        });
+      } finally {
+        setStatusModalOpen(true);
+      }
+    }, [pods]);
+    
+    const createStatusDecoratorClickHandler = React.useCallback(
+      (nodeId) => () => handleStatusDecoratorClick(nodeId),
+      [handleStatusDecoratorClick]
+    );
+
     const nodes = React.useMemo(() => {
         const NODE_DIAMETER = 100;
         return [
@@ -308,6 +355,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'End Users',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: createStatusDecoratorClickHandler('UE'),
             },
             {
                 id: 'RRU',
@@ -324,6 +372,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'RAN',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: createStatusDecoratorClickHandler('DU'),
             },
             {
                 id: 'DU',
@@ -340,6 +389,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'RAN',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: createStatusDecoratorClickHandler('DU'),
             },
             {
                 id: 'CU',
@@ -356,6 +406,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'RAN',
                     isAlternate: false,
                 },
+                oonStatusDecoratorClick: createStatusDecoratorClickHandler('CU'),
             },
             {
                 id: 'AMF',
@@ -420,7 +471,7 @@ export const TopologyCustomEdgeDemo = () => {
                 },
             },
         ];
-    }, [determineNodeStatus]);
+    }, [determineNodeStatus, createStatusDecoratorClickHandler]);
 
     const edges = React.useMemo(() => [
         {
@@ -498,7 +549,7 @@ export const TopologyCustomEdgeDemo = () => {
                   return withDndDrop(nodeDropTargetSpec([CONNECTOR_SOURCE_DROP, CONNECTOR_TARGET_DROP, CREATE_CONNECTOR_DROP_TYPE]))(
                     withDragNode(nodeDragSourceSpec('node', true, true))(
                       withSelection()(
-                        withContextMenu(() => contextMenu)((props) => <CustomNode {...props} setShowSideBar={setShowSideBar} />)
+                        withContextMenu(() => contextMenu)((props) => <CustomNode {...props} setShowSideBar={setShowSideBar} onStatusDecoratorClick={handleStatusDecoratorClick} />)
                       )
                     )
                   );
@@ -529,7 +580,7 @@ export const TopologyCustomEdgeDemo = () => {
             edges,
           });
           return newController;
-      }, [nodes, edges]);
+      }, [nodes, edges, handleStatusDecoratorClick]);
 
       React.useEffect(() => {
         if (controller) {
@@ -637,22 +688,22 @@ export const TopologyCustomEdgeDemo = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell align="center" style={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>Timestamp</TableCell>
-              <TableCell align="center" style={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>Logs</TableCell>
+              <TableCell align="center" style={{ fontWeight: 'bold', fontSize: '12px', backgroundColor: '#F2F2F2', width: '150px' }}>Timestamp</TableCell>
+              <TableCell align="center" style={{ fontWeight: 'bold', fontSize: '12px', backgroundColor: '#F2F2F2', width: 'calc(100% - 150px)' }}>Logs</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {sidebarLoading ? (
               <TableRow>
-                <TableCell colSpan={2} align="center">
+                <TableCell colSpan={2} align="center" style={{ height: '100px' }}>
                   <CircularProgress />
                 </TableCell>
               </TableRow>
             ) : logs.length > 0 ? (
               logs.map((log, index) => (
                 <TableRow key={index}>
-                  <TableCell style={{fontFamily: 'monospace'}} >{log.timestamp}</TableCell>
-                  <TableCell style={{fontFamily: 'monospace'}}>{log.log}</TableCell>
+                  <TableCell align="center" style={{ fontFamily: 'monospace', fontSize: '12px', width: '150px' }}>{log.timestamp}</TableCell>
+                  <TableCell align="center" style={{ fontFamily: 'monospace', fontSize: '12px', width: 'calc(100% - 150px)' }}>{log.log}</TableCell>
                 </TableRow>
               ))
             ) : (
@@ -678,7 +729,7 @@ export const TopologyCustomEdgeDemo = () => {
             ) : (
               logs.slice(0, currentLogIndex + 1).map((log, index) => (
                 <TableRow key={index}>
-                  <TableCell style={{ backgroundColor: '#c0c0c0', fontFamily: 'monospace' }}>{log.log}</TableCell>
+                  <TableCell style={{ backgroundColor: '#F2F2F2', fontFamily: 'monospace', fontSize: '12px' }}>{log.log}</TableCell>
                 </TableRow>
               ))
             )}
@@ -688,17 +739,31 @@ export const TopologyCustomEdgeDemo = () => {
     );
 
     const renderCurlGoogleOutput = () => (
-      <Box p={2} component={Paper} style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', backgroundColor: '#f0f0f0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        {sidebarLoading ? (
-          <CircularProgress />
-        ) : logs.length > 0 ? (
-          logs.map((log, index) => (
-            <Box key={index}>{log.log}</Box>
-          ))
-        ) : (
-          'No curl output available'
-        )}
-      </Box>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableBody>
+            {sidebarLoading ? (
+              <TableRow>
+                <TableCell align="center" colSpan={1} style={{ height: '100px' }}>
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : logs.length > 0 ? (
+              logs.map((log, index) => (
+                <TableRow key={index}>
+                  <TableCell style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '12px' }}>
+                    {log.log}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell align="center" colSpan={1}>No curl output available</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     );
 
     const renderSidebarContent = () => {
@@ -714,6 +779,9 @@ export const TopologyCustomEdgeDemo = () => {
       }
     };
 
+    const createButtonStyles = {
+      textTransform: 'none' // Prevent text from being uppercased
+    };
 
     const topologySideBar = (
         <TopologySideBar
@@ -729,7 +797,10 @@ export const TopologyCustomEdgeDemo = () => {
             style={{
               marginRight: '10px',
               backgroundColor: sidebarContent === 'logs' ? '#004080' : undefined,
-              borderRadius: '20px'
+              borderRadius: '20px',
+              ...createButtonStyles,
+              fontSize: '12px',
+              height: '24px'
             }}
           >
             Logs
@@ -743,7 +814,10 @@ export const TopologyCustomEdgeDemo = () => {
                 style={{
                   marginRight: '10px',
                   backgroundColor: sidebarContent === 'pingGoogle' ? '#2E3B55' : undefined,
-                  borderRadius: '20px'
+                  borderRadius: '20px',
+                  ...createButtonStyles,
+                  fontSize: '12px',
+                  height: '24px'
                 }}
               >
                 Ping
@@ -755,7 +829,10 @@ export const TopologyCustomEdgeDemo = () => {
                 style={{
                   marginRight: '10px',
                   backgroundColor: sidebarContent === 'curlGoogle' ? '#2E3B55' : undefined,
-                  borderRadius: '20px'
+                  borderRadius: '20px',
+                  ...createButtonStyles,
+                  fontSize: '12px',
+                  height: '24px'
                 }}
               >
                 Curl
@@ -801,10 +878,6 @@ export const TopologyCustomEdgeDemo = () => {
         }
     };
 
-    const createButtonStyles = {
-      textTransform: 'none' // Prevent text from being uppercased
-    };
-
   return (
     <TopologyView sideBar={topologySideBar} controlBar={<TopologyControlBar controlButtons={controlButtons} />}>
       {loading ? (
@@ -836,6 +909,25 @@ export const TopologyCustomEdgeDemo = () => {
             <Box display="flex" alignItems="center" justifyContent="center">
                 {actionLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm'}
             </Box>
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        aria-labelledby="status-dialog-title"
+        aria-describedby="status-dialog-description"
+      >
+        <DialogTitle id="status-dialog-title">
+          Pod Status
+        </DialogTitle>
+        <DialogContent>
+          <p><strong>Pod Name:</strong> {statusModalContent.podName}</p>
+          <p><strong>State:</strong> {statusModalContent.state}</p>
+        </DialogContent>
+        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+          <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
+            Close
           </Button>
         </DialogActions>
       </Dialog>

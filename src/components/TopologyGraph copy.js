@@ -90,6 +90,7 @@ const CustomNode = React.memo(({
   onContextMenu,
   contextMenuOpen,
   setShowSideBar,
+  onStatusDecoratorClick,
   ...rest
 }) => {
   const nodeId = element.getId();
@@ -133,6 +134,7 @@ const CustomNode = React.memo(({
       badgeBorderColor={badgeColors?.badgeBorderColor}
       onContextMenu={shouldShowContextMenu ? handleContextMenu : undefined}
       contextMenuOpen={contextMenuOpen}
+      onStatusDecoratorClick={onStatusDecoratorClick}
     >
       <g transform={`translate(15, 15)`}>
         <image href={iconSrc} width={70} height={70} />
@@ -159,6 +161,8 @@ export const TopologyCustomEdgeDemo = () => {
     const [sidebarContent, setSidebarContent] = React.useState('logs');
     const [sidebarLoading, setSidebarLoading] = React.useState(false);
     const [currentLogIndex, setCurrentLogIndex] = React.useState(0);
+    const [statusModalOpen, setStatusModalOpen] = React.useState(false);
+    const [statusModalContent, setStatusModalContent] = React.useState({ podName: '', state: '' });
 
     const fetchDeployments = React.useCallback(async () => {
       try {
@@ -290,6 +294,16 @@ export const TopologyCustomEdgeDemo = () => {
         return deployment && deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
     }, [deployments]);
 
+    const handleStatusDecoratorClick = (nodeId) => {
+      const pod = pods.find(pod => pod.name.toLowerCase().includes(nodeId.toLowerCase()));
+      if (pod) {
+        const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(nodeId.toLowerCase()));
+        const state = deployment && deployment.replicas > 0 ? 'Running' : 'Not Running';
+        setStatusModalContent({ podName: pod.name, state });
+        setStatusModalOpen(true);
+      }
+    };
+
     const nodes = React.useMemo(() => {
         const NODE_DIAMETER = 100;
         return [
@@ -308,6 +322,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'End Users',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('UE'),
             },
             {
                 id: 'RRU',
@@ -324,6 +339,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'RAN',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('DU'),
             },
             {
                 id: 'DU',
@@ -340,6 +356,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'RAN',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('DU'),
             },
             {
                 id: 'CU',
@@ -356,6 +373,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'RAN',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('CU'),
             },
             {
                 id: 'AMF',
@@ -637,22 +655,22 @@ export const TopologyCustomEdgeDemo = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell align="center" style={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>Timestamp</TableCell>
-              <TableCell align="center" style={{ fontWeight: 'bold', backgroundColor: '#e0e0e0' }}>Logs</TableCell>
+              <TableCell align="center" style={{ fontWeight: 'bold', fontSize: '12px', backgroundColor: '#F2F2F2', width: '150px' }}>Timestamp</TableCell>
+              <TableCell align="center" style={{ fontWeight: 'bold', fontSize: '12px', backgroundColor: '#F2F2F2', width: 'calc(100% - 150px)' }}>Logs</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {sidebarLoading ? (
               <TableRow>
-                <TableCell colSpan={2} align="center">
+                <TableCell colSpan={2} align="center" style={{ height: '100px' }}>
                   <CircularProgress />
                 </TableCell>
               </TableRow>
             ) : logs.length > 0 ? (
               logs.map((log, index) => (
                 <TableRow key={index}>
-                  <TableCell>{log.timestamp}</TableCell>
-                  <TableCell>{log.log}</TableCell>
+                  <TableCell align="center" style={{ fontFamily: 'monospace', fontSize: '12px', width: '150px' }}>{log.timestamp}</TableCell>
+                  <TableCell align="center" style={{ fontFamily: 'monospace', fontSize: '12px', width: 'calc(100% - 150px)' }}>{log.log}</TableCell>
                 </TableRow>
               ))
             ) : (
@@ -678,7 +696,7 @@ export const TopologyCustomEdgeDemo = () => {
             ) : (
               logs.slice(0, currentLogIndex + 1).map((log, index) => (
                 <TableRow key={index}>
-                  <TableCell style={{ backgroundColor: '#c0c0c0', fontFamily: 'monospace' }}>{log.log}</TableCell>
+                  <TableCell style={{ backgroundColor: '#F2F2F2', fontFamily: 'monospace', fontSize: '12px' }}>{log.log}</TableCell>
                 </TableRow>
               ))
             )}
@@ -688,17 +706,31 @@ export const TopologyCustomEdgeDemo = () => {
     );
 
     const renderCurlGoogleOutput = () => (
-      <Box p={2} component={Paper} style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', backgroundColor: '#f0f0f0', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        {sidebarLoading ? (
-          <CircularProgress />
-        ) : logs.length > 0 ? (
-          logs.map((log, index) => (
-            <Box key={index}>{log.log}</Box>
-          ))
-        ) : (
-          'No curl output available'
-        )}
-      </Box>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableBody>
+            {sidebarLoading ? (
+              <TableRow>
+                <TableCell align="center" colSpan={1} style={{ height: '100px' }}>
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : logs.length > 0 ? (
+              logs.map((log, index) => (
+                <TableRow key={index}>
+                  <TableCell style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '12px' }}>
+                    {log.log}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell align="center" colSpan={1}>No curl output available</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     );
 
     const renderSidebarContent = () => {
@@ -714,6 +746,9 @@ export const TopologyCustomEdgeDemo = () => {
       }
     };
 
+    const createButtonStyles = {
+      textTransform: 'none' // Prevent text from being uppercased
+    };
 
     const topologySideBar = (
         <TopologySideBar
@@ -728,10 +763,14 @@ export const TopologyCustomEdgeDemo = () => {
             onClick={() => handleSidebarContentChange('logs')}
             style={{
               marginRight: '10px',
-              backgroundColor: sidebarContent === 'logs' ? '#004080' : undefined
+              backgroundColor: sidebarContent === 'logs' ? '#004080' : undefined,
+              borderRadius: '20px',
+              ...createButtonStyles,
+              fontSize: '12px',
+              height: '24px'
             }}
           >
-            Fetch Logs
+            Logs
           </Button>
           {selectedIds.length > 0 && selectedIds[0] === 'UE' && (
             <>
@@ -742,9 +781,13 @@ export const TopologyCustomEdgeDemo = () => {
                 style={{
                   marginRight: '10px',
                   backgroundColor: sidebarContent === 'pingGoogle' ? '#2E3B55' : undefined,
+                  borderRadius: '20px',
+                  ...createButtonStyles,
+                  fontSize: '12px',
+                  height: '24px'
                 }}
               >
-                Ping Google
+                Ping
               </Button>
               <Button
                 variant="contained"
@@ -753,9 +796,13 @@ export const TopologyCustomEdgeDemo = () => {
                 style={{
                   marginRight: '10px',
                   backgroundColor: sidebarContent === 'curlGoogle' ? '#2E3B55' : undefined,
+                  borderRadius: '20px',
+                  ...createButtonStyles,
+                  fontSize: '12px',
+                  height: '24px'
                 }}
               >
-                Curl Google
+                Curl
               </Button>
             </>
           )}
@@ -821,14 +868,33 @@ export const TopologyCustomEdgeDemo = () => {
         <DialogContent>
           Are you sure you want to {modalAction} {selectedNodeId}?
         </DialogContent>
-        <DialogActions>
-          <Button sx={cancelButtonStyles} onClick={handleModalClose} color="primary">
+        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+          <Button sx={cancelButtonStyles} onClick={handleModalClose} color="primary" style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
             Cancel
           </Button>
-          <Button variant="contained" onClick={handleModalConfirm} color="primary" autoFocus disabled={actionLoading} style={{ minWidth: '80px' }}>
+          <Button variant="contained" onClick={handleModalConfirm} color="primary" autoFocus disabled={actionLoading} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
             <Box display="flex" alignItems="center" justifyContent="center">
                 {actionLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm'}
             </Box>
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={statusModalOpen}
+        onClose={() => setStatusModalOpen(false)}
+        aria-labelledby="status-dialog-title"
+        aria-describedby="status-dialog-description"
+      >
+        <DialogTitle id="status-dialog-title">
+          Pod Status
+        </DialogTitle>
+        <DialogContent>
+          <p><strong>Pod Name:</strong> {statusModalContent.podName}</p>
+          <p><strong>State:</strong> {statusModalContent.state}</p>
+        </DialogContent>
+        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+          <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
+            Close
           </Button>
         </DialogActions>
       </Dialog>
