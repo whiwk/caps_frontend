@@ -67,12 +67,12 @@ const handleClick = () => {
 
 const startAction = () => {
   // Add your start action logic here
-  console.log('Start action');
+  // console.log('Start action');
 };
 
 const stopAction = () => {
   // Add your stop action logic here
-  console.log('Stop action');
+  // console.log('Stop action');
 };
 
 //dropdown component
@@ -88,7 +88,7 @@ const stopAction = () => {
 
   const fetchPods = async () => {
     const authToken = localStorage.getItem('authToken');
-    console.log('Fetching pods with authToken:', authToken);
+    // console.log('Fetching pods with authToken:', authToken);
 
     try {
       const response = await api.get('kube/pods/', {
@@ -96,12 +96,12 @@ const stopAction = () => {
           Authorization: `Bearer ${authToken}`,
         },
       });
-      console.log('Pods API response status:', response.status);
-      console.log('Pods API response data:', response.data);
+      // console.log('Pods API response status:', response.status);
+      // console.log('Pods API response data:', response.data);
 
       if (response.data && Array.isArray(response.data.pods)) {
         const podNames = response.data.pods.map((pod: any) => pod.name);
-        console.log('Extracted pod names:', podNames);
+        // console.log('Extracted pod names:', podNames);
         setPods(response.data.pods);
       } else {
         console.error('API response does not contain pods array:', response.data);
@@ -116,23 +116,23 @@ const stopAction = () => {
       console.error('Selected component is undefined');
       return;
     }
-    console.log('Filtering pods for component:', selectedComponent);
+    // console.log('Filtering pods for component:', selectedComponent);
     const searchPattern = `${selectedComponent.toLowerCase()}-level1`;
-    console.log('Search pattern:', searchPattern);
+    // console.log('Search pattern:', searchPattern);
 
     const selectedPods = pods.filter(pod => pod.name && pod.name.toLowerCase().includes(searchPattern));
     if (selectedPods.length > 0) {
-      console.log('Selected pods:', selectedPods);
+      // console.log('Selected pods:', selectedPods);
       setPodsName(selectedPods[0].name); // Assuming name is the field in the response
     } else {
-      console.log('No pods found for the selected component');
+      // console.log('No pods found for the selected component');
       setPodsName(null);
     }
   };
 
   useEffect(() => {
     if (selected !== '') {
-      console.log('Selected component changed:', selected);
+      // console.log('Selected component changed:', selected);
       filterPods(pods, selected); // Filter pods based on selected component
     }
   }, [selected, pods]);
@@ -158,7 +158,7 @@ const stopAction = () => {
             dst: item._source.layers.ip["ip.dst"],
           },
         }));
-        console.log('Parsed Data:', parsedData); // Console log the parsed data
+        // console.log('Parsed Data:', parsedData); // Console log the parsed data
   
         // Display data one by one
         for (let i = 0; i < parsedData.length; i++) {
@@ -196,7 +196,7 @@ const stopAction = () => {
   };
 
   const onSelect = (_event: React.MouseEvent<Element, MouseEvent> | undefined, value: string | number | undefined) => {
-    console.log('Selected value from dropdown:', value);
+    // console.log('Selected value from dropdown:', value);
     setSelected(value as string);
     setIsOpen(false);
   };

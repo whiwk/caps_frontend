@@ -134,7 +134,7 @@ const CustomNode = React.memo(({
       badgeBorderColor={badgeColors?.badgeBorderColor}
       onContextMenu={shouldShowContextMenu ? handleContextMenu : undefined}
       contextMenuOpen={contextMenuOpen}
-      onStatusDecoratorClick={() => onStatusDecoratorClick(nodeId)}
+      onStatusDecoratorClick={() => onStatusDecoratorClick && onStatusDecoratorClick(nodeId)}
     >
       <g transform={`translate(15, 15)`}>
         <image href={iconSrc} width={70} height={70} />
@@ -162,7 +162,7 @@ export const TopologyCustomEdgeDemo = () => {
     const [sidebarLoading, setSidebarLoading] = React.useState(false);
     const [currentLogIndex, setCurrentLogIndex] = React.useState(0);
     const [statusModalOpen, setStatusModalOpen] = React.useState(false);
-    const [statusModalContent, setStatusModalContent] = React.useState({ podName: '', state: '' });
+    const [statusModalContent, setStatusModalContent] = React.useState({ deploymentName: '', state: '' });
 
     const fetchDeployments = React.useCallback(async () => {
       try {
@@ -191,7 +191,6 @@ export const TopologyCustomEdgeDemo = () => {
         // console.log('fetchPods response:', response.data);
         const podsData = response.data.pods.map((pod) => ({
           name: pod.name,
-          state: pod.state,
         }));
         setPods(podsData);
         // console.log('pod name:', podsData )
@@ -210,19 +209,28 @@ export const TopologyCustomEdgeDemo = () => {
         setSidebarLoading(true);
         // console.log('Fetching logs for nodeId:', nodeId);
         // console.log('Current pods:', pods);
-        const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
-        const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
-        // console.log('Found pod:', pod);
-        if (pod) {
-          const response = await api.get(`kube/pods/${pod.name}/logs/`);
-          // console.log('fetchLogs response:', response.data);
-          if (Array.isArray(response.data)) {
-            setLogs(response.data);
-          } else {
-            setLogs([]);
-          }
+        let response;
+        if (nodeId === 'AMF') {
+          response = await api.get('kube/get_amf_logs/');
+        } else if (nodeId === 'UPF') {
+          response = await api.get('kube/get_upf_logs/');
         } else {
-          // console.log(`No matching pod found for nodeId: ${nodeId}`);
+          const searchNodeId = nodeId.toLowerCase();
+          const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
+          // console.log('Found pod:', pod);
+          if (pod) {
+            response = await api.get(`kube/pods/${pod.name}/logs/`);
+          } else {
+            // console.log(`No matching pod found for nodeId: ${nodeId}`);
+            setLogs([]);
+            setSidebarLoading(false);
+            return;
+          }
+        }
+        // console.log('fetchLogs response:', response.data);
+        if (Array.isArray(response.data)) {
+          setLogs(response.data);
+        } else {
           setLogs([]);
         }
       } catch (error) {
@@ -291,51 +299,42 @@ export const TopologyCustomEdgeDemo = () => {
     }, [currentLogIndex, logs, sidebarContent]);
 
     const determineNodeStatus = React.useCallback((nodeName) => {
-        const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(nodeName.toLowerCase()));
-        return deployment && deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
+      const searchNodeName = nodeName.toLowerCase() === 'rru' ? 'du' : nodeName.toLowerCase();
+      const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeName));
+      return deployment && deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
     }, [deployments]);
-
 
     const handleStatusDecoratorClick = React.useCallback(async (nodeId) => {
       try {
-        console.log('handleStatusDecoratorClick nodeId:', nodeId);
-    
-        if (typeof nodeId !== 'string') {
-          console.error('nodeId is not a string:', nodeId);
+        setSidebarLoading(true);
+        // console.log('Fetching status for nodeId:', nodeId);
+        let response;
+        if (nodeId === 'AMF') {
+          response = await api.get('kube/get_amf_deployments/');
+        } else if (nodeId === 'UPF') {
+          response = await api.get('kube/get_upf_deployments/');
+        } else {
+          const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
+          const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeId));
+          if (deployment) {
+            const state = deployment.replicas > 0 ? 'Running' : 'Stopped';
+            setStatusModalContent({ deploymentName: deployment.deployment_name, state });
+            setStatusModalOpen(true);
+          }
           return;
         }
-    
-        const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
-        const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
-    
-        if (pod) {
-          console.log('Found pod:', pod);
-          setStatusModalContent({
-            podName: pod.name,
-            state: pod.state || 'Unknown',
-          });
-        } else {
-          console.log('No matching pod found for nodeId:', nodeId);
-          setStatusModalContent({
-            podName: 'Unknown',
-            state: 'Pod not found',
-          });
+        // console.log('fetchStatus response:', response.data);
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          const state = response.data[0].replicas > 0 ? 'Running' : 'Stopped';
+          setStatusModalContent({ deploymentName: response.data[0].name, state });
+          setStatusModalOpen(true);
         }
       } catch (error) {
-        console.error('Failed to fetch pod status:', error);
-        setStatusModalContent({
-          podName: 'Unknown',
-          state: 'Error occurred',
-        });
+        console.error('Failed to fetch status:', error);
       } finally {
-        setStatusModalOpen(true);
+        setSidebarLoading(false);
       }
-    }, [pods]);
-    
-    const createStatusDecoratorClickHandler = React.useCallback(
-      (nodeId) => () => handleStatusDecoratorClick(nodeId),
-      [handleStatusDecoratorClick]
-    );
+    }, [deployments]);
 
     const nodes = React.useMemo(() => {
         const NODE_DIAMETER = 100;
@@ -355,7 +354,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'End Users',
                     isAlternate: false,
                 },
-                onStatusDecoratorClick: createStatusDecoratorClickHandler('UE'),
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('UE'),
             },
             {
                 id: 'RRU',
@@ -372,7 +371,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'RAN',
                     isAlternate: false,
                 },
-                onStatusDecoratorClick: createStatusDecoratorClickHandler('DU'),
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('DU'),
             },
             {
                 id: 'DU',
@@ -389,7 +388,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'RAN',
                     isAlternate: false,
                 },
-                onStatusDecoratorClick: createStatusDecoratorClickHandler('DU'),
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('DU'),
             },
             {
                 id: 'CU',
@@ -406,7 +405,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'RAN',
                     isAlternate: false,
                 },
-                oonStatusDecoratorClick: createStatusDecoratorClickHandler('CU'),
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('CU'),
             },
             {
                 id: 'AMF',
@@ -423,6 +422,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'Core',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('AMF'),
             },
             {
                 id: 'UPF',
@@ -439,6 +439,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'Core',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('UPF'),
             },
             {
                 id: 'Group-1',
@@ -471,7 +472,7 @@ export const TopologyCustomEdgeDemo = () => {
                 },
             },
         ];
-    }, [determineNodeStatus, createStatusDecoratorClickHandler]);
+    }, [determineNodeStatus, handleStatusDecoratorClick]);
 
     const edges = React.useMemo(() => [
         {
@@ -919,14 +920,14 @@ export const TopologyCustomEdgeDemo = () => {
         aria-describedby="status-dialog-description"
       >
         <DialogTitle id="status-dialog-title">
-          Pod Status
+          Deployment Status
         </DialogTitle>
         <DialogContent>
-          <p><strong>Pod Name:</strong> {statusModalContent.podName}</p>
+          <p><strong>Deployment Name:</strong> {statusModalContent.deploymentName}</p>
           <p><strong>State:</strong> {statusModalContent.state}</p>
         </DialogContent>
         <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
-          <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
+          <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
             Close
           </Button>
         </DialogActions>
