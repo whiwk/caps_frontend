@@ -134,7 +134,7 @@ const CustomNode = React.memo(({
       badgeBorderColor={badgeColors?.badgeBorderColor}
       onContextMenu={shouldShowContextMenu ? handleContextMenu : undefined}
       contextMenuOpen={contextMenuOpen}
-      onStatusDecoratorClick={onStatusDecoratorClick}
+      onStatusDecoratorClick={() => onStatusDecoratorClick && onStatusDecoratorClick(nodeId)}
     >
       <g transform={`translate(15, 15)`}>
         <image href={iconSrc} width={70} height={70} />
@@ -162,7 +162,7 @@ export const TopologyCustomEdgeDemo = () => {
     const [sidebarLoading, setSidebarLoading] = React.useState(false);
     const [currentLogIndex, setCurrentLogIndex] = React.useState(0);
     const [statusModalOpen, setStatusModalOpen] = React.useState(false);
-    const [statusModalContent, setStatusModalContent] = React.useState({ podName: '', state: '' });
+    const [statusModalContent, setStatusModalContent] = React.useState({ deploymentName: '', state: '' });
 
     const fetchDeployments = React.useCallback(async () => {
       try {
@@ -209,19 +209,28 @@ export const TopologyCustomEdgeDemo = () => {
         setSidebarLoading(true);
         // console.log('Fetching logs for nodeId:', nodeId);
         // console.log('Current pods:', pods);
-        const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
-        const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
-        // console.log('Found pod:', pod);
-        if (pod) {
-          const response = await api.get(`kube/pods/${pod.name}/logs/`);
-          // console.log('fetchLogs response:', response.data);
-          if (Array.isArray(response.data)) {
-            setLogs(response.data);
-          } else {
-            setLogs([]);
-          }
+        let response;
+        if (nodeId === 'AMF') {
+          response = await api.get('kube/get_amf_logs/');
+        } else if (nodeId === 'UPF') {
+          response = await api.get('kube/get_upf_logs/');
         } else {
-          // console.log(`No matching pod found for nodeId: ${nodeId}`);
+          const searchNodeId = nodeId.toLowerCase();
+          const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
+          // console.log('Found pod:', pod);
+          if (pod) {
+            response = await api.get(`kube/pods/${pod.name}/logs/`);
+          } else {
+            // console.log(`No matching pod found for nodeId: ${nodeId}`);
+            setLogs([]);
+            setSidebarLoading(false);
+            return;
+          }
+        }
+        // console.log('fetchLogs response:', response.data);
+        if (Array.isArray(response.data)) {
+          setLogs(response.data);
+        } else {
           setLogs([]);
         }
       } catch (error) {
@@ -290,19 +299,42 @@ export const TopologyCustomEdgeDemo = () => {
     }, [currentLogIndex, logs, sidebarContent]);
 
     const determineNodeStatus = React.useCallback((nodeName) => {
-        const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(nodeName.toLowerCase()));
-        return deployment && deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
+      const searchNodeName = nodeName.toLowerCase() === 'rru' ? 'du' : nodeName.toLowerCase();
+      const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeName));
+      return deployment && deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
     }, [deployments]);
 
-    const handleStatusDecoratorClick = (nodeId) => {
-      const pod = pods.find(pod => pod.name.toLowerCase().includes(nodeId.toLowerCase()));
-      if (pod) {
-        const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(nodeId.toLowerCase()));
-        const state = deployment && deployment.replicas > 0 ? 'Running' : 'Not Running';
-        setStatusModalContent({ podName: pod.name, state });
-        setStatusModalOpen(true);
+    const handleStatusDecoratorClick = React.useCallback(async (nodeId) => {
+      try {
+        setSidebarLoading(true);
+        // console.log('Fetching status for nodeId:', nodeId);
+        let response;
+        if (nodeId === 'AMF') {
+          response = await api.get('kube/get_amf_deployments/');
+        } else if (nodeId === 'UPF') {
+          response = await api.get('kube/get_upf_deployments/');
+        } else {
+          const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
+          const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeId));
+          if (deployment) {
+            const state = deployment.replicas > 0 ? 'Running' : 'Stopped';
+            setStatusModalContent({ deploymentName: deployment.deployment_name, state });
+            setStatusModalOpen(true);
+          }
+          return;
+        }
+        // console.log('fetchStatus response:', response.data);
+        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+          const state = response.data[0].replicas > 0 ? 'Running' : 'Stopped';
+          setStatusModalContent({ deploymentName: response.data[0].name, state });
+          setStatusModalOpen(true);
+        }
+      } catch (error) {
+        console.error('Failed to fetch status:', error);
+      } finally {
+        setSidebarLoading(false);
       }
-    };
+    }, [deployments]);
 
     const nodes = React.useMemo(() => {
         const NODE_DIAMETER = 100;
@@ -390,6 +422,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'Core',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('AMF'),
             },
             {
                 id: 'UPF',
@@ -406,6 +439,7 @@ export const TopologyCustomEdgeDemo = () => {
                     badge: 'Core',
                     isAlternate: false,
                 },
+                onStatusDecoratorClick: () => handleStatusDecoratorClick('UPF'),
             },
             {
                 id: 'Group-1',
@@ -438,7 +472,7 @@ export const TopologyCustomEdgeDemo = () => {
                 },
             },
         ];
-    }, [determineNodeStatus]);
+    }, [determineNodeStatus, handleStatusDecoratorClick]);
 
     const edges = React.useMemo(() => [
         {
@@ -516,7 +550,7 @@ export const TopologyCustomEdgeDemo = () => {
                   return withDndDrop(nodeDropTargetSpec([CONNECTOR_SOURCE_DROP, CONNECTOR_TARGET_DROP, CREATE_CONNECTOR_DROP_TYPE]))(
                     withDragNode(nodeDragSourceSpec('node', true, true))(
                       withSelection()(
-                        withContextMenu(() => contextMenu)((props) => <CustomNode {...props} setShowSideBar={setShowSideBar} />)
+                        withContextMenu(() => contextMenu)((props) => <CustomNode {...props} setShowSideBar={setShowSideBar} onStatusDecoratorClick={handleStatusDecoratorClick} />)
                       )
                     )
                   );
@@ -547,7 +581,7 @@ export const TopologyCustomEdgeDemo = () => {
             edges,
           });
           return newController;
-      }, [nodes, edges]);
+      }, [nodes, edges, handleStatusDecoratorClick]);
 
       React.useEffect(() => {
         if (controller) {
@@ -886,14 +920,14 @@ export const TopologyCustomEdgeDemo = () => {
         aria-describedby="status-dialog-description"
       >
         <DialogTitle id="status-dialog-title">
-          Pod Status
+          Deployment Status
         </DialogTitle>
         <DialogContent>
-          <p><strong>Pod Name:</strong> {statusModalContent.podName}</p>
+          <p><strong>Deployment Name:</strong> {statusModalContent.deploymentName}</p>
           <p><strong>State:</strong> {statusModalContent.state}</p>
         </DialogContent>
         <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
-          <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
+          <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
             Close
           </Button>
         </DialogActions>

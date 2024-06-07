@@ -241,6 +241,21 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, [pods]);
 
+    const fetchComponentInfo = React.useCallback(async (nodeId) => {
+      try {
+        setSidebarLoading(true);
+        // Implement the API call to fetch component information
+        const response = await api.get(`kube/components/${nodeId}/info/`);
+        // Assuming response.data contains the component information
+        setLogs([response.data]); // Set component information as logs for now
+      } catch (error) {
+        console.error('Failed to fetch component information:', error);
+        setLogs([]);
+      } finally {
+        setSidebarLoading(false);
+      }
+    }, []);
+
     const pingGoogle = React.useCallback(async () => {
       try {
         setSidebarLoading(true);
@@ -279,7 +294,9 @@ export const TopologyCustomEdgeDemo = () => {
 
     React.useEffect(() => {
       if (selectedIds.length > 0) {
-        if (sidebarContent === 'logs') {
+        if (sidebarContent === 'info') {
+          fetchComponentInfo(selectedIds[0]);
+        } else if (sidebarContent === 'logs') {
           fetchLogs(selectedIds[0]);
         } else if (sidebarContent === 'pingGoogle') {
           pingGoogle();
@@ -287,7 +304,7 @@ export const TopologyCustomEdgeDemo = () => {
           curlGoogle();
         }
       }
-    }, [selectedIds, sidebarContent, fetchLogs, pingGoogle, curlGoogle]);
+    }, [selectedIds, sidebarContent, fetchLogs, pingGoogle, curlGoogle, fetchComponentInfo]);
 
     React.useEffect(() => {
       if (sidebarContent === 'pingGoogle' && logs.length > 0 && currentLogIndex < logs.length) {
@@ -767,6 +784,34 @@ export const TopologyCustomEdgeDemo = () => {
       </TableContainer>
     );
 
+    const renderComponentInfo = () => (
+      <TableContainer component={Paper}>
+        <Table>
+          <TableBody>
+            {sidebarLoading ? (
+              <TableRow>
+                <TableCell colSpan={1} align="center">
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : logs.length > 0 ? (
+              logs.map((log, index) => (
+                <TableRow key={index}>
+                  <TableCell style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '12px' }}>
+                    {log.log}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell align="center" colSpan={1}>No component information available</TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+
     const renderSidebarContent = () => {
       switch (sidebarContent) {
         case 'logs':
@@ -775,6 +820,8 @@ export const TopologyCustomEdgeDemo = () => {
           return renderPingGoogleTable();
         case 'curlGoogle':
           return renderCurlGoogleOutput();
+        case 'info':
+          return renderComponentInfo();
         default:
           return null;
       }
@@ -791,6 +838,21 @@ export const TopologyCustomEdgeDemo = () => {
           onClose={() => setSelectedIds([])}
         >
         <Box p={2}>
+        <Button
+            variant="contained"
+            color="primary"
+            onClick={() => handleSidebarContentChange('info')}
+            style={{
+              marginRight: '10px',
+              backgroundColor: sidebarContent === 'info' ? '#2E3B55' : undefined,
+              borderRadius: '20px',
+              ...createButtonStyles,
+              fontSize: '12px',
+              height: '24px'
+            }}
+          >
+            Info
+          </Button>
           <Button
             variant="contained"
             color="primary"
