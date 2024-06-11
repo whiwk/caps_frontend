@@ -1,4 +1,10 @@
 /* Custom styles for the Zoom Out button in the topology toolbar */
+:root {
+  --connector-circle-success-color: #3e8635; /* Green */
+  --connector-circle-failed-color: #c9190b;  /* Red */
+  --edge-success-color: #3e8635;             /* Green */
+  --edge-failed-color: #c9190b;              /* Red */
+}
 
 .pf-v5-u-screen-reader {
   position: absolute !important;
@@ -13,4 +19,27 @@
 
 .pf-topology__node__label__background {
   filter: none;
+}
+
+.pf-topology__connector-circle.pf-m-source {
+  fill: var(--connector-circle-success-color) !important;
+}
+
+.pf-topology__connector-circle {
+  fill: var(--connector-circle-success-color) !important;
+}
+
+.pf-topology__edge {
+  stroke: var(--edge-success-color) !important;
+  --edge--active--stroke: var(--edge-success-color) !important;
+  --edge--hover--stroke: var(--connector-circle-success-color) !important;
+}
+
+.pf-topology__edge__link.pf-m-dashed-md {
+  stroke-width: 3px !important;
+  animation-duration: 0.5s !important;
+}
+
+.pf-topology__edge__link {
+  stroke-dasharray: 5 5  !important;
 }

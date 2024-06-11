@@ -72,16 +72,39 @@ const BadgeColors = [{
   badgeBorderColor: '#083E4A'
 }];
 
+const setSuccessStyle = () => {
+  document.documentElement.style.setProperty('--connector-circle-success-color', '#3e8635');
+  document.documentElement.style.setProperty('--edge-success-color', '#3e8635');
+};
+
+const setFailedStyle = () => {
+  document.documentElement.style.setProperty('--connector-circle-failed-color', '#c9190b');
+  document.documentElement.style.setProperty('--edge-failed-color', '#c9190b');
+};
+
 const CONNECTOR_SOURCE_DROP = 'connector-src-drop';
 const CONNECTOR_TARGET_DROP = 'connector-src-drop';
 
-const DataEdge = React.memo(({ element, ...rest }) => (
-  <DefaultEdge
-    element={element}
-    startTerminalType={EdgeTerminalType.circle}
-    endTerminalType={EdgeTerminalType.circle} {...rest}
-  />
-));
+const DataEdge = React.memo(({ element, ...rest }) => {
+  React.useEffect(() => {
+    console.log('DataEdge element:', element);
+  }, [element]);
+
+  const handleEdgeClick = (e) => {
+    e.stopPropagation(); // Prevent event from bubbling up
+    console.log('Edge clicked:', element.getId());
+  };
+
+  return (
+    <DefaultEdge
+      element={element}
+      startTerminalType={EdgeTerminalType.circle} 
+      endTerminalType={EdgeTerminalType.circle} 
+      onClick={handleEdgeClick}
+      {...rest}
+    />
+  );
+});
 
 const CustomNode = React.memo(({
   element,
@@ -93,7 +116,12 @@ const CustomNode = React.memo(({
   onStatusDecoratorClick,
   ...rest
 }) => {
-  const nodeId = element.getId();
+  React.useEffect(() => {
+    console.log('CustomNode element:', element);
+  }, [element]);
+
+  const nodeId = element && element.getId ? element.getId() : null;
+
   let iconSrc = '';
   if (nodeId === 'UE') {
     iconSrc = '/UE.png';
@@ -106,7 +134,7 @@ const CustomNode = React.memo(({
   } else if (['AMF', 'UPF'].includes(nodeId)) {
     iconSrc = '/5GC.png';
   }
-  const data = element.getData();
+  const data = element ? element.getData() : {};
   const badgeColors = BadgeColors.find(badgeColor => badgeColor.name === data.badge);
   const shouldShowContextMenu = nodeId !== 'AMF' && nodeId !== 'UPF' && nodeId !== 'RRU';
 
@@ -135,6 +163,7 @@ const CustomNode = React.memo(({
       onContextMenu={shouldShowContextMenu ? handleContextMenu : undefined}
       contextMenuOpen={contextMenuOpen}
       onStatusDecoratorClick={() => onStatusDecoratorClick && onStatusDecoratorClick(nodeId)}
+      className={data.status === 'success' ? 'pf-topology__connector-circle pf-m-source' : 'pf-topology__connector-circle'}
     >
       <g transform={`translate(15, 15)`}>
         <image href={iconSrc} width={70} height={70} />
@@ -158,11 +187,20 @@ export const TopologyCustomEdgeDemo = () => {
     const [actionLoading, setActionLoading] = React.useState(false);
     const [logs, setLogs] = React.useState('');
     const [pods, setPods] = React.useState([]);
-    const [sidebarContent, setSidebarContent] = React.useState('logs');
+    const [sidebarContent, setSidebarContent] = React.useState('protocolStack');
     const [sidebarLoading, setSidebarLoading] = React.useState(false);
     const [currentLogIndex, setCurrentLogIndex] = React.useState(0);
     const [statusModalOpen, setStatusModalOpen] = React.useState(false);
     const [statusModalContent, setStatusModalContent] = React.useState({ deploymentName: '', state: '' });
+    const [protocolStackData, setProtocolStackData] = React.useState({});
+
+    const handleEdgeClick = React.useCallback((element) => {
+      if (element && element.id) {
+        console.log('Edge clicked:', element.id);
+      } else {
+        console.error('Element does not have id property:', element);
+      }
+    }, []);
 
     const fetchDeployments = React.useCallback(async () => {
       try {
@@ -199,10 +237,58 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, []);
 
+    const fetchProtocolStackData = React.useCallback(async (nodeId) => {
+      const authToken = localStorage.getItem('authToken');
+      try {
+        setSidebarLoading(true);
+        const searchNodeId = nodeId.toLowerCase();
+        const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
+        if (pod) {
+          const response = await api.get(`shark/protocolstack/${pod.name}/`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+          
+          // Check if the response data has the expected structure
+          if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
+            const parsedData = response.data.packets.map((item) => ({
+              ipAddress: item._source?.layers?.ip?.["ip.src"] || null,
+              sctpSrcPort: item._source?.layers?.sctp?.["sctp.srcport"] || null,
+              sctpDstPort: item._source?.layers?.sctp?.["sctp.dstport"] || null,
+              sctpVerificationTag: item._source?.layers?.sctp?.["sctp.verification_tag"] || null,
+              sctpAssocIndex: item._source?.layers?.sctp?.["sctp.assoc_index"] || null,
+              sctpPort: item._source?.layers?.sctp?.["sctp.port"] || null,
+              sctpChecksum: item._source?.layers?.sctp?.["sctp.checksum"] || null,
+              sctpChecksumStatus: item._source?.layers?.sctp?.["sctp.checksum.status"] || null,
+            }));
+    
+            console.log('Parsed Protocol Stack Data:', parsedData);
+            setProtocolStackData(parsedData[0] || {}); // Display the first packet data for simplicity
+          } else {
+            setProtocolStackData({});
+          }
+        } else {
+          setProtocolStackData({});
+        }
+      } catch (error) {
+        console.error('Failed to fetch protocol stack data:', error);
+        setProtocolStackData({});
+      } finally {
+        setSidebarLoading(false);
+      }
+    }, [pods]);
+
     React.useEffect(() => {
       fetchDeployments();
       fetchPods();
     }, [fetchDeployments, fetchPods]);
+
+    React.useEffect(() => {
+      if (selectedIds.length > 0) {
+        fetchProtocolStackData(selectedIds[0]);
+      }
+    }, [selectedIds, fetchProtocolStackData]);
 
     const fetchLogs = React.useCallback(async (nodeId) => {
       try {
@@ -240,21 +326,6 @@ export const TopologyCustomEdgeDemo = () => {
         setSidebarLoading(false);
       }
     }, [pods]);
-
-    const fetchComponentInfo = React.useCallback(async (nodeId) => {
-      try {
-        setSidebarLoading(true);
-        // Implement the API call to fetch component information
-        const response = await api.get(`kube/components/${nodeId}/info/`);
-        // Assuming response.data contains the component information
-        setLogs([response.data]); // Set component information as logs for now
-      } catch (error) {
-        console.error('Failed to fetch component information:', error);
-        setLogs([]);
-      } finally {
-        setSidebarLoading(false);
-      }
-    }, []);
 
     const pingGoogle = React.useCallback(async () => {
       try {
@@ -294,8 +365,8 @@ export const TopologyCustomEdgeDemo = () => {
 
     React.useEffect(() => {
       if (selectedIds.length > 0) {
-        if (sidebarContent === 'info') {
-          fetchComponentInfo(selectedIds[0]);
+        if (sidebarContent === 'protocolStack') {
+          fetchProtocolStackData(selectedIds[0]);
         } else if (sidebarContent === 'logs') {
           fetchLogs(selectedIds[0]);
         } else if (sidebarContent === 'pingGoogle') {
@@ -304,7 +375,7 @@ export const TopologyCustomEdgeDemo = () => {
           curlGoogle();
         }
       }
-    }, [selectedIds, sidebarContent, fetchLogs, pingGoogle, curlGoogle, fetchComponentInfo]);
+    }, [selectedIds, sidebarContent, fetchLogs, pingGoogle, curlGoogle, fetchProtocolStackData]);
 
     React.useEffect(() => {
       if (sidebarContent === 'pingGoogle' && logs.length > 0 && currentLogIndex < logs.length) {
@@ -542,44 +613,46 @@ export const TopologyCustomEdgeDemo = () => {
     }, [loading, nodes, edges]);
 
     const controller = React.useMemo(() => {
-        const customComponentFactory = (kind, type) => {
-          const contextMenuItem = (label, i) => {
-            if (label === '-') {
-              return <ContextMenuSeparator component="li" key={`separator:${i.toString()}`} />;
-            }
-            return (
-              <ContextMenuItem key={label} onClick={() => handleContextMenuAction(label)}>
-                {label}
-              </ContextMenuItem>
-            );
-          };
-          const createContextMenuItems = (...labels) => labels.map(contextMenuItem);
-          const contextMenu = createContextMenuItems('Start', 'Stop', 'Restart');
-      
-          switch (type) {
-            case 'group':
-              return DefaultGroup;
-            default:
-              switch (kind) {
-                case ModelKind.graph:
-                  return withPanZoom()(GraphComponent);
-                case ModelKind.node:
-                  return withDndDrop(nodeDropTargetSpec([CONNECTOR_SOURCE_DROP, CONNECTOR_TARGET_DROP, CREATE_CONNECTOR_DROP_TYPE]))(
-                    withDragNode(nodeDragSourceSpec('node', true, true))(
-                      withSelection()(
-                        withContextMenu(() => contextMenu)((props) => <CustomNode {...props} setShowSideBar={setShowSideBar} onStatusDecoratorClick={handleStatusDecoratorClick} />)
-                      )
-                    )
-                  );
-                case ModelKind.edge:
-                  return withSelection()(
-                    withContextMenu(() => contextMenu)(DataEdge)
-                  );
-                default:
-                  return undefined;
-              }
+      const customComponentFactory = (kind, type) => {
+        const contextMenuItem = (label, i) => {
+          if (label === '-') {
+            return <ContextMenuSeparator component="li" key={`separator:${i.toString()}`} />;
           }
+          return (
+            <ContextMenuItem key={label} onClick={() => handleContextMenuAction(label)}>
+              {label}
+            </ContextMenuItem>
+          );
         };
+        const createContextMenuItems = (...labels) => labels.map(contextMenuItem);
+        const contextMenu = createContextMenuItems('Start', 'Stop', 'Restart');
+  
+        switch (type) {
+          case 'group':
+            return DefaultGroup;
+          default:
+            switch (kind) {
+              case ModelKind.graph:
+                return withPanZoom()(GraphComponent);
+              case ModelKind.node:
+                return withDndDrop(nodeDropTargetSpec([CONNECTOR_SOURCE_DROP, CONNECTOR_TARGET_DROP, CREATE_CONNECTOR_DROP_TYPE]))(
+                  withDragNode(nodeDragSourceSpec('node', true, true))(
+                    withSelection()(
+                      withContextMenu(() => contextMenu)((props) => <CustomNode {...props} setShowSideBar={setShowSideBar} onStatusDecoratorClick={handleStatusDecoratorClick} />)
+                    )
+                  )
+                );
+              case ModelKind.edge:
+                return withSelection()(
+                  withContextMenu(() => contextMenu)((props) => (
+                    <DataEdge {...props} onSelect={() => handleEdgeClick(props.element)} />
+                  ))
+                );
+              default:
+                return undefined;
+            }
+        }
+      };
       
         const newController = new Visualization();
           newController.registerLayoutFactory(customLayoutFactory);
@@ -598,7 +671,7 @@ export const TopologyCustomEdgeDemo = () => {
             edges,
           });
           return newController;
-      }, [nodes, edges, handleStatusDecoratorClick]);
+      }, [nodes, edges, handleStatusDecoratorClick, handleEdgeClick]);
 
       React.useEffect(() => {
         if (controller) {
@@ -700,6 +773,63 @@ export const TopologyCustomEdgeDemo = () => {
     const handleSidebarContentChange = (content) => {
       setSidebarContent(content);
     };
+    
+    const renderProtocolStack = () => (
+      <TableContainer component={Paper}>
+        <Table>
+          <TableBody>
+            {sidebarLoading ? (
+              <TableRow>
+                <TableCell colSpan={2} align="center">
+                  <CircularProgress />
+                </TableCell>
+              </TableRow>
+            ) : (
+              <>
+                <TableRow>
+                  <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>IP Layer</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>IP Address</TableCell>
+                  <TableCell>{protocolStackData.ipAddress}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>SCTP Layer</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>sctp.srcport</TableCell>
+                  <TableCell>{protocolStackData.sctpSrcPort}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>sctp.dstport</TableCell>
+                  <TableCell>{protocolStackData.sctpDstPort}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>sctp.verification_tag</TableCell>
+                  <TableCell>{protocolStackData.sctpVerificationTag}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>sctp.assoc_index</TableCell>
+                  <TableCell>{protocolStackData.sctpAssocIndex}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>sctp.port</TableCell>
+                  <TableCell>{protocolStackData.sctpPort}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>sctp.checksum</TableCell>
+                  <TableCell>{protocolStackData.sctpChecksum}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>sctp.checksum.status</TableCell>
+                  <TableCell>{protocolStackData.sctpChecksumStatus}</TableCell>
+                </TableRow>
+              </>
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
 
     const renderLogsTable = () => (
       <TableContainer component={Paper}>
@@ -784,34 +914,6 @@ export const TopologyCustomEdgeDemo = () => {
       </TableContainer>
     );
 
-    const renderComponentInfo = () => (
-      <TableContainer component={Paper}>
-        <Table>
-          <TableBody>
-            {sidebarLoading ? (
-              <TableRow>
-                <TableCell colSpan={1} align="center">
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : logs.length > 0 ? (
-              logs.map((log, index) => (
-                <TableRow key={index}>
-                  <TableCell style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '12px' }}>
-                    {log.log}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell align="center" colSpan={1}>No component information available</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
-
     const renderSidebarContent = () => {
       switch (sidebarContent) {
         case 'logs':
@@ -820,8 +922,8 @@ export const TopologyCustomEdgeDemo = () => {
           return renderPingGoogleTable();
         case 'curlGoogle':
           return renderCurlGoogleOutput();
-        case 'info':
-          return renderComponentInfo();
+        case 'protocolStack':
+          return renderProtocolStack();
         default:
           return null;
       }
@@ -841,17 +943,17 @@ export const TopologyCustomEdgeDemo = () => {
         <Button
             variant="contained"
             color="primary"
-            onClick={() => handleSidebarContentChange('info')}
+            onClick={() => handleSidebarContentChange('protocolStack')}
             style={{
               marginRight: '10px',
-              backgroundColor: sidebarContent === 'info' ? '#2E3B55' : undefined,
+              backgroundColor: sidebarContent === 'protocolStack' ? '#2E3B55' : undefined,
               borderRadius: '20px',
               ...createButtonStyles,
               fontSize: '12px',
               height: '24px'
             }}
           >
-            Info
+            Protocol Stack
           </Button>
           <Button
             variant="contained"
