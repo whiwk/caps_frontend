@@ -85,14 +85,15 @@ const setFailedStyle = () => {
 const CONNECTOR_SOURCE_DROP = 'connector-src-drop';
 const CONNECTOR_TARGET_DROP = 'connector-src-drop';
 
-const DataEdge = React.memo(({ element, ...rest }) => {
+const DataEdge = React.memo(({ element, onEdgeClick, ...rest }) => {
   React.useEffect(() => {
     console.log('DataEdge element:', element);
   }, [element]);
 
   const handleEdgeClick = (e) => {
     e.stopPropagation(); // Prevent event from bubbling up
-    console.log('Edge clicked:', element.id);
+    console.log('Edge clicked:', element.getId());
+    onEdgeClick(element);
   };
 
   return (
@@ -193,10 +194,14 @@ export const TopologyCustomEdgeDemo = () => {
     const [statusModalOpen, setStatusModalOpen] = React.useState(false);
     const [statusModalContent, setStatusModalContent] = React.useState({ deploymentName: '', state: '' });
     const [protocolStackData, setProtocolStackData] = React.useState({});
+    const [edgeModalOpen, setEdgeModalOpen] = React.useState(false);
+    const [selectedEdge, setSelectedEdge] = React.useState(null);
 
     const handleEdgeClick = React.useCallback((element) => {
       if (element && element.id) {
         console.log('Edge clicked:', element.id);
+        setSelectedEdge(element);
+        setEdgeModalOpen(true);
       } else {
         console.error('Element does not have id property:', element);
       }
@@ -1092,6 +1097,24 @@ export const TopologyCustomEdgeDemo = () => {
         </DialogContent>
         <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
           <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog
+        open={edgeModalOpen}
+        onClose={() => setEdgeModalOpen(false)}
+        aria-labelledby="edge-dialog-title"
+        aria-describedby="edge-dialog-description"
+      >
+        <DialogTitle id="edge-dialog-title">
+          Edge Details
+        </DialogTitle>
+        <DialogContent>
+          <p><strong>Edge ID:</strong> {selectedEdge ? selectedEdge.getId() : ''}</p>
+        </DialogContent>
+        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+          <Button sx={cancelButtonStyles} onClick={() => setEdgeModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
             Close
           </Button>
         </DialogActions>

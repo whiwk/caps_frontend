@@ -22,7 +22,7 @@
 }
 
 .pf-topology__connector-circle.pf-m-source {
-  fill: var(--connector-circle-success-color) !important;
+  fill: var(--connector-circle-failed-color) !important;
 }
 
 .pf-topology__connector-circle {
@@ -30,9 +30,9 @@
 }
 
 .pf-topology__edge {
-  stroke: var(--edge-success-color) !important;
-  --edge--active--stroke: var(--edge-success-color) !important;
-  --edge--hover--stroke: var(--connector-circle-success-color) !important;
+  stroke: rgb(121, 121, 121) !important;
+  --edge--active--stroke: rgb(39, 39, 39) !important;
+  --edge--hover--stroke: rgb(121, 121, 121) !important;
 }
 
 .pf-topology__edge__link.pf-m-dashed-md {
@@ -42,4 +42,16 @@
 
 .pf-topology__edge__link {
   stroke-dasharray: 5 5  !important;
+}
+
+.pf-topology__group__background {
+  fill: var(--pf-topology__group__background--Fill);
+  stroke: #0A7373 !important;
+  stroke-width: 8px !important;
+}
+
+.pf-topology-visualization-surface {
+  background-color: #f3f3f3;
+  background-image: radial-gradient(#d6d6d6 2px, transparent 0) !important;
+  background-size: 20px 20px !important;
 }
