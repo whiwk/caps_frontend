@@ -33,23 +33,29 @@ const Sidebar = () => {
                     <NavItem> 
                         <NavLink to="/5g-implementation-overview" activeClassName="pf-m-current">5G Implementation Overview</NavLink>
                     </NavItem>
+                    <NavExpandable
+                        title="Lab Guidance"
+                        groupId="lab"
+                        isActive={activeGroup === 'lab'}
+                        isExpanded={expandedGroups['lab']}
+                        onToggle={isExpanded => onToggle('lab', isExpanded)}
+                    > 
                     <NavItem>
                         <NavLink to="/lab-one-guidance" activeClassName="pf-m-current">Lab 1 Guidance </NavLink>
                     </NavItem>
-                    <NavExpandable
-                        title="Behind the Technology"
-                        groupId="tech"
-                        isActive={activeGroup === 'tech'}
-                        isExpanded={expandedGroups['tech']}
-                        onToggle={isExpanded => onToggle('tech', isExpanded)}
-                    >
                     <NavItem>
-                        <NavLink to="/cluster-topology" activeClassName="pf-m-current">Cluster Topology</NavLink>
+                        <NavLink to="/lab-two-guidance" activeClassName="pf-m-current">Lab 2 Guidance </NavLink>
                     </NavItem>
                     <NavItem>
-                        <NavLink to="/management-subscriber" activeClassName="pf-m-current">Management Subscriber</NavLink>
+                        <NavLink to="/lab-three-guidance" activeClassName="pf-m-current">Lab 3 Guidance </NavLink>
                     </NavItem>
                     </NavExpandable>
+                    <NavItem>
+                        <NavLink to="/monitoring-and-logging" activeClassName="pf-m-current">Monitoring and Logging</NavLink>
+                    </NavItem>
+                    <NavItem>
+                        <NavLink to="/behind-the-technology" activeClassName="pf-m-current">Behind the Technology</NavLink>
+                    </NavItem>
                 </NavList>
             </Nav>
             </PageSidebarBody>
