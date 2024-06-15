@@ -663,9 +663,9 @@ export const TopologyCustomEdgeDemo = () => {
                 );
               case ModelKind.edge:
                 return withSelection()(
-                  withContextMenu(() => contextMenu)((props) => (
+                  (props) => (
                     <DataEdge {...props} onSelect={() => handleEdgeClick(props.element)} />
-                  ))
+                  )
                 );
               default:
                 return undefined;
