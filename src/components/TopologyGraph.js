@@ -43,7 +43,6 @@ import {
   DialogActions,
   Button,
   Snackbar,
-  Alert,
   CircularProgress,
   Box,
   Paper,
@@ -54,6 +53,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
 
 const BadgeColors = [{
   name: 'End Users',
@@ -196,6 +196,7 @@ export const TopologyCustomEdgeDemo = () => {
     const [protocolStackData, setProtocolStackData] = React.useState({});
     const [edgeModalOpen, setEdgeModalOpen] = React.useState(false);
     const [selectedEdge, setSelectedEdge] = React.useState(null);
+    const [snackbarSeverity, setSnackbarSeverity] = React.useState('success'); 
 
     const handleEdgeClick = React.useCallback((element) => {
       if (element && element.id) {
@@ -394,13 +395,17 @@ export const TopologyCustomEdgeDemo = () => {
     const determineNodeStatus = React.useCallback((nodeName) => {
       const searchNodeName = nodeName.toLowerCase() === 'rru' ? 'du' : nodeName.toLowerCase();
       const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeName));
-      return deployment && deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
+    
+      if (!deployment) {
+        return NodeStatus.danger;
+      }
+    
+      return deployment.replicas > 0 ? NodeStatus.success : NodeStatus.warning;
     }, [deployments]);
 
     const handleStatusDecoratorClick = React.useCallback(async (nodeId) => {
       try {
         setSidebarLoading(true);
-        // console.log('Fetching status for nodeId:', nodeId);
         let response;
         if (nodeId === 'AMF') {
           response = await api.get('kube/get_amf_deployments/');
@@ -413,13 +418,18 @@ export const TopologyCustomEdgeDemo = () => {
             const state = deployment.replicas > 0 ? 'Running' : 'Stopped';
             setStatusModalContent({ deploymentName: deployment.deployment_name, state });
             setStatusModalOpen(true);
+          } else {
+            setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
+            setStatusModalOpen(true);
           }
           return;
         }
-        // console.log('fetchStatus response:', response.data);
         if (response.data && Array.isArray(response.data) && response.data.length > 0) {
           const state = response.data[0].replicas > 0 ? 'Running' : 'Stopped';
           setStatusModalContent({ deploymentName: response.data[0].name, state });
+          setStatusModalOpen(true);
+        } else {
+          setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
           setStatusModalOpen(true);
         }
       } catch (error) {
@@ -631,7 +641,7 @@ export const TopologyCustomEdgeDemo = () => {
         };
         const createContextMenuItems = (...labels) => labels.map(contextMenuItem);
         const contextMenu = createContextMenuItems('Start', 'Stop', 'Restart');
-  
+    
         switch (type) {
           case 'group':
             return DefaultGroup;
@@ -658,25 +668,33 @@ export const TopologyCustomEdgeDemo = () => {
             }
         }
       };
-      
-        const newController = new Visualization();
-          newController.registerLayoutFactory(customLayoutFactory);
-          newController.registerComponentFactory(customComponentFactory);
-          newController.addEventListener(SELECTION_EVENT, ids => {
-              setSelectedIds(ids);
-              setShowSideBar(true);
-            });
-          newController.fromModel({
-            graph: {
-              id: 'g1',
-              type: 'graph',
-              layout: 'Grid',
-            },
-            nodes,
-            edges,
-          });
-          return newController;
-      }, [nodes, edges, handleStatusDecoratorClick, handleEdgeClick]);
+    
+      const newController = new Visualization();
+      newController.registerLayoutFactory(customLayoutFactory);
+      newController.registerComponentFactory(customComponentFactory);
+      newController.addEventListener(SELECTION_EVENT, ids => {
+        const selectedNodeId = ids[0];
+        const selectedNode = nodes.find(node => node.id === selectedNodeId);
+        const nodeStatus = selectedNode ? determineNodeStatus(selectedNode.id) : null;
+        if (nodeStatus === NodeStatus.danger) {
+          handleStatusDecoratorClick(selectedNodeId);
+          setShowSideBar(false);
+        } else {
+          setSelectedIds(ids);
+          setShowSideBar(true);
+        }
+      });
+      newController.fromModel({
+        graph: {
+          id: 'g1',
+          type: 'graph',
+          layout: 'Grid',
+        },
+        nodes,
+        edges,
+      });
+      return newController;
+    }, [nodes, edges, handleStatusDecoratorClick, handleEdgeClick, determineNodeStatus]);
 
       React.useEffect(() => {
         if (controller) {
@@ -714,14 +732,15 @@ export const TopologyCustomEdgeDemo = () => {
       setActionLoading(true);
       try {
         if (selectedIds.length === 0) {
-          throw new Error('No node selected');
+          throw new Error('Please try again');
         }
     
         const nodeId = selectedIds[0];
         const selectedNode = nodes.find(node => node.id === nodeId);
     
         if (!selectedNode) {
-          throw new Error('Node not found');
+          alert('Node not recognized. Please select a valid node.');
+          throw new Error('Node not recognized');
         }
     
         const nodeLabel = selectedNode.label;
@@ -743,16 +762,18 @@ export const TopologyCustomEdgeDemo = () => {
         }
     
         if (response.status === 200) {
-          setSnackbarMessage(`${modalAction} ${nodeId} executed successfully!`);
+          setSnackbarSeverity('success');
+          setSnackbarMessage(`${modalAction} ${nodeId}: success!`);
         } else {
-          setSnackbarMessage(`${modalAction} ${nodeId} failed.`);
+          setSnackbarSeverity('error');
+          setSnackbarMessage(`${modalAction} ${nodeId}: failed.`);
         }
     
         setSnackbarOpen(true);
       } catch (error) {
         console.error('Error executing action:', error);
-        // eslint-disable-next-line no-undef
-        setSnackbarMessage(`${modalAction} ${nodeId} failed : ${error.message}`);
+        setSnackbarSeverity('error');
+        setSnackbarMessage(`Failed: ${error.message}`);
         setSnackbarOpen(true);
       } finally {
         setModalOpen(false);
@@ -1077,7 +1098,7 @@ export const TopologyCustomEdgeDemo = () => {
           </Button>
           <Button variant="contained" onClick={handleModalConfirm} color="primary" autoFocus disabled={actionLoading} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
             <Box display="flex" alignItems="center" justifyContent="center">
-                {actionLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm'}
+                {actionLoading ? <CircularProgress size={25} color="inherit" /> : 'Confirm'}
             </Box>
           </Button>
         </DialogActions>
@@ -1121,12 +1142,12 @@ export const TopologyCustomEdgeDemo = () => {
       </Dialog>
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={6000}
+        autoHideDuration={3000}
         onClose={handleSnackbarClose}
       >
-        <Alert onClose={handleSnackbarClose} severity="success">
+        <MuiAlert variant="filled" onClose={handleSnackbarClose} severity={snackbarSeverity}>
           {snackbarMessage}
-        </Alert>
+        </MuiAlert>
       </Snackbar>
     </TopologyView>
   );

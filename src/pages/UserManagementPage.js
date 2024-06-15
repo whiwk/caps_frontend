@@ -274,7 +274,7 @@ function UserManagementPage() {
             <Button sx={cancelButtonStyles} onClick={() => setCreateModalOpen(false)} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>Cancel</Button>
             <Button variant="contained" color="primary" onClick={handleCreateUsers} disabled={creatingUsers} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
               <Box display="flex" alignItems="center" justifyContent="center">
-                {creatingUsers ? <CircularProgress size={20} color="inherit" /> : 'Create'}
+                {creatingUsers ? <CircularProgress size={25} color="inherit" /> : 'Create'}
               </Box>
             </Button>
           </DialogActions>
@@ -315,7 +315,7 @@ function UserManagementPage() {
             <Button sx={cancelButtonStyles} onClick={closeEditModal} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>Cancel</Button>
             <Button variant="contained" color="primary" onClick={confirmEdit} disabled={editingUser} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
               <Box display="flex" alignItems="center" justifyContent="center">
-                {editingUser ? <CircularProgress size={20} color="inherit"/> : 'Confirm'}
+                {editingUser ? <CircularProgress size={25} color="inherit"/> : 'Confirm'}
               </Box>
             </Button>
           </DialogActions>
@@ -331,7 +331,7 @@ function UserManagementPage() {
             <Button sx={cancelButtonStyles} onClick={closeRemoveModal} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>Cancel</Button>
             <Button sx={removeButtonStyles} onClick={confirmRemove} disabled={removingUser} autoFocus style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
               <Box display="flex" alignItems="center" justifyContent="center">
-                {removingUser ? <CircularProgress size={20} color="inherit" /> : 'Remove'}
+                {removingUser ? <CircularProgress size={25} color="inherit" /> : 'Remove'}
               </Box>
             </Button>
           </DialogActions>

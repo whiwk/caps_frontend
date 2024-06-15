@@ -43,7 +43,6 @@ import {
   DialogActions,
   Button,
   Snackbar,
-  Alert,
   CircularProgress,
   Box,
   Paper,
@@ -54,6 +53,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
 
 const BadgeColors = [{
   name: 'End Users',
@@ -196,6 +196,7 @@ export const TopologyCustomEdgeDemo = () => {
     const [protocolStackData, setProtocolStackData] = React.useState({});
     const [edgeModalOpen, setEdgeModalOpen] = React.useState(false);
     const [selectedEdge, setSelectedEdge] = React.useState(null);
+    const [snackbarSeverity, setSnackbarSeverity] = React.useState('success'); 
 
     const handleEdgeClick = React.useCallback((element) => {
       if (element && element.id) {
@@ -569,7 +570,7 @@ export const TopologyCustomEdgeDemo = () => {
 
     const edges = React.useMemo(() => [
         {
-          id: `edge-1`,
+          id: `air-interface`,
           type: 'data-edge',
           source: 'UE',
           target: 'RRU',
@@ -577,7 +578,7 @@ export const TopologyCustomEdgeDemo = () => {
           animationSpeed: EdgeAnimationSpeed.medium,
         },
         {
-          id: `edge-2`,
+          id: `Open-Fronthaul-interface`,
           type: 'data-edge',
           source: 'RRU',
           target: 'DU',
@@ -585,7 +586,7 @@ export const TopologyCustomEdgeDemo = () => {
           animationSpeed: EdgeAnimationSpeed.medium,
         },
         {
-          id: `edge-3`,
+          id: `F1-interface`,
           type: 'data-edge',
           source: 'DU',
           target: 'CU',
@@ -593,7 +594,7 @@ export const TopologyCustomEdgeDemo = () => {
           animationSpeed: EdgeAnimationSpeed.medium,
         },
         {
-          id: `edge-4`,
+          id: `N2-interface`,
           type: 'data-edge',
           source: 'CU',
           target: 'AMF',
@@ -601,7 +602,7 @@ export const TopologyCustomEdgeDemo = () => {
           animationSpeed: EdgeAnimationSpeed.medium,
         },
         {
-          id: `edge-5`,
+          id: `N3-interface`,
           type: 'data-edge',
           source: 'CU',
           target: 'UPF',
@@ -714,14 +715,15 @@ export const TopologyCustomEdgeDemo = () => {
       setActionLoading(true);
       try {
         if (selectedIds.length === 0) {
-          throw new Error('No node selected');
+          throw new Error('Please try again');
         }
     
         const nodeId = selectedIds[0];
         const selectedNode = nodes.find(node => node.id === nodeId);
     
         if (!selectedNode) {
-          throw new Error('Node not found');
+          alert('Node not recognized. Please select a valid node.');
+          throw new Error('Node not recognized');
         }
     
         const nodeLabel = selectedNode.label;
@@ -743,16 +745,18 @@ export const TopologyCustomEdgeDemo = () => {
         }
     
         if (response.status === 200) {
-          setSnackbarMessage(`${modalAction} ${nodeId} executed successfully!`);
+          setSnackbarSeverity('success');
+          setSnackbarMessage(`${modalAction} ${nodeId}: success!`);
         } else {
-          setSnackbarMessage(`${modalAction} ${nodeId} failed.`);
+          setSnackbarSeverity('error');
+          setSnackbarMessage(`${modalAction} ${nodeId}: failed.`);
         }
     
         setSnackbarOpen(true);
       } catch (error) {
         console.error('Error executing action:', error);
-        // eslint-disable-next-line no-undef
-        setSnackbarMessage(`${modalAction} ${nodeId} failed : ${error.message}`);
+        setSnackbarSeverity('error');
+        setSnackbarMessage(`Failed: ${error.message}`);
         setSnackbarOpen(true);
       } finally {
         setModalOpen(false);
@@ -1077,7 +1081,7 @@ export const TopologyCustomEdgeDemo = () => {
           </Button>
           <Button variant="contained" onClick={handleModalConfirm} color="primary" autoFocus disabled={actionLoading} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
             <Box display="flex" alignItems="center" justifyContent="center">
-                {actionLoading ? <CircularProgress size={24} color="inherit" /> : 'Confirm'}
+                {actionLoading ? <CircularProgress size={25} color="inherit" /> : 'Confirm'}
             </Box>
           </Button>
         </DialogActions>
@@ -1108,10 +1112,10 @@ export const TopologyCustomEdgeDemo = () => {
         aria-describedby="edge-dialog-description"
       >
         <DialogTitle id="edge-dialog-title">
-          Edge Details
+          Link Details
         </DialogTitle>
         <DialogContent>
-          <p><strong>Edge ID:</strong> {selectedEdge ? selectedEdge.getId() : ''}</p>
+          <p><strong>Interface Name:</strong> {selectedEdge ? selectedEdge.getId() : ''}</p>
         </DialogContent>
         <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
           <Button sx={cancelButtonStyles} onClick={() => setEdgeModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
@@ -1121,12 +1125,12 @@ export const TopologyCustomEdgeDemo = () => {
       </Dialog>
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={6000}
+        autoHideDuration={3000}
         onClose={handleSnackbarClose}
       >
-        <Alert onClose={handleSnackbarClose} severity="success">
+        <MuiAlert variant="filled" onClose={handleSnackbarClose} severity={snackbarSeverity}>
           {snackbarMessage}
-        </Alert>
+        </MuiAlert>
       </Snackbar>
     </TopologyView>
   );
