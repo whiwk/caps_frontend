@@ -393,15 +393,23 @@ export const TopologyCustomEdgeDemo = () => {
     }, [currentLogIndex, logs, sidebarContent]);
 
     const determineNodeStatus = React.useCallback((nodeName) => {
+      if (nodeName === 'AMF' || nodeName === 'UPF') {
+        return NodeStatus.success;
+      }
+    
       const searchNodeName = nodeName.toLowerCase() === 'rru' ? 'du' : nodeName.toLowerCase();
       const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeName));
-      return deployment && deployment.replicas > 0 ? NodeStatus.success : NodeStatus.danger;
+    
+      if (!deployment) {
+        return NodeStatus.danger;
+      }
+    
+      return deployment.replicas > 0 ? NodeStatus.success : NodeStatus.warning;
     }, [deployments]);
 
     const handleStatusDecoratorClick = React.useCallback(async (nodeId) => {
       try {
         setSidebarLoading(true);
-        // console.log('Fetching status for nodeId:', nodeId);
         let response;
         if (nodeId === 'AMF') {
           response = await api.get('kube/get_amf_deployments/');
@@ -414,13 +422,18 @@ export const TopologyCustomEdgeDemo = () => {
             const state = deployment.replicas > 0 ? 'Running' : 'Stopped';
             setStatusModalContent({ deploymentName: deployment.deployment_name, state });
             setStatusModalOpen(true);
+          } else {
+            setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
+            setStatusModalOpen(true);
           }
           return;
         }
-        // console.log('fetchStatus response:', response.data);
         if (response.data && Array.isArray(response.data) && response.data.length > 0) {
           const state = response.data[0].replicas > 0 ? 'Running' : 'Stopped';
           setStatusModalContent({ deploymentName: response.data[0].name, state });
+          setStatusModalOpen(true);
+        } else {
+          setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
           setStatusModalOpen(true);
         }
       } catch (error) {
@@ -632,7 +645,7 @@ export const TopologyCustomEdgeDemo = () => {
         };
         const createContextMenuItems = (...labels) => labels.map(contextMenuItem);
         const contextMenu = createContextMenuItems('Start', 'Stop', 'Restart');
-  
+    
         switch (type) {
           case 'group':
             return DefaultGroup;
@@ -659,25 +672,38 @@ export const TopologyCustomEdgeDemo = () => {
             }
         }
       };
-      
-        const newController = new Visualization();
-          newController.registerLayoutFactory(customLayoutFactory);
-          newController.registerComponentFactory(customComponentFactory);
-          newController.addEventListener(SELECTION_EVENT, ids => {
-              setSelectedIds(ids);
-              setShowSideBar(true);
-            });
-          newController.fromModel({
-            graph: {
-              id: 'g1',
-              type: 'graph',
-              layout: 'Grid',
-            },
-            nodes,
-            edges,
-          });
-          return newController;
-      }, [nodes, edges, handleStatusDecoratorClick, handleEdgeClick]);
+    
+      const newController = new Visualization();
+      newController.registerLayoutFactory(customLayoutFactory);
+      newController.registerComponentFactory(customComponentFactory);
+      newController.addEventListener(SELECTION_EVENT, ids => {
+        const selectedNodeId = ids[0];
+        const selectedNode = nodes.find(node => node.id === selectedNodeId);
+        const nodeStatus = selectedNode ? determineNodeStatus(selectedNode.id) : null;
+    
+        // Always show sidebar for AMF and UPF nodes
+        if (selectedNodeId === 'AMF' || selectedNodeId === 'UPF') {
+          setSelectedIds(ids);
+          setShowSideBar(true);
+        } else if (nodeStatus === NodeStatus.danger) {
+          handleStatusDecoratorClick(selectedNodeId);
+          setShowSideBar(false);
+        } else {
+          setSelectedIds(ids);
+          setShowSideBar(true);
+        }
+      });
+      newController.fromModel({
+        graph: {
+          id: 'g1',
+          type: 'graph',
+          layout: 'Grid',
+        },
+        nodes,
+        edges,
+      });
+      return newController;
+    }, [nodes, edges, handleStatusDecoratorClick, handleEdgeClick, determineNodeStatus]);
 
       React.useEffect(() => {
         if (controller) {

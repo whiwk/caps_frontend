@@ -393,6 +393,10 @@ export const TopologyCustomEdgeDemo = () => {
     }, [currentLogIndex, logs, sidebarContent]);
 
     const determineNodeStatus = React.useCallback((nodeName) => {
+      if (nodeName === 'AMF' || nodeName === 'UPF') {
+        return NodeStatus.success;
+      }
+    
       const searchNodeName = nodeName.toLowerCase() === 'rru' ? 'du' : nodeName.toLowerCase();
       const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeName));
     
@@ -676,7 +680,12 @@ export const TopologyCustomEdgeDemo = () => {
         const selectedNodeId = ids[0];
         const selectedNode = nodes.find(node => node.id === selectedNodeId);
         const nodeStatus = selectedNode ? determineNodeStatus(selectedNode.id) : null;
-        if (nodeStatus === NodeStatus.danger) {
+    
+        // Always show sidebar for AMF and UPF nodes
+        if (selectedNodeId === 'AMF' || selectedNodeId === 'UPF') {
+          setSelectedIds(ids);
+          setShowSideBar(true);
+        } else if (nodeStatus === NodeStatus.danger) {
           handleStatusDecoratorClick(selectedNodeId);
           setShowSideBar(false);
         } else {
