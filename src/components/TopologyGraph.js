@@ -1,7 +1,8 @@
-import * as React from 'react';
+import React, { useEffect, useContext } from 'react';
 import '@patternfly/patternfly/patternfly.css';
 import './TopologyGraph.css';
 import api from '../services/apiService';
+import { RefreshContext } from '../contexts/RefreshContext';
 import {
   action,
   ContextMenuItem,
@@ -177,6 +178,7 @@ const customLayoutFactory = (type, graph) => new GridLayout(graph, {
 });
 
 export const TopologyCustomEdgeDemo = () => {
+    const { refresh, setRefresh } = useContext(RefreshContext);
     const [selectedIds, setSelectedIds] = React.useState([]);
     const [deployments, setDeployments] = React.useState([]);
     const [modalOpen, setModalOpen] = React.useState(false);
@@ -291,6 +293,13 @@ export const TopologyCustomEdgeDemo = () => {
       fetchDeployments();
       fetchPods();
     }, [fetchDeployments, fetchPods]);
+
+    useEffect(() => {
+      if (refresh) {
+        fetchDeployments();
+        setRefresh(false);
+      }
+    }, [refresh, fetchDeployments, setRefresh]);
 
     React.useEffect(() => {
       if (selectedIds.length > 0) {

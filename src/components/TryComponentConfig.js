@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import './TryComponentConfig.css'
 import {
   Card,
@@ -20,6 +20,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import api from '../services/apiService';
+import { RefreshContext } from '../contexts/RefreshContext';
 
 const componentData = {
     CU: { 'CU ID': '', 'Cell ID': '', 'F1 IP Address': '', 'F1 CU Port': '', 'F1 DU Port': '', 'N2 IP Address': '', 'N3 IP Address': '', 'MCC': '', 'MNC': '', 'TAC': '', 'SST': '', 'AMF Host': '' },
@@ -47,6 +48,7 @@ const ConfigurationPanel = () => {
   const [alertSeverity, setAlertSeverity] = useState('success');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { setRefresh } = useContext(RefreshContext);
 
   useEffect(() => {
     const fetchUserLevel = async () => {
@@ -227,7 +229,8 @@ const ConfigurationPanel = () => {
           ...componentData[selectedComponent],
           ...updatedValues
         });
-        setSetValuesState({}); // Reset set values state
+        setSetValuesState({});
+        setRefresh(true);  // Reset set values state
       } else {
         throw new Error('Failed to update due to server error');
       }
