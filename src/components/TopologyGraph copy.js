@@ -409,39 +409,39 @@ export const TopologyCustomEdgeDemo = () => {
 
     const handleStatusDecoratorClick = React.useCallback(async (nodeId) => {
       try {
-        setSidebarLoading(true);
-        let response;
-        if (nodeId === 'AMF') {
-          response = await api.get('kube/get_amf_deployments/');
-        } else if (nodeId === 'UPF') {
-          response = await api.get('kube/get_upf_deployments/');
-        } else {
-          const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
-          const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeId));
-          if (deployment) {
-            const state = deployment.replicas > 0 ? 'Running' : 'Stopped';
-            setStatusModalContent({ deploymentName: deployment.deployment_name, state });
-            setStatusModalOpen(true);
+          setSidebarLoading(true);
+          let response;
+          if (nodeId === 'AMF') {
+              response = await api.get('kube/get_amf_deployments/');
+          } else if (nodeId === 'UPF') {
+              response = await api.get('kube/get_upf_deployments/');
           } else {
-            setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
-            setStatusModalOpen(true);
+              const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
+              const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeId));
+              if (deployment) {
+                  const state = deployment.replicas > 0 ? 'Running' : 'Stopped';
+                  setStatusModalContent({ deploymentName: deployment.deployment_name, state });
+                  setStatusModalOpen(true);
+              } else {
+                  setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
+                  setStatusModalOpen(true);
+              }
+              return;
           }
-          return;
-        }
-        if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-          const state = response.data[0].replicas > 0 ? 'Running' : 'Stopped';
-          setStatusModalContent({ deploymentName: response.data[0].name, state });
-          setStatusModalOpen(true);
-        } else {
-          setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
-          setStatusModalOpen(true);
-        }
+          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+              const state = response.data[0].replicas > 0 ? 'Running' : 'Stopped';
+              setStatusModalContent({ deploymentName: response.data[0].name, state });
+              setStatusModalOpen(true);
+          } else {
+              setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
+              setStatusModalOpen(true);
+          }
       } catch (error) {
-        console.error('Failed to fetch status:', error);
+          console.error('Failed to fetch status:', error);
       } finally {
-        setSidebarLoading(false);
+          setSidebarLoading(false);
       }
-    }, [deployments]);
+  }, [deployments]);
 
     const nodes = React.useMemo(() => {
         const NODE_DIAMETER = 100;
@@ -460,6 +460,7 @@ export const TopologyCustomEdgeDemo = () => {
                 data: {
                     badge: 'End Users',
                     isAlternate: false,
+                    status: determineNodeStatus('UE'),
                 },
                 onStatusDecoratorClick: () => handleStatusDecoratorClick('UE'),
             },
@@ -477,6 +478,7 @@ export const TopologyCustomEdgeDemo = () => {
                 data: {
                     badge: 'RAN',
                     isAlternate: false,
+                    status: determineNodeStatus('DU'),
                 },
                 onStatusDecoratorClick: () => handleStatusDecoratorClick('DU'),
             },
@@ -494,6 +496,7 @@ export const TopologyCustomEdgeDemo = () => {
                 data: {
                     badge: 'RAN',
                     isAlternate: false,
+                    status: determineNodeStatus('DU'),
                 },
                 onStatusDecoratorClick: () => handleStatusDecoratorClick('DU'),
             },
@@ -511,6 +514,7 @@ export const TopologyCustomEdgeDemo = () => {
                 data: {
                     badge: 'RAN',
                     isAlternate: false,
+                    status: determineNodeStatus('CU'),
                 },
                 onStatusDecoratorClick: () => handleStatusDecoratorClick('CU'),
             },
@@ -528,6 +532,7 @@ export const TopologyCustomEdgeDemo = () => {
                 data: {
                     badge: 'Core',
                     isAlternate: false,
+                    status: NodeStatus.success,
                 },
                 onStatusDecoratorClick: () => handleStatusDecoratorClick('AMF'),
             },
@@ -545,6 +550,7 @@ export const TopologyCustomEdgeDemo = () => {
                 data: {
                     badge: 'Core',
                     isAlternate: false,
+                    status: NodeStatus.success,
                 },
                 onStatusDecoratorClick: () => handleStatusDecoratorClick('UPF'),
             },
@@ -644,7 +650,22 @@ export const TopologyCustomEdgeDemo = () => {
           );
         };
         const createContextMenuItems = (...labels) => labels.map(contextMenuItem);
-        const contextMenu = createContextMenuItems('Start', 'Stop', 'Restart');
+
+        const createContextMenu = (nodeStatus) => {
+          console.log('Creating context menu for node status:', nodeStatus);
+          if (nodeStatus === NodeStatus.danger) {
+              setStatusModalOpen(false); // Close the status modal if the node status is danger
+              return createContextMenuItems('Start');
+          }
+          switch (nodeStatus) {
+              case NodeStatus.success:
+                  return createContextMenuItems('Stop', 'Restart');
+              case NodeStatus.warning:
+                  return createContextMenuItems('Start');
+              default:
+                  return [];
+          }
+        };
     
         switch (type) {
           case 'group':
@@ -657,7 +678,12 @@ export const TopologyCustomEdgeDemo = () => {
                 return withDndDrop(nodeDropTargetSpec([CONNECTOR_SOURCE_DROP, CONNECTOR_TARGET_DROP, CREATE_CONNECTOR_DROP_TYPE]))(
                   withDragNode(nodeDragSourceSpec('node', true, true))(
                     withSelection()(
-                      withContextMenu(() => contextMenu)((props) => <CustomNode {...props} setShowSideBar={setShowSideBar} onStatusDecoratorClick={handleStatusDecoratorClick} />)
+                      withContextMenu((element) => {
+                        console.log('Context menu element data:', element.getData());
+                        return createContextMenu(element.getData().status);
+                      })(
+                        (props) => <CustomNode {...props} setShowSideBar={setShowSideBar} onStatusDecoratorClick={handleStatusDecoratorClick} />
+                      )
                     )
                   )
                 );
@@ -721,6 +747,7 @@ export const TopologyCustomEdgeDemo = () => {
       }, [controller, nodes, edges]);
 
     const handleContextMenuAction = (action) => {
+      console.log('Context menu action:', action);
       setModalAction(action);
       setModalOpen(true);
       setShowSideBar(false);
