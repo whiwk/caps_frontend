@@ -197,6 +197,8 @@ export const TopologyCustomEdgeDemo = () => {
     const [edgeModalOpen, setEdgeModalOpen] = React.useState(false);
     const [selectedEdge, setSelectedEdge] = React.useState(null);
     const [snackbarSeverity, setSnackbarSeverity] = React.useState('success'); 
+    const [customMessage, setCustomMessage] = React.useState('');
+    const [dangerStatus, setDangerStatus] = React.useState(false);
 
     const handleEdgeClick = React.useCallback((element) => {
       if (element && element.id) {
@@ -409,39 +411,87 @@ export const TopologyCustomEdgeDemo = () => {
 
     const handleStatusDecoratorClick = React.useCallback(async (nodeId) => {
       try {
-          setSidebarLoading(true);
-          let response;
-          if (nodeId === 'AMF') {
-              response = await api.get('kube/get_amf_deployments/');
-          } else if (nodeId === 'UPF') {
-              response = await api.get('kube/get_upf_deployments/');
+        setSidebarLoading(true);
+        let response;
+        let dangerStatus = false;
+    
+        if (nodeId === 'AMF') {
+          response = await api.get('kube/get_amf_deployments/');
+        } else if (nodeId === 'UPF') {
+          response = await api.get('kube/get_upf_deployments/');
+        } else {
+          const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
+          const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeId));
+          if (deployment) {
+            const state = deployment.replicas > 0 ? 'Running' : 'Stopped';
+            setStatusModalContent({ deploymentName: deployment.deployment_name, state });
+            setCustomMessage(''); // Reset custom message
           } else {
-              const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
-              const deployment = deployments.find(d => d.deployment_name.toLowerCase().includes(searchNodeId));
-              if (deployment) {
-                  const state = deployment.replicas > 0 ? 'Running' : 'Stopped';
-                  setStatusModalContent({ deploymentName: deployment.deployment_name, state });
-                  setStatusModalOpen(true);
-              } else {
-                  setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
-                  setStatusModalOpen(true);
-              }
-              return;
+            setStatusModalContent('Component not available. Please configure the F1 CU and F1 DU port for the CU/DU components to make it available. You can configure it on the Configuration Panel below.');
+            dangerStatus = true;
           }
-          if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-              const state = response.data[0].replicas > 0 ? 'Running' : 'Stopped';
-              setStatusModalContent({ deploymentName: response.data[0].name, state });
-              setStatusModalOpen(true);
-          } else {
-              setStatusModalContent({ deploymentName: nodeId, state: 'Component not ready yet' });
-              setStatusModalOpen(true);
-          }
+        }
+        
+        if (response && response.data && Array.isArray(response.data) && response.data.length > 0) {
+          const state = response.data[0].replicas > 0 ? 'Running' : 'Stopped';
+          setStatusModalContent({ deploymentName: response.data[0].name, state });
+          setCustomMessage(''); // Reset custom message
+        }
+    
+        setDangerStatus(dangerStatus); // Set the flag for danger status
+        setStatusModalOpen(true);
+    
       } catch (error) {
-          console.error('Failed to fetch status:', error);
+        console.error('Failed to fetch status:', error);
       } finally {
-          setSidebarLoading(false);
+        setSidebarLoading(false);
       }
-  }, [deployments]);
+    }, [deployments]);
+
+    const renderStatusModalContent = () => {
+      if (dangerStatus) {
+        return (
+          <Dialog
+            open={statusModalOpen}
+            onClose={() => setStatusModalOpen(false)}
+            aria-labelledby="status-dialog-title"
+            aria-describedby="status-dialog-description"
+          >
+            <DialogContent>
+              {statusModalContent}
+            </DialogContent>
+            <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+              <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+        );
+      } else {
+        return (
+          <Dialog
+            open={statusModalOpen}
+            onClose={() => setStatusModalOpen(false)}
+            aria-labelledby="status-dialog-title"
+            aria-describedby="status-dialog-description"
+          >
+            <DialogTitle id="status-dialog-title">
+              Deployment Status
+            </DialogTitle>
+            <DialogContent>
+              <p><strong>Deployment Name:</strong> {statusModalContent.deploymentName}</p>
+              <p><strong>State:</strong> {statusModalContent.state}</p>
+              {customMessage && <p><strong>Note:</strong> {customMessage}</p>}
+            </DialogContent>
+            <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+              <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+        );
+      }
+    };
 
     const nodes = React.useMemo(() => {
         const NODE_DIAMETER = 100;
@@ -654,8 +704,7 @@ export const TopologyCustomEdgeDemo = () => {
         const createContextMenu = (nodeStatus) => {
           console.log('Creating context menu for node status:', nodeStatus);
           if (nodeStatus === NodeStatus.danger) {
-              setStatusModalOpen(false); // Close the status modal if the node status is danger
-              return createContextMenuItems('Start');
+              setStatusModalOpen(true); // Close the status modal if the node status is danger
           }
           switch (nodeStatus) {
               case NodeStatus.success:
@@ -1139,25 +1188,7 @@ export const TopologyCustomEdgeDemo = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog
-        open={statusModalOpen}
-        onClose={() => setStatusModalOpen(false)}
-        aria-labelledby="status-dialog-title"
-        aria-describedby="status-dialog-description"
-      >
-        <DialogTitle id="status-dialog-title">
-          Deployment Status
-        </DialogTitle>
-        <DialogContent>
-          <p><strong>Deployment Name:</strong> {statusModalContent.deploymentName}</p>
-          <p><strong>State:</strong> {statusModalContent.state}</p>
-        </DialogContent>
-        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
-          <Button sx={cancelButtonStyles} onClick={() => setStatusModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {renderStatusModalContent()}
       <Dialog
         open={edgeModalOpen}
         onClose={() => setEdgeModalOpen(false)}
