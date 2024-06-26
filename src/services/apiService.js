@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getNewToken, isTokenExpired } from '../utils/tokenService';
 
 const api = axios.create({
-  baseURL: 'http://backend.staging.svc:8000/api/v1/'
+  baseURL: 'http://backend:8000/api/v1/'
 });
 
 api.interceptors.request.use(
