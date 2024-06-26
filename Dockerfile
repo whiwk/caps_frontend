@@ -1,4 +1,4 @@
-FROM quay.tiplab.local/openetra/node:18.17.0-alpine
+FROM quay.tiplab.local/orca/node:18.17.0-alpine
 
 WORKDIR /app
 
