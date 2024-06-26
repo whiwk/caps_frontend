@@ -89,7 +89,6 @@ const Navbar = () => {
         <div className="navbar__user-info">
           {!user.isAdmin && (
             <div className="navbar__user-details">
-              <span className="navbar__level">Level: {user.level}</span>
               <span className="navbar__completion">Completion: {user.completion}</span>
             </div>
           )}

@@ -259,19 +259,28 @@ export const TopologyCustomEdgeDemo = () => {
               Authorization: `Bearer ${authToken}`,
             },
           });
-          
+    
           // Check if the response data has the expected structure
           if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
-            const parsedData = response.data.packets.map((item) => ({
-              ipAddress: item._source?.layers?.ip?.["ip.src"] || null,
-              sctpSrcPort: item._source?.layers?.sctp?.["sctp.srcport"] || null,
-              sctpDstPort: item._source?.layers?.sctp?.["sctp.dstport"] || null,
-              sctpVerificationTag: item._source?.layers?.sctp?.["sctp.verification_tag"] || null,
-              sctpAssocIndex: item._source?.layers?.sctp?.["sctp.assoc_index"] || null,
-              sctpPort: item._source?.layers?.sctp?.["sctp.port"] || null,
-              sctpChecksum: item._source?.layers?.sctp?.["sctp.checksum"] || null,
-              sctpChecksumStatus: item._source?.layers?.sctp?.["sctp.checksum.status"] || null,
-            }));
+            const parsedData = response.data.packets.map((item) => {
+    
+              return {
+                ipAddress: item._source?.layers?.ip?.["ip.src"] || null,
+                sctpSrcPort: item._source?.layers?.sctp?.["sctp.srcport"] || null,
+                sctpDstPort: item._source?.layers?.sctp?.["sctp.dstport"] || null,
+                sctpVerificationTag: item._source?.layers?.sctp?.["sctp.verification_tag"] || null,
+                sctpAssocIndex: item._source?.layers?.sctp?.["sctp.assoc_index"] || null,
+                sctpPort: item._source?.layers?.sctp?.["sctp.port"] || null,
+                sctpChecksum: item._source?.layers?.sctp?.["sctp.checksum"] || null,
+                sctpChecksumStatus: item._source?.layers?.sctp?.["sctp.checksum.status"] || null,
+                sctpChunkType: item._source?.layers?.sctp?.["sctp.chunk_type"] || null,
+                sctpChunkFlags: item._source?.layers?.sctp?.["sctp.chunk_flags"] || null,
+                sctpChunkLength: item._source?.layers?.sctp?.["sctp.chunk_length"] || null,
+                sctpParameterType: item._source?.layers?.sctp?.["sctp.parameter_type"] || null,
+                sctpParameterLength: item._source?.layers?.sctp?.["sctp.parameter_length"] || null,
+                sctpHeartbeatInformation: item._source?.layers?.sctp?.["sctp.parameter_heartbeat_information"] || null,
+              };
+            });
     
             console.log('Parsed Protocol Stack Data:', parsedData);
             setProtocolStackData(parsedData[0] || {}); // Display the first packet data for simplicity
@@ -287,7 +296,7 @@ export const TopologyCustomEdgeDemo = () => {
       } finally {
         setSidebarLoading(false);
       }
-    }, [pods]);
+    }, [pods]);    
 
     React.useEffect(() => {
       fetchDeployments();

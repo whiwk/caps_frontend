@@ -293,26 +293,26 @@ const ConfigurationPanel = () => {
           <>
         <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid #ccc', marginLeft: '-15px', marginRight: '-15px' }}>
           <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-40px' }}>Key</Title>
-          <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-30px' }}>Current Value</Title>
-          <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem' }}>Set Value</Title>
+          <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-30px' }}>Set Value</Title>
+          <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem' }}>Current Value</Title>
         </div>
         <div style={shouldScroll ? { position: 'relative', overflowY: 'auto', maxHeight: '360px', width: '475px', paddingLeft: '15px', paddingRight: '20px', marginLeft: '-15px', overflowX: 'hidden', } : {}}>
           {Object.entries(componentData[selectedComponent]).map(([key, _]) => (
             <div key={key} style={{ display: 'flex', paddingTop: '10px', marginLeft: '-15px', marginRight: '-15px' }}>
               <span style={{ width: '240px', textAlign: 'left', fontSize: '0.75rem', marginTop: '6px' }}>{key}</span>
               <TextInput
-                id={`${key}-current`}
-                value={values[key] || ''}
-                type="text"
-                isreadonly="true"
-                style={{ flex: 1, margin: '0 0px', fontSize: '0.75rem', boxSizing: 'border-box' }}
-              />
-              <TextInput
                 id={`${key}-new`}
                 type="text"
                 value={setValuesState[key] || ''}
                 onChange={(e) => setSetValuesState({ ...setValuesState, [key]: e.target.value })}
                 style={{ flex: 1, fontSize: '0.75rem', boxSizing: 'border-box'}}
+              />
+              <TextInput
+                id={`${key}-current`}
+                value={values[key] || ''}
+                type="text"
+                isreadonly="true"
+                style={{ flex: 1, margin: '0 0px', fontSize: '0.75rem', boxSizing: 'border-box' }}
               />
             </div>
           ))}
@@ -327,7 +327,7 @@ const ConfigurationPanel = () => {
           Submit
         </Button>
       </CardFooter>
-      <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={handleSnackbarClose}>
         <MuiAlert elevation={6} variant="filled" onClose={handleSnackbarClose} severity={alertSeverity}>
           {alertMessage}
         </MuiAlert>
@@ -345,7 +345,7 @@ const ConfigurationPanel = () => {
           </Button>
           <Button variant="contained" color="primary" onClick={handleSubmit} autoFocus style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
           <Box display="flex" alignItems="center" justifyContent="center">
-              {loading ? <CircularProgress size={20} color="inherit"/> : 'Confirm'}
+              {loading ? <CircularProgress size={24} color="inherit"/> : 'Confirm'}
             </Box>
           </Button>
         </DialogActions>
