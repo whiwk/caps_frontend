@@ -59,7 +59,7 @@ export default function SignInSide() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://arigints.my.id:81/api/v1/token/access/', {
+      const response = await axios.post('https://arigints.my.id:81/api/v1/token/access/', {
         username,
         password
       });
