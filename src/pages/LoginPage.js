@@ -9,10 +9,10 @@ import Grid from '@mui/material/Grid';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import CircularProgress from '@mui/material/CircularProgress';
 import { Helmet } from 'react-helmet';
+import api from '../services/apiService';
 
 const defaultTheme = createTheme();
 
@@ -59,7 +59,7 @@ export default function SignInSide() {
     setLoading(true);
 
     try {
-      const response = await axios.post('https://arigints.my.id/api/v1/token/access/', {
+      const response = await api.post('token/access/', {
         username,
         password
       });

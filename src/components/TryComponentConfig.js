@@ -39,6 +39,7 @@ const levelComponents = {
 };
 
 const ConfigurationPanel = () => {
+  const { setRefreshTopology, setRefreshNavbar } = useContext(RefreshContext);
   const [userLevel, setUserLevel] = useState(1);
   const [selectedComponent, setSelectedComponent] = useState(null);
   const [values, setValues] = useState({});
@@ -48,7 +49,6 @@ const ConfigurationPanel = () => {
   const [alertSeverity, setAlertSeverity] = useState('success');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { setRefresh } = useContext(RefreshContext);
 
   useEffect(() => {
     const fetchUserLevel = async () => {
@@ -230,7 +230,24 @@ const ConfigurationPanel = () => {
           ...updatedValues
         });
         setSetValuesState({});
-        setRefresh(true);  // Reset set values state
+        setRefreshTopology(true);
+
+        // Make additional API call based on component type
+        let compareEndpoint = '';
+        if (selectedComponent.startsWith('CU')) {
+          compareEndpoint = 'user/compare/cu/';
+        } else if (selectedComponent.startsWith('DU')) {
+          compareEndpoint = 'user/compare/du/';
+        } else if (selectedComponent.startsWith('UE')) {
+          compareEndpoint = 'user/compare/ue/';
+        }
+
+        if (compareEndpoint) {
+          await api.get(compareEndpoint);
+          console.log(`Successfully called compare endpoint: ${compareEndpoint}`);
+          setRefreshNavbar(true);
+        }
+
       } else {
         throw new Error('Failed to update due to server error');
       }

@@ -178,7 +178,7 @@ const customLayoutFactory = (type, graph) => new GridLayout(graph, {
 });
 
 export const TopologyCustomEdgeDemo = () => {
-    const { refresh, setRefresh } = useContext(RefreshContext);
+    const { refreshTopology, setRefreshTopology } = useContext(RefreshContext);
     const [selectedIds, setSelectedIds] = React.useState([]);
     const [deployments, setDeployments] = React.useState([]);
     const [modalOpen, setModalOpen] = React.useState(false);
@@ -304,11 +304,11 @@ export const TopologyCustomEdgeDemo = () => {
     }, [fetchDeployments, fetchPods]);
 
     useEffect(() => {
-      if (refresh) {
+      if (refreshTopology) {
         fetchDeployments();
-        setRefresh(false);
+        setRefreshTopology(false);
       }
-    }, [refresh, fetchDeployments, setRefresh]);
+    }, [refreshTopology, fetchDeployments, setRefreshTopology]);
 
     React.useEffect(() => {
       if (selectedIds.length > 0) {

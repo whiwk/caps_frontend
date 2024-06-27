@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import './Navbar.css';
@@ -6,6 +6,7 @@ import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import Tooltip from '@mui/material/Tooltip';
 import CircularProgress from '@mui/material/CircularProgress';
 import api from '../../services/apiService';
+import { RefreshContext } from '../../contexts/RefreshContext';
 
 const Navbar = () => {
   const [user, setUser] = useState({
@@ -17,8 +18,25 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const { refreshNavbar, setRefreshNavbar } = useContext(RefreshContext);
 
   useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await api.get('user/information/');
+        setUser(prevState => ({
+          ...prevState,
+          username: response.data.username,
+          level: response.data.level,
+          completion: `${Math.round(response.data.completion)}%`
+        }));
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     setLoading(true);
     document.body.style.paddingTop = '40px';
     const authToken = localStorage.getItem('authToken');
@@ -28,27 +46,34 @@ const Navbar = () => {
       setUser(prevState => ({ ...prevState, isAdmin }));
     }
 
-    const fetchUserData = async () => {
-      try {
-        const response = await api.get('user/information/');
-        setUser(prevState => ({
-          ...prevState,
-          username: response.data.username,
-          level: response.data.level,
-          completion: `${response.data.completion}%`
-        }));
-      } catch (error) {
-        console.error('Failed to fetch user data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUserData();
+
     return () => {
       document.body.style.paddingTop = '0px'; // Reset padding when the component is unmounted
     };
   }, []);
+
+  useEffect(() => {
+    if (refreshNavbar) {
+      const fetchUserData = async () => {
+        try {
+          const response = await api.get('user/information/');
+          setUser(prevState => ({
+            ...prevState,
+            username: response.data.username,
+            level: response.data.level,
+            completion: `${response.data.completion}%`
+          }));
+        } catch (error) {
+          console.error('Failed to fetch user data:', error);
+        } finally {
+          setRefreshNavbar(false); // Reset the refresh state
+        }
+      };
+
+      fetchUserData();
+    }
+  }, [refreshNavbar, setRefreshNavbar]);
 
   const handleLogout = async () => {
     try {
@@ -69,38 +94,38 @@ const Navbar = () => {
   return (
     <header className="navbar">
       {loading ? <CircularProgress /> : (
-      <>
-        <div className="navbar__logo">
-          <Link to="/">
-            <img src="/logo-orca-black.png" alt="Logo" />
-          </Link>
-        </div>
-        <nav className="navbar__nav">
-          {user.isAdmin ? (
-            <Link to="/user-management" className={isActive('/user-management') ? 'active' : ''}>User Management</Link>
-          ) : (
-            <>
-              <Link to="/introduction" className={isActive('/introduction') ? 'active' : ''}>Introduction</Link>
-              <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>Dashboard</Link>
-              <Link to="/monitoring" className={isActive('/monitoring') ? 'active' : ''}>Monitoring</Link>
-            </>
-          )}
-        </nav>
-        <div className="navbar__user-info">
-          {!user.isAdmin && (
-            <div className="navbar__user-details">
-              <span className="navbar__completion">Completion: {user.completion}</span>
-            </div>
-          )}
-          <img src="/login-bright.png" alt="User Avatar" className="navbar__avatar" />
-          <span className="navbar__username">{user.username}</span>
-          <Tooltip title="Logout" placement="bottom">
-            <button className="navbar__logout" onClick={handleLogout}>
-              <ExitToAppIcon />
-            </button>
-          </Tooltip>
-        </div>
-      </>
+        <>
+          <div className="navbar__logo">
+            <Link to="/">
+              <img src="/logo-orca-black.png" alt="Logo" />
+            </Link>
+          </div>
+          <nav className="navbar__nav">
+            {user.isAdmin ? (
+              <Link to="/user-management" className={isActive('/user-management') ? 'active' : ''}>User Management</Link>
+            ) : (
+              <>
+                <Link to="/introduction" className={isActive('/introduction') ? 'active' : ''}>Introduction</Link>
+                <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>Dashboard</Link>
+                <Link to="/monitoring" className={isActive('/monitoring') ? 'active' : ''}>Monitoring</Link>
+              </>
+            )}
+          </nav>
+          <div className="navbar__user-info">
+            {!user.isAdmin && (
+              <div className="navbar__user-details">
+                <span className="navbar__completion">Completion: {user.completion}</span>
+              </div>
+            )}
+            <img src="/login-bright.png" alt="User Avatar" className="navbar__avatar" />
+            <span className="navbar__username">{user.username}</span>
+            <Tooltip title="Logout" placement="bottom">
+              <button className="navbar__logout" onClick={handleLogout}>
+                <ExitToAppIcon />
+              </button>
+            </Tooltip>
+          </div>
+        </>
       )}
     </header>
   );

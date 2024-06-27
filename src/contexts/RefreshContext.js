@@ -3,10 +3,11 @@ import React, { createContext, useState } from 'react';
 export const RefreshContext = createContext();
 
 export const RefreshProvider = ({ children }) => {
-  const [refresh, setRefresh] = useState(false);
+  const [refreshTopology, setRefreshTopology] = useState(false);
+  const [refreshNavbar, setRefreshNavbar] = useState(false);
 
   return (
-    <RefreshContext.Provider value={{ refresh, setRefresh }}>
+    <RefreshContext.Provider value={{ refreshTopology, setRefreshTopology, refreshNavbar, setRefreshNavbar }}>
       {children}
     </RefreshContext.Provider>
   );
