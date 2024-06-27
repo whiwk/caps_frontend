@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getNewToken, isTokenExpired } from '../utils/tokenService';
 
 const api = axios.create({
-  baseURL: 'https://api.orca.edu/api/v1/'
+  baseURL: 'http://arigints.my.id:81/api/v1/'
 });
 
 api.interceptors.request.use(
