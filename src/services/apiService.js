@@ -2,7 +2,7 @@ import axios from 'axios';
 import { getNewToken, isTokenExpired } from '../utils/tokenService';
 
 const api = axios.create({
-  baseURL: 'https://arigints.my.id:81/api/v1/'
+  baseURL: 'https://arigints.my.id/api/v1/'
 });
 
 api.interceptors.request.use(
