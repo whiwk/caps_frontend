@@ -59,7 +59,7 @@ export default function SignInSide() {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://backend:8000/api/v1/token/access/', {
+      const response = await axios.post('http://backend.staging.svc:8000/api/v1/token/access/', {
         username,
         password
       });
