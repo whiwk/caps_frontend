@@ -211,7 +211,7 @@ function UserManagementPage() {
                 <TableRow key={user.id}>
                   <TableCell component="th" scope="row">{user.username}</TableCell>
                   <TableCell align="right">{user.profile.level}</TableCell>
-                  <TableCell align="right">{user.profile.completion}%</TableCell>
+                  <TableCell align="right">{Math.round(user.profile.completion)}%</TableCell>
                   <TableCell align="right">
                     <Button color="primary" onClick={() => handleEdit(user)}>Edit</Button>
                     <Button  onClick={() => handleRemove(user)} style={{color: '#CC1914'}}>Remove</Button>

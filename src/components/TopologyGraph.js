@@ -201,6 +201,8 @@ export const TopologyCustomEdgeDemo = () => {
     const [snackbarSeverity, setSnackbarSeverity] = React.useState('success'); 
     const [customMessage, setCustomMessage] = React.useState('');
     const [dangerStatus, setDangerStatus] = React.useState(false);
+    const [warningModalOpen, setWarningModalOpen] = React.useState(false);
+    const [warningModalMessage, setWarningModalMessage] = React.useState('');
 
     const handleEdgeClick = React.useCallback((element) => {
       if (element && element.id) {
@@ -475,6 +477,7 @@ export const TopologyCustomEdgeDemo = () => {
             aria-labelledby="status-dialog-title"
             aria-describedby="status-dialog-description"
           >
+            <DialogTitle id="warning-dialog-title">Warning</DialogTitle>
             <DialogContent>
               {statusModalContent}
             </DialogContent>
@@ -720,6 +723,7 @@ export const TopologyCustomEdgeDemo = () => {
         const createContextMenuItems = (...labels) => labels.map(contextMenuItem);
 
         const createContextMenu = (nodeStatus) => {
+          setWarningModalOpen(false)
           console.log('Creating context menu for node status:', nodeStatus);
           if (nodeStatus === NodeStatus.danger) {
               setStatusModalOpen(true); // Close the status modal if the node status is danger
@@ -780,6 +784,10 @@ export const TopologyCustomEdgeDemo = () => {
           setShowSideBar(true);
         } else if (nodeStatus === NodeStatus.danger) {
           handleStatusDecoratorClick(selectedNodeId);
+          setShowSideBar(false);
+        } else if (nodeStatus === NodeStatus.warning) {
+          setWarningModalMessage(`You must start the component ${selectedNodeId} first.`);
+          setWarningModalOpen(true);
           setShowSideBar(false);
         } else {
           setSelectedIds(ids);
@@ -1062,6 +1070,23 @@ export const TopologyCustomEdgeDemo = () => {
       textTransform: 'none' // Prevent text from being uppercased
     };
 
+    const renderWarningModal = () => (
+      <Dialog
+        open={warningModalOpen}
+        onClose={() => setWarningModalOpen(false)}
+        aria-labelledby="warning-dialog-title"
+        aria-describedby="warning-dialog-description"
+      >
+        <DialogTitle id="warning-dialog-title">Warning</DialogTitle>
+        <DialogContent>{warningModalMessage}</DialogContent>
+        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+          <Button sx={cancelButtonStyles} onClick={() => setWarningModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
+
     const topologySideBar = (
         <TopologySideBar
           className="topology-example-sidebar"
@@ -1207,6 +1232,7 @@ export const TopologyCustomEdgeDemo = () => {
         </DialogActions>
       </Dialog>
       {renderStatusModalContent()}
+      {renderWarningModal()}
       <Dialog
         open={edgeModalOpen}
         onClose={() => setEdgeModalOpen(false)}
