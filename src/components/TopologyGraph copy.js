@@ -1,7 +1,8 @@
-import * as React from 'react';
+import React, { useEffect, useContext } from 'react';
 import '@patternfly/patternfly/patternfly.css';
 import './TopologyGraph.css';
 import api from '../services/apiService';
+import { RefreshContext } from '../contexts/RefreshContext';
 import {
   action,
   ContextMenuItem,
@@ -87,12 +88,12 @@ const CONNECTOR_TARGET_DROP = 'connector-src-drop';
 
 const DataEdge = React.memo(({ element, onEdgeClick, ...rest }) => {
   React.useEffect(() => {
-    console.log('DataEdge element:', element);
+    // console.log('DataEdge element:', element);
   }, [element]);
 
   const handleEdgeClick = (e) => {
     e.stopPropagation(); // Prevent event from bubbling up
-    console.log('Edge clicked:', element.getId());
+    // console.log('Edge clicked:', element.getId());
     onEdgeClick(element);
   };
 
@@ -118,7 +119,7 @@ const CustomNode = React.memo(({
   ...rest
 }) => {
   React.useEffect(() => {
-    console.log('CustomNode element:', element);
+    // console.log('CustomNode element:', element);
   }, [element]);
 
   const nodeId = element && element.getId ? element.getId() : null;
@@ -177,6 +178,7 @@ const customLayoutFactory = (type, graph) => new GridLayout(graph, {
 });
 
 export const TopologyCustomEdgeDemo = () => {
+    const { refreshTopology, setRefreshTopology } = useContext(RefreshContext);
     const [selectedIds, setSelectedIds] = React.useState([]);
     const [deployments, setDeployments] = React.useState([]);
     const [modalOpen, setModalOpen] = React.useState(false);
@@ -199,10 +201,12 @@ export const TopologyCustomEdgeDemo = () => {
     const [snackbarSeverity, setSnackbarSeverity] = React.useState('success'); 
     const [customMessage, setCustomMessage] = React.useState('');
     const [dangerStatus, setDangerStatus] = React.useState(false);
+    const [warningModalOpen, setWarningModalOpen] = React.useState(false);
+    const [warningModalMessage, setWarningModalMessage] = React.useState('');
 
     const handleEdgeClick = React.useCallback((element) => {
       if (element && element.id) {
-        console.log('Edge clicked:', element.id);
+        // console.log('Edge clicked:', element.id);
         setSelectedEdge(element);
         setEdgeModalOpen(true);
       } else {
@@ -257,22 +261,35 @@ export const TopologyCustomEdgeDemo = () => {
               Authorization: `Bearer ${authToken}`,
             },
           });
-          
+    
+          console.log('API Response:', response.data);
+    
           // Check if the response data has the expected structure
           if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
-            const parsedData = response.data.packets.map((item) => ({
-              ipAddress: item._source?.layers?.ip?.["ip.src"] || null,
-              sctpSrcPort: item._source?.layers?.sctp?.["sctp.srcport"] || null,
-              sctpDstPort: item._source?.layers?.sctp?.["sctp.dstport"] || null,
-              sctpVerificationTag: item._source?.layers?.sctp?.["sctp.verification_tag"] || null,
-              sctpAssocIndex: item._source?.layers?.sctp?.["sctp.assoc_index"] || null,
-              sctpPort: item._source?.layers?.sctp?.["sctp.port"] || null,
-              sctpChecksum: item._source?.layers?.sctp?.["sctp.checksum"] || null,
-              sctpChecksumStatus: item._source?.layers?.sctp?.["sctp.checksum.status"] || null,
-            }));
+            const parsedData = response.data.packets.map((item) => {
+              const sctp = item._source?.layers?.sctp || {};
+              const sctpChunk = Object.values(sctp).find(value => value?.['sctp.chunk_type']);
     
-            console.log('Parsed Protocol Stack Data:', parsedData);
-            setProtocolStackData(parsedData[0] || {}); // Display the first packet data for simplicity
+              return {
+                ipAddress: item._source?.layers?.ip?.["ip.src"] || null,
+                sctpSrcPort: sctp["sctp.srcport"] || null,
+                sctpDstPort: sctp["sctp.dstport"] || null,
+                sctpVerificationTag: sctp["sctp.verification_tag"] || null,
+                sctpAssocIndex: sctp["sctp.assoc_index"] || null,
+                sctpPort: sctp["sctp.port"] || null,
+                sctpChecksum: sctp["sctp.checksum"] || null,
+                sctpChecksumStatus: sctp["sctp.checksum.status"] || null,
+                sctpChunkType: sctpChunk?.["sctp.chunk_type"] || null,
+                sctpChunkFlags: sctpChunk?.["sctp.chunk_flags"] || null,
+                sctpChunkLength: sctpChunk?.["sctp.chunk_length"] || null,
+                sctpParameterType: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_type"] || null,
+                sctpParameterLength: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_length"] || null,
+                sctpHeartbeatInformation: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_heartbeat_information"] || null,
+              };
+            }).filter(packet => packet.sctpSrcPort !== null && packet.sctpDstPort !== null);
+    
+            console.log('Filtered Protocol Stack Data:', parsedData);
+            setProtocolStackData(parsedData[0] || {}); // Display the first packet data that contains SCTP information
           } else {
             setProtocolStackData({});
           }
@@ -291,6 +308,13 @@ export const TopologyCustomEdgeDemo = () => {
       fetchDeployments();
       fetchPods();
     }, [fetchDeployments, fetchPods]);
+
+    useEffect(() => {
+      if (refreshTopology) {
+        fetchDeployments();
+        setRefreshTopology(false);
+      }
+    }, [refreshTopology, fetchDeployments, setRefreshTopology]);
 
     React.useEffect(() => {
       if (selectedIds.length > 0) {
@@ -457,6 +481,7 @@ export const TopologyCustomEdgeDemo = () => {
             aria-labelledby="status-dialog-title"
             aria-describedby="status-dialog-description"
           >
+            <DialogTitle id="warning-dialog-title">Warning</DialogTitle>
             <DialogContent>
               {statusModalContent}
             </DialogContent>
@@ -702,7 +727,8 @@ export const TopologyCustomEdgeDemo = () => {
         const createContextMenuItems = (...labels) => labels.map(contextMenuItem);
 
         const createContextMenu = (nodeStatus) => {
-          console.log('Creating context menu for node status:', nodeStatus);
+          setWarningModalOpen(false)
+          // console.log('Creating context menu for node status:', nodeStatus);
           if (nodeStatus === NodeStatus.danger) {
               setStatusModalOpen(true); // Close the status modal if the node status is danger
           }
@@ -728,7 +754,7 @@ export const TopologyCustomEdgeDemo = () => {
                   withDragNode(nodeDragSourceSpec('node', true, true))(
                     withSelection()(
                       withContextMenu((element) => {
-                        console.log('Context menu element data:', element.getData());
+                        // console.log('Context menu element data:', element.getData());
                         return createContextMenu(element.getData().status);
                       })(
                         (props) => <CustomNode {...props} setShowSideBar={setShowSideBar} onStatusDecoratorClick={handleStatusDecoratorClick} />
@@ -763,6 +789,10 @@ export const TopologyCustomEdgeDemo = () => {
         } else if (nodeStatus === NodeStatus.danger) {
           handleStatusDecoratorClick(selectedNodeId);
           setShowSideBar(false);
+        } else if (nodeStatus === NodeStatus.warning) {
+          setWarningModalMessage(`You must start the component ${selectedNodeId} first.`);
+          setWarningModalOpen(true);
+          setShowSideBar(false);
         } else {
           setSelectedIds(ids);
           setShowSideBar(true);
@@ -796,7 +826,7 @@ export const TopologyCustomEdgeDemo = () => {
       }, [controller, nodes, edges]);
 
     const handleContextMenuAction = (action) => {
-      console.log('Context menu action:', action);
+      // console.log('Context menu action:', action);
       setModalAction(action);
       setModalOpen(true);
       setShowSideBar(false);
@@ -889,54 +919,96 @@ export const TopologyCustomEdgeDemo = () => {
       <TableContainer component={Paper}>
         <Table>
           <TableBody>
-            {sidebarLoading ? (
-              <TableRow>
-                <TableCell colSpan={2} align="center">
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : (
-              <>
-                <TableRow>
-                  <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>IP Layer</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>IP Address</TableCell>
-                  <TableCell>{protocolStackData.ipAddress}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>SCTP Layer</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.srcport</TableCell>
-                  <TableCell>{protocolStackData.sctpSrcPort}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.dstport</TableCell>
-                  <TableCell>{protocolStackData.sctpDstPort}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.verification_tag</TableCell>
-                  <TableCell>{protocolStackData.sctpVerificationTag}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.assoc_index</TableCell>
-                  <TableCell>{protocolStackData.sctpAssocIndex}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.port</TableCell>
-                  <TableCell>{protocolStackData.sctpPort}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.checksum</TableCell>
-                  <TableCell>{protocolStackData.sctpChecksum}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.checksum.status</TableCell>
-                  <TableCell>{protocolStackData.sctpChecksumStatus}</TableCell>
-                </TableRow>
-              </>
-            )}
+            <TableRow>
+              <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>IP Layer</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>IP Address</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.ipAddress ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>SCTP Layer</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.srcport</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpSrcPort ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.dstport</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpDstPort ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.verification_tag</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpVerificationTag ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.assoc_index</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpAssocIndex ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.port</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpPort ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.checksum</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChecksum ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.checksum.status</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChecksumStatus ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.chunk_type</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChunkType ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.chunk_flags</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChunkFlags ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.chunk_length</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChunkLength ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.parameter_type</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpParameterType ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.parameter_length</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpParameterLength ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.parameter_heartbeat_information</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpHeartbeatInformation ?? 'null')}
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </TableContainer>
@@ -1043,6 +1115,23 @@ export const TopologyCustomEdgeDemo = () => {
     const createButtonStyles = {
       textTransform: 'none' // Prevent text from being uppercased
     };
+
+    const renderWarningModal = () => (
+      <Dialog
+        open={warningModalOpen}
+        onClose={() => setWarningModalOpen(false)}
+        aria-labelledby="warning-dialog-title"
+        aria-describedby="warning-dialog-description"
+      >
+        <DialogTitle id="warning-dialog-title">Warning</DialogTitle>
+        <DialogContent>{warningModalMessage}</DialogContent>
+        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+          <Button sx={cancelButtonStyles} onClick={() => setWarningModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
+    );
 
     const topologySideBar = (
         <TopologySideBar
@@ -1189,6 +1278,7 @@ export const TopologyCustomEdgeDemo = () => {
         </DialogActions>
       </Dialog>
       {renderStatusModalContent()}
+      {renderWarningModal()}
       <Dialog
         open={edgeModalOpen}
         onClose={() => setEdgeModalOpen(false)}

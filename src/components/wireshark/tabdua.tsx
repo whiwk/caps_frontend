@@ -21,9 +21,10 @@ import {
 import api from '../../services/apiService'
 
 interface PcapFile {
-  timestamp: string;
+  id: number; 
+  created_at: string;
   filename: string;
-  size: string;
+  file_size: number;
 }
 
 interface FilesTabProps {
@@ -64,7 +65,7 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
   }, [isActive]);
 
 
-  const handleDownload = async (id: number, filename: string) => {
+  const handleDownload = async (id: number, displayFilename: string) => {
     const authToken = localStorage.getItem('authToken');
     try {
       const response = await api.get(`shark/pcap_files/${id}/download/`, {
@@ -77,10 +78,12 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `${filename}.pcap`); // Use the actual file name
+      link.setAttribute('download', displayFilename); // Use the display filename
       document.body.appendChild(link);
       link.click();
-      link.parentNode.removeChild(link);
+      if (link.parentNode) {
+        link.parentNode.removeChild(link);
+      }
     } catch (error) {
       console.error('Error downloading pcap file:', error.message);
     }
@@ -120,32 +123,48 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
   };
 
   const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    const formattedDate = date.toISOString().split('T')[0];
-    const formattedTime = date.toTimeString().split(' ')[0];
-    return (
-      <>
-        <div>{formattedDate}</div>
-        <div>{formattedTime}</div>
-      </>
-    );
+    try {
+      const date = new Date(timestamp);
+      const formattedDate = date.toLocaleDateString();
+      const formattedTime = date.toLocaleTimeString();
+      return (
+        <>
+          <div>{formattedDate}</div>
+          <div>{formattedTime}</div>
+        </>
+      );
+    } catch (error) {
+      console.error('Invalid date format:', timestamp);
+      return 'Invalid date';
+    }
   };
 
+  const formatFileSize = (size: number) => {
+    if (size >= 1024 * 1024) {
+      return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+    } else if (size >= 1024) {
+      return `${(size / 1024).toFixed(2)} KB`;
+    } else {
+      return `${size} B`;
+    }
+  };
 
-  const shortenFileName = (filename: string) => {
+  const shortenFileName = (filename: string, id: number) => {
     if (!filename) return 'Unknown filename';
     const parts = filename.split('-');
     if (parts.length >= 3) {
       const userPart = parts[0].split('_')[0]; // extract user1 from user1_oai
       const componentPart = parts[0].split('_')[1]; // extract oai from user1_oai
       const namePart = parts[1]; // extract cu
-      const levelPart = parts[2]; // extract level1
-      return `${userPart}_${componentPart}-${namePart}-${levelPart}.pcap`;
+      return `${userPart}_${componentPart}-${namePart}-${id}.pcap`;
     }
     return filename;
   };
 
   const cancelButtonStyles = {
+    textTransform: 'none', // Prevent text from being uppercased
+    minWidth: '80px',
+    borderRadius: '20px',
     backgroundColor: '#E3AE14',
     color: '#fff',
     '&:hover': {
@@ -155,6 +174,9 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
   };
 
   const removeButtonStyles = {
+    textTransform: 'none', // Prevent text from being uppercased
+    minWidth: '80px',
+    borderRadius: '20px',
     backgroundColor: '#FF1F19', // Red color
     color: '#fff',
     '&:hover': {
@@ -164,60 +186,73 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
   };
 
   const createButtonStyles = {
-    textTransform: 'none' // Prevent text from being uppercased
+    textTransform: 'none', // Prevent text from being uppercased
+    minWidth: '80px',
+    borderRadius: '20px'
   };
 
   return (
     <>
-    <TableContainer component={Paper}>
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-          <CircularProgress />
-        </Box>
-      ) : (
-      <Table aria-label="Pcap Files Table">
-        <TableHead>
-          <TableRow>
-              <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Timestamp</TableCell>
-              <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>File Name</TableCell>
-              <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Size</TableCell>
-              <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {pcapFiles.map((file) => (
-            <TableRow key={file.fileName}>
-                <TableCell style={{ textAlign: 'center' }}>{formatTimestamp(file.created_at)}</TableCell>
-                <TableCell style={{ textAlign: 'center' }}>{shortenFileName(file.filename)}</TableCell>
-                <TableCell style={{ textAlign: 'center' }}>{`${file.file_size} B`}</TableCell>
-                <TableCell style={{ textAlign: 'center' }}>
-                <Box display="flex" justifyContent="flex-end" gap={1}>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    size="small"
-                    onClick={() => handleDownload(file.id, file.filename)}
-                    style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}
-                  >
-                    Download
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    size="small"
-                    onClick={() => handleRemoveClick(file)}
-                    style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}
-                  >
-                    Remove
-                  </Button>
-                </Box>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      )}
-    </TableContainer>
+      <TableContainer component={Paper}>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+            <CircularProgress />
+          </Box>
+        ) : (
+          <Table aria-label="Pcap Files Table">
+            <TableHead>
+              <TableRow>
+                <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Timestamp</TableCell>
+                <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>File Name</TableCell>
+                <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Size</TableCell>
+                <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {pcapFiles.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={4} style={{ textAlign: 'center', fontStyle: 'italic' }}>
+                    Available pcap files will be shown here
+                  </TableCell>
+                </TableRow>
+              ) : (
+                pcapFiles.map((file) => {
+                  const shortenedFilename = shortenFileName(file.filename, file.id);
+                  return (
+                    <TableRow key={file.id}>
+                      <TableCell style={{ textAlign: 'center' }}>{formatTimestamp(file.created_at)}</TableCell>
+                      <TableCell style={{ textAlign: 'center' }}>{shortenedFilename}</TableCell>
+                      <TableCell style={{ textAlign: 'center' }}>{formatFileSize(file.file_size)}</TableCell>
+                      <TableCell style={{ textAlign: 'center' }}>
+                        <Box display="flex" justifyContent="flex-end" gap={1}>
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            size="small"
+                            onClick={() => handleDownload(file.id, shortenedFilename)}
+                            sx={createButtonStyles}
+                          >
+                            Download
+                          </Button>
+                          <Button
+                            variant="contained"
+                            color="error"
+                            size="small"
+                            onClick={() => handleRemoveClick(file)}
+                            sx={createButtonStyles}
+                          >
+                            Remove
+                          </Button>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        )}
+      </TableContainer>
     <Snackbar
       open={snackbarOpen}
       autoHideDuration={3000}
@@ -239,10 +274,10 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
         </DialogContentText>
       </DialogContent>
       <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
-        <Button sx={cancelButtonStyles} variant="contained" onClick={() => setRemoveDialogOpen(false)} color="primary" style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
+        <Button sx={cancelButtonStyles} variant="contained" onClick={() => setRemoveDialogOpen(false)} color="primary">
           Cancel
         </Button>
-        <Button sx={removeButtonStyles} variant="contained" color="primary" onClick={confirmRemove} style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
+        <Button sx={removeButtonStyles} variant="contained" color="primary" onClick={confirmRemove}>
           {removing ? <CircularProgress size={20} color="inherit" /> : 'Remove'}
         </Button>
       </DialogActions>

@@ -17,22 +17,33 @@ function IntroductionPage() {
         <Text component={TextVariants.h1} style={{ fontSize: '36px', marginBottom: '36px'}}>What is ORCA?</Text>
         <img src="/logo-orca-black.png" alt="logoorca" style={{ marginBottom: '18px' }}/>
         <Text component={TextVariants.p} style={{marginBottom: '48px'}}>
-          ORCA is a cutting-edge simulation dashboard-based training platform designed
-          to enhance users' mastery of the complexities of 5G Radio Access Network (RAN) configuration.
+          ORCA (Open RAN Configuration Application) is an advanced simulation dashboard-based 
+          training platform specifically designed to elevate users' understanding and expertise 
+          in configuring 5G Radio Access Networks (RAN). This innovative platform provides 
+          a comprehensive, interactive environment where users can explore, simulate, and master 
+          the intricate configurations and operations of 5G RAN, facilitating hands-on learning 
+          and skill development. ORCA integrates sophisticated tools and features, including 
+          topology graph visualization, real-time monitoring, and detailed packet analysis with 
+          Wireshark, making it an indispensable resource for anyone looking to deepen their 
+          knowledge and proficiency in 5G RAN configuration.
         </Text>
 
         <Text component={TextVariants.h1} style={{ fontSize: '28px'}}>Who We Are</Text>
         <Text component={TextVariants.p} style={{marginBottom: '18px'}}>
-          We are a dedicated team of final-year students on the brink of graduation, 
-          driven by a passion for innovation and excellence in telecommunications. 
-          Our capstone project, ORCA, is developed with the support of the Telecom Infra Project (TIP) lab.
+          We are a dedicated team of final-year students on the cusp of graduation, united 
+          by our passion for innovation and excellence in telecommunications. Our capstone project, 
+          ORCA (Open RAN Configuration Application), is a testament to our commitment to advancing 
+          the field. Developed with the invaluable support of the Telecom Infra Project (TIP) lab, 
+          ORCA represents our collective vision and effort to create a transformative training platform.
         </Text>
         <img src="/tip-logo.png" alt="logotip" style={{ marginBottom: '18px' }}/>
         <Text component={TextVariants.p} style={{marginBottom: '48px'}}>
-          TIP is a global community committed to accelerating the development and deployment of open, 
-          standards-based technology solutions for high-quality connectivity. Leveraging TIP's extensive
-          resources and expertise, we strive to create a training platform that addresses the current 
-          and future needs of the telecom industry.
+          TIP is a global community dedicated to accelerating the development and deployment of open, 
+          standards-based technology solutions for high-quality connectivity. By leveraging TIP's 
+          extensive resources, expertise, and collaborative spirit, we aim to address the current and 
+          future needs of the telecom industry. Our partnership with TIP empowers us to design and develop 
+          a cutting-edge platform that not only meets the industry's demands but also prepares the next 
+          generation of telecom professionals for the challenges ahead.
         </Text>
 
         <Text component={TextVariants.h1} style={{ fontSize: '28px'}}>What we're building</Text>

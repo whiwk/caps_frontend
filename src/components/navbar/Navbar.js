@@ -62,7 +62,7 @@ const Navbar = () => {
             ...prevState,
             username: response.data.username,
             level: response.data.level,
-            completion: `${response.data.completion}%`
+            completion: `${Math.round(response.data.completion)}%`
           }));
         } catch (error) {
           console.error('Failed to fetch user data:', error);
@@ -97,7 +97,7 @@ const Navbar = () => {
         <>
           <div className="navbar__logo">
             <Link to="/">
-              <img src="/logo-orca-black.png" alt="Logo" />
+              <img src="/logo-orca-white.png" alt="Logo" />
             </Link>
           </div>
           <nav className="navbar__nav">

@@ -88,12 +88,12 @@ const CONNECTOR_TARGET_DROP = 'connector-src-drop';
 
 const DataEdge = React.memo(({ element, onEdgeClick, ...rest }) => {
   React.useEffect(() => {
-    console.log('DataEdge element:', element);
+    // console.log('DataEdge element:', element);
   }, [element]);
 
   const handleEdgeClick = (e) => {
     e.stopPropagation(); // Prevent event from bubbling up
-    console.log('Edge clicked:', element.getId());
+    // console.log('Edge clicked:', element.getId());
     onEdgeClick(element);
   };
 
@@ -119,7 +119,7 @@ const CustomNode = React.memo(({
   ...rest
 }) => {
   React.useEffect(() => {
-    console.log('CustomNode element:', element);
+    // console.log('CustomNode element:', element);
   }, [element]);
 
   const nodeId = element && element.getId ? element.getId() : null;
@@ -206,7 +206,7 @@ export const TopologyCustomEdgeDemo = () => {
 
     const handleEdgeClick = React.useCallback((element) => {
       if (element && element.id) {
-        console.log('Edge clicked:', element.id);
+        // console.log('Edge clicked:', element.id);
         setSelectedEdge(element);
         setEdgeModalOpen(true);
       } else {
@@ -262,30 +262,34 @@ export const TopologyCustomEdgeDemo = () => {
             },
           });
     
+          console.log('API Response:', response.data);
+    
           // Check if the response data has the expected structure
           if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
             const parsedData = response.data.packets.map((item) => {
+              const sctp = item._source?.layers?.sctp || {};
+              const sctpChunk = Object.values(sctp).find(value => value?.['sctp.chunk_type']);
     
               return {
                 ipAddress: item._source?.layers?.ip?.["ip.src"] || null,
-                sctpSrcPort: item._source?.layers?.sctp?.["sctp.srcport"] || null,
-                sctpDstPort: item._source?.layers?.sctp?.["sctp.dstport"] || null,
-                sctpVerificationTag: item._source?.layers?.sctp?.["sctp.verification_tag"] || null,
-                sctpAssocIndex: item._source?.layers?.sctp?.["sctp.assoc_index"] || null,
-                sctpPort: item._source?.layers?.sctp?.["sctp.port"] || null,
-                sctpChecksum: item._source?.layers?.sctp?.["sctp.checksum"] || null,
-                sctpChecksumStatus: item._source?.layers?.sctp?.["sctp.checksum.status"] || null,
-                sctpChunkType: item._source?.layers?.sctp?.["sctp.chunk_type"] || null,
-                sctpChunkFlags: item._source?.layers?.sctp?.["sctp.chunk_flags"] || null,
-                sctpChunkLength: item._source?.layers?.sctp?.["sctp.chunk_length"] || null,
-                sctpParameterType: item._source?.layers?.sctp?.["sctp.parameter_type"] || null,
-                sctpParameterLength: item._source?.layers?.sctp?.["sctp.parameter_length"] || null,
-                sctpHeartbeatInformation: item._source?.layers?.sctp?.["sctp.parameter_heartbeat_information"] || null,
+                sctpSrcPort: sctp["sctp.srcport"] || null,
+                sctpDstPort: sctp["sctp.dstport"] || null,
+                sctpVerificationTag: sctp["sctp.verification_tag"] || null,
+                sctpAssocIndex: sctp["sctp.assoc_index"] || null,
+                sctpPort: sctp["sctp.port"] || null,
+                sctpChecksum: sctp["sctp.checksum"] || null,
+                sctpChecksumStatus: sctp["sctp.checksum.status"] || null,
+                sctpChunkType: sctpChunk?.["sctp.chunk_type"] || null,
+                sctpChunkFlags: sctpChunk?.["sctp.chunk_flags"] || null,
+                sctpChunkLength: sctpChunk?.["sctp.chunk_length"] || null,
+                sctpParameterType: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_type"] || null,
+                sctpParameterLength: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_length"] || null,
+                sctpHeartbeatInformation: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_heartbeat_information"] || null,
               };
-            });
+            }).filter(packet => packet.sctpSrcPort !== null && packet.sctpDstPort !== null);
     
-            console.log('Parsed Protocol Stack Data:', parsedData);
-            setProtocolStackData(parsedData[0] || {}); // Display the first packet data for simplicity
+            console.log('Filtered Protocol Stack Data:', parsedData);
+            setProtocolStackData(parsedData[0] || {}); // Display the first packet data that contains SCTP information
           } else {
             setProtocolStackData({});
           }
@@ -298,7 +302,7 @@ export const TopologyCustomEdgeDemo = () => {
       } finally {
         setSidebarLoading(false);
       }
-    }, [pods]);    
+    }, [pods]);
 
     React.useEffect(() => {
       fetchDeployments();
@@ -724,7 +728,7 @@ export const TopologyCustomEdgeDemo = () => {
 
         const createContextMenu = (nodeStatus) => {
           setWarningModalOpen(false)
-          console.log('Creating context menu for node status:', nodeStatus);
+          // console.log('Creating context menu for node status:', nodeStatus);
           if (nodeStatus === NodeStatus.danger) {
               setStatusModalOpen(true); // Close the status modal if the node status is danger
           }
@@ -750,7 +754,7 @@ export const TopologyCustomEdgeDemo = () => {
                   withDragNode(nodeDragSourceSpec('node', true, true))(
                     withSelection()(
                       withContextMenu((element) => {
-                        console.log('Context menu element data:', element.getData());
+                        // console.log('Context menu element data:', element.getData());
                         return createContextMenu(element.getData().status);
                       })(
                         (props) => <CustomNode {...props} setShowSideBar={setShowSideBar} onStatusDecoratorClick={handleStatusDecoratorClick} />
@@ -822,7 +826,7 @@ export const TopologyCustomEdgeDemo = () => {
       }, [controller, nodes, edges]);
 
     const handleContextMenuAction = (action) => {
-      console.log('Context menu action:', action);
+      // console.log('Context menu action:', action);
       setModalAction(action);
       setModalOpen(true);
       setShowSideBar(false);
@@ -915,54 +919,96 @@ export const TopologyCustomEdgeDemo = () => {
       <TableContainer component={Paper}>
         <Table>
           <TableBody>
-            {sidebarLoading ? (
-              <TableRow>
-                <TableCell colSpan={2} align="center">
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : (
-              <>
-                <TableRow>
-                  <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>IP Layer</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>IP Address</TableCell>
-                  <TableCell>{protocolStackData.ipAddress}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>SCTP Layer</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.srcport</TableCell>
-                  <TableCell>{protocolStackData.sctpSrcPort}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.dstport</TableCell>
-                  <TableCell>{protocolStackData.sctpDstPort}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.verification_tag</TableCell>
-                  <TableCell>{protocolStackData.sctpVerificationTag}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.assoc_index</TableCell>
-                  <TableCell>{protocolStackData.sctpAssocIndex}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.port</TableCell>
-                  <TableCell>{protocolStackData.sctpPort}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.checksum</TableCell>
-                  <TableCell>{protocolStackData.sctpChecksum}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell>sctp.checksum.status</TableCell>
-                  <TableCell>{protocolStackData.sctpChecksumStatus}</TableCell>
-                </TableRow>
-              </>
-            )}
+            <TableRow>
+              <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>IP Layer</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>IP Address</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.ipAddress ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>SCTP Layer</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.srcport</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpSrcPort ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.dstport</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpDstPort ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.verification_tag</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpVerificationTag ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.assoc_index</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpAssocIndex ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.port</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpPort ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.checksum</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChecksum ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.checksum.status</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChecksumStatus ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.chunk_type</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChunkType ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.chunk_flags</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChunkFlags ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.chunk_length</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChunkLength ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.parameter_type</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpParameterType ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.parameter_length</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpParameterLength ?? 'null')}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>sctp.parameter_heartbeat_information</TableCell>
+              <TableCell>
+                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpHeartbeatInformation ?? 'null')}
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </TableContainer>
