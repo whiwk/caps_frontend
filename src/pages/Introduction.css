@@ -48,3 +48,17 @@
   overflow-y: auto;
   height: calc(100vh - 50px); /* Adjust based on navbar height */
 }
+
+/* lab one page css for table */
+.table-header-grey th {
+  background-color: grey;
+}
+
+.table-bordered {
+  border: 1px solid #dcdcdc;
+}
+
+.table-bordered th,
+.table-bordered td {
+  border: 1px solid #dcdcdc;
+}

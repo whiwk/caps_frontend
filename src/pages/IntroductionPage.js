@@ -126,43 +126,17 @@ function IntroductionPage() {
             a new generation of skilled telecom engineers.
           </Text>
 
-          <Text component={TextVariants.h1} style={{ fontSize: '28px'}}>Get Involved</Text>
-          <Text component={TextVariants.p}>
-            We invite you to join us on this exciting journey. Whether you're a telecom professional 
-            looking to enhance your skills, an industry expert willing to share your insights, 
-            or an organization interested in collaborating, there are numerous ways to get involved 
-            with ORCA. Together, we can drive the future of 5G RAN configuration and beyond.
-          </Text>
-          <Text component={TextVariants.p} style={{marginBottom: '48px'}}>
-            For more information, please contact us at [your contact email].
-          </Text>
-
-          <Text component={TextVariants.h1} style={{ fontSize: '28px'}}>What We're  Building</Text>
-          <Text component={TextVariants.p} style={{marginBottom: '48px'}}>
-            We extend our sincere gratitude to the Telecom Infra Project (TIP) lab for their unwavering 
-            support and resources. Their commitment to fostering innovation in telecommunications has 
-            been instrumental in the development of ORCA.
-          </Text>
-
           <Text component={TextVariants.h1} style={{ fontSize: '28px'}}>Team Members</Text>
           <TextList>
-            <TextListItem>Upin: Project Lead</TextListItem>
-            <TextListItem>Ipin: Lead Developer</TextListItem>
-            <TextListItem>Mei-Mei: Network Specialist</TextListItem>
-            <TextListItem>Mail: Data Analyst</TextListItem>
+            <TextListItem>Ari Erginta Ginting: Infrastructure Engineer</TextListItem>
+            <TextListItem>Bagus Dwi Prasetyo: Backend Engineer</TextListItem>
+            <TextListItem>Ima Dewi Arofani: Frontend Engineer</TextListItem>
+            <TextListItem>Mochamad Rafli Hadiana: System Integrator Engineer</TextListItem>
           </TextList>
           <Text component={TextVariants.p}>
-            We invite you to join us on this exciting journey. Whether you're a telecom professional 
-            looking to enhance your skills, an industry expert willing to share your insights, 
-            or an organization interested in collaborating, there are numerous ways to get involved 
-            with ORCA. Together, we can drive the future of 5G RAN configuration and beyond.
+            Together, we are committed to pushing the boundaries of what's possible in telecom training and 
+            configuration. Thank you for your interest in ORCA.
           </Text>
-          <TextList isPlain>
-            <TextListItem>[Your University Name]</TextListItem>
-            <TextListItem>[Your University Address]</TextListItem>
-            <TextListItem>[Your Contact Email]</TextListItem>
-            <TextListItem style={{marginBottom: '48px'}}>[Your Project Website (if applicable)]</TextListItem>
-          </TextList>
         </TextContent>
       </main>
       </div>

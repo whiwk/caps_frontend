@@ -3,6 +3,7 @@ import '@patternfly/patternfly/patternfly.css';
 import './TopologyGraph.css';
 import api from '../services/apiService';
 import { RefreshContext } from '../contexts/RefreshContext';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import {
   action,
   ContextMenuItem,
@@ -72,16 +73,6 @@ const BadgeColors = [{
   badgeTextColor: '#fff',
   badgeBorderColor: '#083E4A'
 }];
-
-const setSuccessStyle = () => {
-  document.documentElement.style.setProperty('--connector-circle-success-color', '#3e8635');
-  document.documentElement.style.setProperty('--edge-success-color', '#3e8635');
-};
-
-const setFailedStyle = () => {
-  document.documentElement.style.setProperty('--connector-circle-failed-color', '#c9190b');
-  document.documentElement.style.setProperty('--edge-failed-color', '#c9190b');
-};
 
 const CONNECTOR_SOURCE_DROP = 'connector-src-drop';
 const CONNECTOR_TARGET_DROP = 'connector-src-drop';
@@ -248,6 +239,12 @@ export const TopologyCustomEdgeDemo = () => {
         console.error('Failed to fetch pods:', error);
       }
     }, []);
+
+    const handleTopologyRefresh = async () => {
+      setLoading(true);
+      await fetchPods();
+      setLoading(false);
+    };
 
     const fetchProtocolStackData = React.useCallback(async (nodeId) => {
       const authToken = localStorage.getItem('authToken');
@@ -793,6 +790,7 @@ export const TopologyCustomEdgeDemo = () => {
           setWarningModalMessage(`You must start the component ${selectedNodeId} first.`);
           setWarningModalOpen(true);
           setShowSideBar(false);
+          setSelectedIds(ids);
         } else {
           setSelectedIds(ids);
           setShowSideBar(true);
@@ -1097,7 +1095,7 @@ export const TopologyCustomEdgeDemo = () => {
       </TableContainer>
     );
 
-    const renderSidebarContent = () => {
+    const renderSidebarContent = () => {      
       switch (sidebarContent) {
         case 'logs':
           return renderLogsTable();
@@ -1133,106 +1131,163 @@ export const TopologyCustomEdgeDemo = () => {
       </Dialog>
     );
 
+    const handleRefresh = async () => {
+      const selectedNodeId = selectedIds.length > 0 ? selectedIds[0] : '';
+      switch (sidebarContent) {
+        case 'logs':
+          await fetchLogs(selectedNodeId);
+          break;
+        case 'pingGoogle':
+          await pingGoogle();
+          break;
+        case 'curlGoogle':
+          await curlGoogle();
+          break;
+        case 'protocolStack':
+          await fetchProtocolStackData(selectedNodeId);
+          break;
+        default:
+          break;
+      }
+    };
+
     const topologySideBar = (
-        <TopologySideBar
-          className="topology-example-sidebar"
-          show={showSideBar && selectedIds.length > 0}
-          onClose={() => setSelectedIds([])}
-        >
+      <TopologySideBar
+        className="topology-example-sidebar"
+        show={showSideBar && selectedIds.length > 0}
+        onClose={() => setSelectedIds([])}
+      >
         <Box p={2}>
-        <Button
-            variant="contained"
-            color="primary"
-            onClick={() => handleSidebarContentChange('protocolStack')}
-            style={{
-              marginRight: '10px',
-              backgroundColor: sidebarContent === 'protocolStack' ? '#2E3B55' : undefined,
-              borderRadius: '20px',
-              ...createButtonStyles,
-              fontSize: '12px',
-              height: '24px'
-            }}
-          >
-            Protocol Stack
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={() => handleSidebarContentChange('logs')}
-            style={{
-              marginRight: '10px',
-              backgroundColor: sidebarContent === 'logs' ? '#004080' : undefined,
-              borderRadius: '20px',
-              ...createButtonStyles,
-              fontSize: '12px',
-              height: '24px'
-            }}
-          >
-            Logs
-          </Button>
-          {selectedIds.length > 0 && selectedIds[0] === 'UE' && (
-            <>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <div>
+              {selectedIds.length > 0 && selectedIds[0] !== 'AMF' && selectedIds[0] !== 'UPF' && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleSidebarContentChange('protocolStack')}
+                  style={{
+                    marginRight: '10px',
+                    backgroundColor: sidebarContent === 'protocolStack' ? '#2E3B55' : undefined,
+                    borderRadius: '20px',
+                    ...createButtonStyles,
+                    fontSize: '12px',
+                    height: '24px'
+                  }}
+                >
+                  Protocol Stack
+                </Button>
+              )}
               <Button
                 variant="contained"
                 color="primary"
-                onClick={() => handleSidebarContentChange('pingGoogle')}
+                onClick={() => handleSidebarContentChange('logs')}
                 style={{
                   marginRight: '10px',
-                  backgroundColor: sidebarContent === 'pingGoogle' ? '#2E3B55' : undefined,
+                  backgroundColor: sidebarContent === 'logs' ? '#004080' : undefined,
                   borderRadius: '20px',
                   ...createButtonStyles,
                   fontSize: '12px',
                   height: '24px'
                 }}
               >
-                Ping
+                Logs
               </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={() => handleSidebarContentChange('curlGoogle')}
-                style={{
-                  marginRight: '10px',
-                  backgroundColor: sidebarContent === 'curlGoogle' ? '#2E3B55' : undefined,
-                  borderRadius: '20px',
-                  ...createButtonStyles,
-                  fontSize: '12px',
-                  height: '24px'
-                }}
-              >
-                Curl
-              </Button>
-            </>
-          )}
+              {selectedIds.length > 0 && selectedIds[0] === 'UE' && (
+                <>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleSidebarContentChange('pingGoogle')}
+                    style={{
+                      marginRight: '10px',
+                      backgroundColor: sidebarContent === 'pingGoogle' ? '#2E3B55' : undefined,
+                      borderRadius: '20px',
+                      ...createButtonStyles,
+                      fontSize: '12px',
+                      height: '24px'
+                    }}
+                  >
+                    Ping
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleSidebarContentChange('curlGoogle')}
+                    style={{
+                      marginRight: '10px',
+                      backgroundColor: sidebarContent === 'curlGoogle' ? '#2E3B55' : undefined,
+                      borderRadius: '20px',
+                      ...createButtonStyles,
+                      fontSize: '12px',
+                      height: '24px'
+                    }}
+                  >
+                    Curl
+                  </Button>
+                </>
+              )}
+            </div>
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={handleRefresh}
+              style={{
+                borderRadius: '20px',
+                ...createButtonStyles,
+                fontSize: '12px',
+                height: '24px'
+              }}
+            >
+              Refresh
+            </Button>
+          </Box>
         </Box>
-        {renderSidebarContent()}  
-        </TopologySideBar>
+        {renderSidebarContent()}
+      </TopologySideBar>
     );
 
-    const controlButtons = createTopologyControlButtons({
+    const TopologyControlBarWithRefresh = ({ controller, onRefresh }) => {
+      const controlButtons = createTopologyControlButtons({
         ...defaultControlButtonsOptions,
         zoomInCallback: action(() => {
-        if (controller.getGraph()) {
+          if (controller.getGraph()) {
             controller.getGraph().scaleBy(4 / 3);
-        }
+          }
         }),
         zoomOutCallback: action(() => {
-        if (controller.getGraph()) {
+          if (controller.getGraph()) {
             controller.getGraph().scaleBy(0.75);
-        }
+          }
         }),
         fitToScreenCallback: action(() => {
-        if (controller.getGraph()) {
+          if (controller.getGraph()) {
             controller.getGraph().fit(80);
-        }
+          }
         }),
         resetViewCallback: action(() => {
-        if (controller.getGraph()) {
+          if (controller.getGraph()) {
             controller.getGraph().reset();
-        }
+          }
         }),
-        legend: false
-    });
+        legend: false,
+      });
+    
+      const refreshButton = {
+        id: 'refresh',
+        icon: <RefreshIcon viewBox="0 0 20 20" style={{ width: 16, height: 16 }} />, // Adjust viewBox and fontSize
+        tooltip: 'Refresh Topology',
+        ariaLabel: 'Refresh Topology',
+        callback: onRefresh,
+        disabled: false,
+        hidden: false,
+      };
+    
+      return (
+        <TopologyControlBar
+          controlButtons={[...controlButtons, refreshButton]}
+        />
+      );
+    };
 
     const cancelButtonStyles = {
         backgroundColor: '#E3AE14',
@@ -1243,70 +1298,74 @@ export const TopologyCustomEdgeDemo = () => {
         }
     };
 
-  return (
-    <TopologyView sideBar={topologySideBar} controlBar={<TopologyControlBar controlButtons={controlButtons} />}>
-      {loading ? (
-        <Box display="flex" justifyContent="center" alignItems="center" height="100%">
-          <CircularProgress />
-        </Box>
-      ) : (
-      <VisualizationProvider controller={controller}>
-        <VisualizationSurface state={{ selectedIds }} />
-      </VisualizationProvider>
-      )}
-      <Dialog
-        open={modalOpen}
-        onClose={handleModalClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          {modalAction}
-        </DialogTitle>
-        <DialogContent>
-          Are you sure you want to {modalAction} {selectedNodeId}?
-        </DialogContent>
-        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
-          <Button sx={cancelButtonStyles} onClick={handleModalClose} color="primary" style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={handleModalConfirm} color="primary" autoFocus disabled={actionLoading} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
-            <Box display="flex" alignItems="center" justifyContent="center">
+    const topologyControlBar = (
+      <TopologyControlBarWithRefresh controller={controller} onRefresh={handleTopologyRefresh} />
+    );  
+
+    return (
+      <TopologyView sideBar={topologySideBar} controlBar={topologyControlBar}>
+        {loading ? (
+          <Box display="flex" justifyContent="center" alignItems="center" height="100%">
+            <CircularProgress />
+          </Box>
+        ) : (
+        <VisualizationProvider controller={controller}>
+          <VisualizationSurface state={{ selectedIds }} />
+        </VisualizationProvider>
+        )}
+        <Dialog
+          open={modalOpen}
+          onClose={handleModalClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">
+            {modalAction}
+          </DialogTitle>
+          <DialogContent>
+            Are you sure you want to {modalAction} {selectedNodeId}?
+          </DialogContent>
+          <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+            <Button sx={cancelButtonStyles} onClick={handleModalClose} color="primary" style={{minWidth: '80px', borderRadius: '20px', ...createButtonStyles}}>
+              Cancel
+            </Button>
+            <Button variant="contained" onClick={handleModalConfirm} color="primary" autoFocus disabled={actionLoading} style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
+              <Box display="flex" alignItems="center" justifyContent="center">
                 {actionLoading ? <CircularProgress size={25} color="inherit" /> : 'Confirm'}
-            </Box>
-          </Button>
-        </DialogActions>
-      </Dialog>
-      {renderStatusModalContent()}
-      {renderWarningModal()}
-      <Dialog
-        open={edgeModalOpen}
-        onClose={() => setEdgeModalOpen(false)}
-        aria-labelledby="edge-dialog-title"
-        aria-describedby="edge-dialog-description"
-      >
-        <DialogTitle id="edge-dialog-title">
-          Link Details
-        </DialogTitle>
-        <DialogContent>
-          <p><strong>Interface Name:</strong> {selectedEdge ? selectedEdge.getId() : ''}</p>
-        </DialogContent>
-        <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
-          <Button sx={cancelButtonStyles} onClick={() => setEdgeModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={handleSnackbarClose}
-      >
-        <MuiAlert variant="filled" onClose={handleSnackbarClose} severity={snackbarSeverity}>
-          {snackbarMessage}
-        </MuiAlert>
-      </Snackbar>
-    </TopologyView>
-  );
+              </Box>
+            </Button>
+          </DialogActions>
+        </Dialog>
+        {renderStatusModalContent()}
+        {renderWarningModal()}
+        <Dialog
+          open={edgeModalOpen}
+          onClose={() => setEdgeModalOpen(false)}
+          aria-labelledby="edge-dialog-title"
+          aria-describedby="edge-dialog-description"
+        >
+          <DialogTitle id="edge-dialog-title">
+            Link Details
+          </DialogTitle>
+          <DialogContent>
+            <p><strong>Interface Name:</strong> {selectedEdge ? selectedEdge.getId() : ''}</p>
+          </DialogContent>
+          <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
+            <Button sx={cancelButtonStyles} onClick={() => setEdgeModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={handleSnackbarClose}
+        >
+          <MuiAlert variant="filled" onClose={handleSnackbarClose} severity={snackbarSeverity}>
+            {snackbarMessage}
+          </MuiAlert>
+        </Snackbar>
+      </TopologyView>
+    );
 };
 export default TopologyCustomEdgeDemo;

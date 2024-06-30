@@ -22,11 +22,11 @@
 }
 
 .pf-topology__connector-circle.pf-m-source {
-  fill: var(--connector-circle-failed-color) !important;
+  fill: rgb(128, 128, 128) !important;
 }
 
 .pf-topology__connector-circle {
-  fill: var(--connector-circle-success-color) !important;
+  fill: rgb(128, 128, 128) !important;
 }
 
 .pf-topology__edge {

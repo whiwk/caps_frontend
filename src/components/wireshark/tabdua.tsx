@@ -191,67 +191,71 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
     borderRadius: '20px'
   };
 
+  const sortedPcapFiles = [...pcapFiles].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
   return (
     <>
       <TableContainer component={Paper}>
-        {loading ? (
-          <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Table aria-label="Pcap Files Table">
-            <TableHead>
+        <Table aria-label="Pcap Files Table">
+          <TableHead>
+            <TableRow>
+              <TableCell style={{ fontWeight: 'bold', textAlign: 'right', width: '20%' }}>Timestamp</TableCell>
+              <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>File Name</TableCell>
+              <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Size</TableCell>
+              <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody sx={{ display: 'block', maxHeight: '400px', overflowY: 'auto', width: '500%' }}>
+            {loading ? (
               <TableRow>
-                <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Timestamp</TableCell>
-                <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>File Name</TableCell>
-                <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Size</TableCell>
-                <TableCell style={{ fontWeight: 'bold', textAlign: 'center' }}>Actions</TableCell>
+                <TableCell colSpan={4} style={{ padding: 0 }}>
+                  <Box display="flex" justifyContent="center" alignItems="center" height="100px" width="1700%">
+                    <CircularProgress/>
+                  </Box>
+                </TableCell>
               </TableRow>
-            </TableHead>
-            <TableBody>
-              {pcapFiles.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} style={{ textAlign: 'center', fontStyle: 'italic' }}>
-                    Available pcap files will be shown here
-                  </TableCell>
-                </TableRow>
-              ) : (
-                pcapFiles.map((file) => {
-                  const shortenedFilename = shortenFileName(file.filename, file.id);
-                  return (
-                    <TableRow key={file.id}>
-                      <TableCell style={{ textAlign: 'center' }}>{formatTimestamp(file.created_at)}</TableCell>
-                      <TableCell style={{ textAlign: 'center' }}>{shortenedFilename}</TableCell>
-                      <TableCell style={{ textAlign: 'center' }}>{formatFileSize(file.file_size)}</TableCell>
-                      <TableCell style={{ textAlign: 'center' }}>
-                        <Box display="flex" justifyContent="flex-end" gap={1}>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            size="small"
-                            onClick={() => handleDownload(file.id, shortenedFilename)}
-                            sx={createButtonStyles}
-                          >
-                            Download
-                          </Button>
-                          <Button
-                            variant="contained"
-                            color="error"
-                            size="small"
-                            onClick={() => handleRemoveClick(file)}
-                            sx={createButtonStyles}
-                          >
-                            Remove
-                          </Button>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        )}
+            ) : sortedPcapFiles.length === 0 ? (
+              <TableRow style={{ display: 'table', width: '100%', tableLayout: 'fixed' }}>
+                <TableCell colSpan={4} style={{ textAlign: 'center', fontStyle: 'italic' }}>
+                  Available pcap files will be shown here
+                </TableCell>
+              </TableRow>
+            ) : (
+              sortedPcapFiles.map((file) => {
+                const shortenedFilename = shortenFileName(file.filename, file.id);
+                return (
+                  <TableRow key={file.id} sx={{ display: 'table', width: '100%', tableLayout: 'fixed' }}>
+                    <TableCell style={{ textAlign: 'center' }}>{formatTimestamp(file.created_at)}</TableCell>
+                    <TableCell style={{ textAlign: 'center' }}>{shortenedFilename}</TableCell>
+                    <TableCell style={{ textAlign: 'center' }}>{formatFileSize(file.file_size)}</TableCell>
+                    <TableCell style={{ textAlign: 'center' }}>
+                      <Box display="flex" justifyContent="flex-end" gap={1}>
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          size="small"
+                          onClick={() => handleDownload(file.id, shortenedFilename)}
+                          sx={createButtonStyles}
+                        >
+                          Download
+                        </Button>
+                        <Button
+                          variant="contained"
+                          color="error"
+                          size="small"
+                          onClick={() => handleRemoveClick(file)}
+                          sx={createButtonStyles}
+                        >
+                          Remove
+                        </Button>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
       </TableContainer>
     <Snackbar
       open={snackbarOpen}
@@ -278,7 +282,7 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
           Cancel
         </Button>
         <Button sx={removeButtonStyles} variant="contained" color="primary" onClick={confirmRemove}>
-          {removing ? <CircularProgress size={20} color="inherit" /> : 'Remove'}
+          {removing ? <CircularProgress size={25} color="inherit" /> : 'Remove'}
         </Button>
       </DialogActions>
     </Dialog>

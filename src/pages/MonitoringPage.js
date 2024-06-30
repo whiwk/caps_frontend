@@ -1,6 +1,6 @@
 // src/pages/MonitoringPage.js
 import React from 'react';
-import { Grid, GridItem, PageSection, Card, CardTitle, CardBody, Tab } from '@patternfly/react-core';
+import { Grid, GridItem, PageSection, Card, CardTitle, CardBody } from '@patternfly/react-core';
 import { Helmet } from 'react-helmet';
 import Graph from '../components/Graph';
 import TableMisc from '../components/Table';

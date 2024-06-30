@@ -15,24 +15,33 @@ import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } 
 import MuiAlert from '@mui/material/Alert';
 
 const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
-  const tableCellStyle = {
+
+  const tableCellStyle: React.CSSProperties = {
     height: '50px', // Customize the height
     verticalAlign: 'middle', // Center content vertically
     padding: '8px', // Adjust padding as needed
   };
+
+  const tableHeaderStyle: React.CSSProperties = {
+    position: 'sticky' as 'sticky',
+    top: 0,
+    backgroundColor: 'white',
+    zIndex: 1,
+  };
+  
   return (
-    <div>
+    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
       <Table variant={TableVariant.compact} aria-label="Wireshark Data Table">
         <Thead>
           <Tr>
-            <Th style={tableCellStyle}>No.</Th>
-            <Th style={tableCellStyle}>Timestamp</Th>
-            <Th style={tableCellStyle}>IP src</Th>
-            <Th style={tableCellStyle}>IP dst</Th>
-            <Th style={tableCellStyle}>Protocol Info</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>No.</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>Timestamp</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>IP src</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>IP dst</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>Protocol Info</Th>
           </Tr>
         </Thead>
-        <Tbody>
+        <Tbody >
           {data.map((item, index) => (
             <Tr key={index}>
               <Td style={tableCellStyle}>{index + 1}</Td>
@@ -246,10 +255,11 @@ export const Tabsatu: React.FunctionComponent = () => {
       if (value.trim() === '') {
         setFilteredData([]); // Reset the filter if the input is empty
       } else {
-        const filteredResult = data.filter(item => item.frame.protocols && item.frame.protocols.includes(value));
-        setFilteredData(filteredResult);
+        const filteredResult = data.filter(item => item.layers?.frame?.frame_frame_protocols && item.layers.frame.frame_frame_protocols.includes(value));
+        setFilteredData(filteredResult.length > 0 ? filteredResult : []); // Show nothing if no matches
       }
     };
+  
 
     const onToggleClick = () => {
       setIsOpen(!isOpen);
@@ -317,7 +327,7 @@ export const Tabsatu: React.FunctionComponent = () => {
                 </SelectList>
               </Select>
             </div>
-            <div style={{ height: '385px', border: '1px solid #ccc', padding: '16px', marginBottom: '10px', marginTop: '10px', overflow: 'auto', position: 'relative' }}>
+            <div style={{ height: '385px', border: '1px solid #ccc', padding: '16px', marginBottom: '10px', marginTop: '10px', overflow: 'hidden', position: 'relative' }}>
               {loading && <Spinner size="xl" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />}
               {selected && <WiresharkDataTable data={filteredData.length > 0 ? filteredData : data} />}
             </div>
