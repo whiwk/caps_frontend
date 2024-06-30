@@ -5,6 +5,7 @@ import './Introduction.css'
 import TableCU from './TableCU';
 import TableDU from './TableDU';
 import TableUE from './TableUE';
+import Task from './TaskandValidation';
 
 function LabonePage() {
   return (
@@ -27,6 +28,9 @@ function LabonePage() {
 
             <Text component={TextVariants.h3}>Parameters to Config in UE</Text>
             <TableUE />
+
+            <Text component={TextVariants.h3}>Task Details</Text>
+            <Task />
 
             <Text component={TextVariants.h3}>Test & Validation:</Text>
             <TextList component={TextListVariants.ol}>

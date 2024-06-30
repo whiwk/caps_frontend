@@ -50,7 +50,8 @@ function TableUE() {
   return (
     <Table 
       aria-label="Simple table" 
-      className="table-bordered table-header-grey">
+      className="table-bordered table-header-grey"
+      style={{ marginBottom:'48px'}}>
       <Thead>
         <Tr>
           <Th>{columnNames.parameter}</Th>

@@ -41,7 +41,7 @@ const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
             <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>Protocol Info</Th>
           </Tr>
         </Thead>
-        <Tbody >
+        <Tbody>
           {data.map((item, index) => (
             <Tr key={index}>
               <Td style={tableCellStyle}>{index + 1}</Td>
@@ -81,6 +81,13 @@ export const Tabsatu: React.FunctionComponent = () => {
     useEffect(() => {
       fetchPods(); // Fetch the pods when the component mounts
     }, []);
+
+    const formatTimestamp = (timestamp) => {
+      const date = new Date(timestamp);
+      const formattedDate = date.toISOString().split('T')[0]; // Get the date part
+      const formattedTime = date.toTimeString().split(' ')[0]; // Get the time part (up to seconds)
+      return `${formattedDate} ${formattedTime}`;
+    };
 
     const fetchPods = async () => {
       const authToken = localStorage.getItem('authToken');
@@ -162,17 +169,17 @@ export const Tabsatu: React.FunctionComponent = () => {
             Authorization: `Bearer ${authToken}`,
           },
         });
+        console.log('API response:', response); // Log the entire response object
   
         if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
           const parsedData = response.data.packets
             .filter((item: any) => item.layers && item.layers.ip && item.layers.frame) // Filter out packets without required layers
             .map((item: any) => {
-              const timestamp = item.timestamp || 'N/A';
-              const ipLayer = item.layers.ip || {};
               const frameLayer = item.layers.frame || {};
-  
-              return {
-                timestamp: timestamp,
+              const ipLayer = item.layers.ip || {};
+              
+              const parsedItem = {
+                timestamp: frameLayer["frame_frame_time"] ? formatTimestamp(frameLayer["frame_frame_time"]) : 'N/A',
                 layers: {
                   ip: {
                     ip_ip_src: ipLayer["ip_ip_src"] || 'N/A',
@@ -183,6 +190,8 @@ export const Tabsatu: React.FunctionComponent = () => {
                   },
                 },
               };
+              console.log('Parsed item:', parsedItem); // Log each parsed item
+              return parsedItem;
             });
   
           for (let i = 0; i < parsedData.length; i++) {
@@ -199,16 +208,16 @@ export const Tabsatu: React.FunctionComponent = () => {
         console.error('Error fetching sniffing data:', error.message);
       }
     };
-  
 
-    const stopSniffing = async (podName: string) => {
+    const stopSniffing = async (sniffingId: string) => {
       const authToken = localStorage.getItem('authToken');
       try {
-        const response = await api.post(`shark/stop_sniffing/${podName}/`, {
+        const response = await api.post(`shark/stop_sniffing/${sniffingId}/`, {}, {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
         });
+        console.log('API response:', response); // Log the entire response object
         if (response.data.message) {
           console.log('Sniffing stopped successfully:', response.data);
           setDialogMessage(response.data.message);
@@ -244,8 +253,8 @@ export const Tabsatu: React.FunctionComponent = () => {
           setLoading(false);
         }
       } else {
-        if (podsName) {
-          await stopSniffing(podsName);
+        if (sniffingId) {
+          await stopSniffing(sniffingId);
           setIsRunning(false);
         }
       }

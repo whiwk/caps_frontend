@@ -1,6 +1,6 @@
 import React from 'react';
 import Sidebar from '../components/sidebar/Sidebar'; // Adjust the import path as needed
-import { Grid, GridItem, PageSection, Card, CardTitle, CardBody, TextContent, Text, TextVariants, TextList, TextListVariants, TextListItem} from '@patternfly/react-core';
+import { TextContent, Text, TextVariants, TextList, TextListVariants, TextListItem} from '@patternfly/react-core';
 import './Introduction.css'
 
 function ImplementationPage() {
