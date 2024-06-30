@@ -51,14 +51,18 @@
 
 /* lab one page css for table */
 .table-header-grey th {
-  background-color: grey;
+  background-color: #e4e4e4;
 }
 
 .table-bordered {
-  border: 1px solid #dcdcdc;
+  border: 1px solid #cdcdcd;
 }
 
 .table-bordered th,
 .table-bordered td {
-  border: 1px solid #dcdcdc;
+  border: 1px solid #cdcdcd;
+}
+
+.table-bordered tr {
+  border: 1px solid #cdcdcd;
 }

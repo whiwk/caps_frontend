@@ -11,8 +11,6 @@ import Layout from './components/layout/Layout';
 import ProtectedRoute from './routes/ProtectedRoute';
 import ImplementationPage from './pages/ImplementationPage';
 import LabonePage from './pages/LabonePage';
-import LabtwoPage from './pages/LabtwoPage';
-import LabthreePage from './pages/LabthreePage';
 import BehindPage from './pages/BehindPage';
 import LoggingPage from './pages/LoggingPage';
 
@@ -29,8 +27,6 @@ function App() {
           <Route path="/user-management" element={<ProtectedRoute><Layout><UserManagementPage /></Layout></ProtectedRoute>} />
           <Route path='/5g-implementation-overview' element={<ProtectedRoute><Layout><ImplementationPage /></Layout></ProtectedRoute>} />
           <Route path='/lab-one-guidance' element={<ProtectedRoute><Layout><LabonePage /></Layout></ProtectedRoute>} />
-          <Route path='/lab-two-guidance' element={<ProtectedRoute><Layout><LabtwoPage /></Layout></ProtectedRoute>} />
-          <Route path='/lab-three-guidance' element={<ProtectedRoute><Layout><LabthreePage /></Layout></ProtectedRoute>} />
           <Route path='/behind-the-technology' element={<ProtectedRoute><Layout><BehindPage /></Layout></ProtectedRoute>} />
           <Route path='/monitoring-and-logging' element={<ProtectedRoute><Layout><LoggingPage /></Layout></ProtectedRoute>} />
         </Routes>

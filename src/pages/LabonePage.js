@@ -1,37 +1,12 @@
 import React from 'react';
 import Sidebar from '../components/sidebar/Sidebar'; // Adjust the import path as needed
-import {TextContent, Text, TextVariants, TextList, TextListVariants, TextListItem, ToggleGroup, ToggleGroupItem} from '@patternfly/react-core';
-import { Table, Caption, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+import {TextContent, Text, TextVariants, TextList, TextListVariants, TextListItem} from '@patternfly/react-core';
 import './Introduction.css'
+import TableCU from './TableCU';
+import TableDU from './TableDU';
+import TableUE from './TableUE';
 
 function LabonePage() {
-  const repositories = [{
-    name: 'one',
-    branches: 'two',
-    prs: 'three',
-    workspaces: 'four',
-    lastCommit: 'five'
-  }, {
-    name: 'one - 2',
-    branches: null,
-    prs: null,
-    workspaces: 'four - 2',
-    lastCommit: 'five - 2'
-  }, {
-    name: 'one - 3',
-    branches: 'two - 3',
-    prs: 'three - 3',
-    workspaces: 'four - 3',
-    lastCommit: 'five - 3'
-  }];
-  const columnNames = {
-    name: 'Repositories',
-    branches: 'Branches',
-    prs: 'Pull requests',
-    workspaces: 'Workspaces',
-    lastCommit: 'Last commit'
-  };
-
   return (
     <div style={{ display: 'flex', backgroundColor: '#f0f0f0' }} className='page-container'>
       <div className='main-content-container'>
@@ -45,31 +20,13 @@ function LabonePage() {
             </Text>
 
             <Text component={TextVariants.h3}>Parameters to Config in CU</Text>
-            <Table 
-      aria-label="Simple table" 
-      className="table-bordered table-header-grey">
-      <Thead>
-        <Tr>
-          <Th>{columnNames.name}</Th>
-          <Th>{columnNames.branches}</Th>
-          <Th>{columnNames.prs}</Th>
-          <Th>{columnNames.workspaces}</Th>
-          <Th>{columnNames.lastCommit}</Th>
-        </Tr>
-      </Thead>
-      <Tbody>
-        {repositories.map(repo => (
-          <Tr key={repo.name}>
-            <Td dataLabel={columnNames.name}>{repo.name}</Td>
-            <Td dataLabel={columnNames.branches}>{repo.branches}</Td>
-            <Td dataLabel={columnNames.prs}>{repo.prs}</Td>
-            <Td dataLabel={columnNames.workspaces}>{repo.workspaces}</Td>
-            <Td dataLabel={columnNames.lastCommit}>{repo.lastCommit}</Td>
-          </Tr>
-        ))}
-      </Tbody>
-    </Table>
+            <TableCU />
 
+            <Text component={TextVariants.h3}>Parameters to Config in DU</Text>
+            <TableDU />
+
+            <Text component={TextVariants.h3}>Parameters to Config in UE</Text>
+            <TableUE />
 
             <Text component={TextVariants.h3}>Test & Validation:</Text>
             <TextList component={TextListVariants.ol}>
