@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useRef  } from 'react';
 import '@patternfly/patternfly/patternfly.css';
 import './TopologyGraph.css';
 import api from '../services/apiService';
@@ -248,6 +248,9 @@ export const TopologyCustomEdgeDemo = () => {
 
     const fetchProtocolStackData = React.useCallback(async (nodeId) => {
       const authToken = localStorage.getItem('authToken');
+      const currentRequestId = Date.now(); // Unique ID for the current request
+      requestIdRef.current = currentRequestId; // Store it in the ref
+    
       try {
         setSidebarLoading(true);
         const searchNodeId = nodeId.toLowerCase();
@@ -258,8 +261,6 @@ export const TopologyCustomEdgeDemo = () => {
               Authorization: `Bearer ${authToken}`,
             },
           });
-    
-          console.log('API Response:', response.data);
     
           // Check if the response data has the expected structure
           if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
@@ -285,8 +286,10 @@ export const TopologyCustomEdgeDemo = () => {
               };
             }).filter(packet => packet.sctpSrcPort !== null && packet.sctpDstPort !== null);
     
-            console.log('Filtered Protocol Stack Data:', parsedData);
-            setProtocolStackData(parsedData[0] || {}); // Display the first packet data that contains SCTP information
+            // Only update state if the current request ID is the latest one
+            if (requestIdRef.current === currentRequestId) {
+              setProtocolStackData(parsedData[0] || {}); // Display the first packet data that contains SCTP information
+            }
           } else {
             setProtocolStackData({});
           }
@@ -300,6 +303,16 @@ export const TopologyCustomEdgeDemo = () => {
         setSidebarLoading(false);
       }
     }, [pods]);
+    
+    // useRef to store the current request ID
+    const requestIdRef = useRef(null);
+    
+    // Example usage in useEffect
+    React.useEffect(() => {
+      if (selectedIds.length > 0) {
+        fetchProtocolStackData(selectedIds[0]);
+      }
+    }, [selectedIds, fetchProtocolStackData]);
 
     React.useEffect(() => {
       fetchDeployments();

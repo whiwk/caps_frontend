@@ -24,7 +24,7 @@ function MonitoringPage() {
           </Card>
         </GridItem>
         <GridItem span={12} rowSpan={6}>
-          <Card ouiaId="BasicCard" style={{height: '350px', borderRadius: '8px'}}>
+          <Card ouiaId="BasicCard" style={{height: '500px', borderRadius: '8px'}}>
             <CardBody>
               <TableMisc />
             </CardBody>

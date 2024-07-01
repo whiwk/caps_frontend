@@ -18,6 +18,8 @@ import {
   DialogContentText,
   DialogTitle,
 } from '@mui/material';
+import DownloadIcon from '@mui/icons-material/Download';
+import DeleteIcon from '@mui/icons-material/Delete';
 import api from '../../services/apiService'
 
 interface PcapFile {
@@ -237,7 +239,7 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
                           onClick={() => handleDownload(file.id, shortenedFilename)}
                           sx={createButtonStyles}
                         >
-                          Download
+                          <DownloadIcon />
                         </Button>
                         <Button
                           variant="contained"
@@ -246,7 +248,7 @@ const FilesTab: React.FC<FilesTabProps> = ({ isActive }) => {
                           onClick={() => handleRemoveClick(file)}
                           sx={createButtonStyles}
                         >
-                          Remove
+                          <DeleteIcon />
                         </Button>
                       </Box>
                     </TableCell>

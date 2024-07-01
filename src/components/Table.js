@@ -1,19 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import api from '../services/apiService';
 import { CircularProgress, Alert, Snackbar } from '@mui/material';
 import './Table.css';
+import DataContext from '../contexts/DataContext';
+
+const initialRepositories = [
+  { content: 'L1 TX processing', value: '' },
+  { content: 'ULSCH encoding', value: '' },
+  { content: 'L1 RX processing', value: '' },
+  { content: 'UL Indication', value: '' },
+  { content: 'PDSCH receiver', value: '' },
+  { content: 'PDSCH decoding', value: '' },
+  { content: '-> Deinterleive', value: '' },
+  { content: '-> Rate Unmatch', value: '' },
+  { content: '->  LDPC Decode', value: '' },
+  { content: 'PDSCH unscrambling', value: '' },
+  { content: 'PDCCH handling', value: '' }
+];
 
 export const TableMisc = () => {
-  const [repositories, setRepositories] = useState([
-    { content: 'L1 TX processing', value: '' }, 
-    { content: 'ULSCH encoding', value: '' }, 
-    { content: 'L1 RX processing', value: '' }, 
-    { content: '-> Rate Unmatch', value: '' }, 
-    { content: '->  LDPC Decode', value: '' }, 
-    { content: 'PDSCH unscrambling', value: '' }, 
-    { content: 'PDCCH handling', value: '' },
-  ]);
+  const [repositories, setRepositories] = useState(initialRepositories);
+  const { setData } = useContext(DataContext);
   const [loading, setLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('info');
@@ -26,22 +34,17 @@ export const TableMisc = () => {
       while (isMounted) {
         setLoading(true);
         try {
-          // console.log('Fetching list of pods...');
-          // Step 1: Fetch the list of pods
+          // Fetch the list of pods
           const podsResponse = await api.get('kube/pods/');
-          // console.log('Pods response:', podsResponse.data); // Log the response to inspect its structure
-
-          const podsData = podsResponse.data.pods; // Extract the array of pods from the response
-          // console.log('Extracted pods data:', podsData);
+          const podsData = podsResponse.data.pods;
 
           // Check if podsData is an array
           if (!Array.isArray(podsData) || podsData.length === 0) {
             throw new Error('No pods data found.');
           }
 
-          // Step 2: Find the pod with 'oai-nr-ue' in its name
+          // Find the pod with 'oai-nr-ue' in its name
           const uePod = podsData.find(pod => pod.name.includes('oai-nr-ue'));
-          // console.log('Found UE pod:', uePod);
 
           if (!uePod) {
             throw new Error('No UE pod found for the user.');
@@ -49,19 +52,13 @@ export const TableMisc = () => {
 
           const podName = uePod.name;
           const namespace = uePod.namespace;
-          // console.log('Pod name:', podName);
-          // console.log('Namespace:', namespace);
 
-          // Step 3: Fetch the log data for the identified UE pod
-          // console.log(`Fetching log data for pod: ${podName} in namespace: ${namespace}...`);
+          // Fetch the log data for the identified UE pod
           const logResponse = await api.get(`kube/get_ue_log/${namespace}/${podName}/`);
-          // console.log('Log response:', logResponse.data);
-
           const logData = logResponse.data.log;
-          // console.log('Extracted log data:', logData);
 
           // Map the log data to the repository entries and prepare data for the graph
-          const updatedRepositories = repositories.map(repo => {
+          const updatedRepositories = initialRepositories.map(repo => {
             const regex = new RegExp(`\\s*${repo.content.replace('->', '\\->')}\\s*:\\s*([\\d\\.]+)\\s*us;`);
             const logEntry = logData.find(log => regex.test(log.log));
             const match = logEntry ? logEntry.log.match(regex) : null;
@@ -72,8 +69,16 @@ export const TableMisc = () => {
             };
           });
 
-          // console.log('Updated repositories:', updatedRepositories);
           setRepositories(updatedRepositories);
+
+          // Prepare data for the graph
+          const graphData = updatedRepositories.map(repo => ({
+            name: repo.content,
+            value: parseFloat(repo.value) || 0
+          }));
+
+          setData(graphData); // Update the context with the new data
+
         } catch (error) {
           console.error('Error fetching UE log:', error);
           setRepositories(repositories.map(repo => ({ ...repo, value: repo.value || null })));
@@ -94,7 +99,7 @@ export const TableMisc = () => {
     return () => {
       isMounted = false; // Cleanup function to set isMounted to false
     };
-  }, [repositories]);
+  }, [repositories, setData]);
 
   const columnNames = {
     content: 'Content',

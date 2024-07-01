@@ -1,4 +1,4 @@
-import React, { useEffect, useContext } from 'react';
+import React, { useEffect, useContext, useRef  } from 'react';
 import '@patternfly/patternfly/patternfly.css';
 import './TopologyGraph.css';
 import api from '../services/apiService';
@@ -248,10 +248,17 @@ export const TopologyCustomEdgeDemo = () => {
 
     const fetchProtocolStackData = React.useCallback(async (nodeId) => {
       const authToken = localStorage.getItem('authToken');
+      const currentRequestId = Date.now(); // Unique ID for the current request
+      requestIdRef.current = currentRequestId; // Store it in the ref
+    
+      console.log(`Fetching protocol stack data for node: ${nodeId}, request ID: ${currentRequestId}`);
+    
       try {
         setSidebarLoading(true);
         const searchNodeId = nodeId.toLowerCase();
         const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
+        console.log(`Found pod for node ${nodeId}:`, pod);
+    
         if (pod) {
           const response = await api.get(`shark/protocolstack/${pod.name}/`, {
             headers: {
@@ -259,7 +266,7 @@ export const TopologyCustomEdgeDemo = () => {
             },
           });
     
-          console.log('API Response:', response.data);
+          console.log('API response:', response.data);
     
           // Check if the response data has the expected structure
           if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
@@ -267,7 +274,7 @@ export const TopologyCustomEdgeDemo = () => {
               const sctp = item._source?.layers?.sctp || {};
               const sctpChunk = Object.values(sctp).find(value => value?.['sctp.chunk_type']);
     
-              return {
+              const parsedItem = {
                 ipAddress: item._source?.layers?.ip?.["ip.src"] || null,
                 sctpSrcPort: sctp["sctp.srcport"] || null,
                 sctpDstPort: sctp["sctp.dstport"] || null,
@@ -283,15 +290,27 @@ export const TopologyCustomEdgeDemo = () => {
                 sctpParameterLength: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_length"] || null,
                 sctpHeartbeatInformation: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_heartbeat_information"] || null,
               };
+    
+              console.log('Parsed item:', parsedItem);
+              return parsedItem;
             }).filter(packet => packet.sctpSrcPort !== null && packet.sctpDstPort !== null);
     
-            console.log('Filtered Protocol Stack Data:', parsedData);
-            setProtocolStackData(parsedData[0] || {}); // Display the first packet data that contains SCTP information
+            console.log('Filtered protocol stack data:', parsedData);
+    
+            // Only update state if the current request ID is the latest one
+            if (requestIdRef.current === currentRequestId) {
+              setProtocolStackData(parsedData[0] || {}); // Display the first packet data that contains SCTP information
+              console.log('Protocol stack data set:', parsedData[0] || {});
+            } else {
+              console.log('Ignored outdated response for request ID:', currentRequestId);
+            }
           } else {
             setProtocolStackData({});
+            console.log('No valid protocol stack data found.');
           }
         } else {
           setProtocolStackData({});
+          console.log('No matching pod found.');
         }
       } catch (error) {
         console.error('Failed to fetch protocol stack data:', error);
@@ -300,6 +319,17 @@ export const TopologyCustomEdgeDemo = () => {
         setSidebarLoading(false);
       }
     }, [pods]);
+    
+    // useRef to store the current request ID
+    const requestIdRef = useRef(null);
+    
+    // Example usage in useEffect
+    React.useEffect(() => {
+      if (selectedIds.length > 0) {
+        console.log('Selected node ID:', selectedIds[0]);
+        fetchProtocolStackData(selectedIds[0]);
+      }
+    }, [selectedIds, fetchProtocolStackData]);
 
     React.useEffect(() => {
       fetchDeployments();
@@ -1229,16 +1259,17 @@ export const TopologyCustomEdgeDemo = () => {
             </div>
             <Button
               variant="contained"
-              color="secondary"
+              color="primary"
               onClick={handleRefresh}
               style={{
                 borderRadius: '20px',
                 ...createButtonStyles,
                 fontSize: '12px',
-                height: '24px'
+                height: '24px',
+                backgroundColor: '#F2B90F'
               }}
             >
-              Refresh
+              <RefreshIcon style={{ fontSize: '20px', color: '#FFF' }} />
             </Button>
           </Box>
         </Box>
