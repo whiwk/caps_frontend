@@ -27,8 +27,7 @@ function Validation() {
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '24px'}}>
           <img src="/pict16.png" alt="pict16" style={{ width: '80%', height: 'auto', display: 'block', margin: '0 auto 0 0' }}/>
         </div>
-        <Text component={TextVariants.p} style={{ marginBottom: '24px'}}>Registrasi Core berhasil, interface oaitun UE belum ada. 
-            Protocol stack UE dan DU belum ada. Log UE juga belum dari dahsboard.
+        <Text component={TextVariants.p} style={{ marginBottom: '24px'}}>Registrasi Core berhasil, interface oaitun UE sudah ada dengan IP dinamis.
         </Text>
 
       <TextListItem style={{marginBottom: '18px'}}>Ensure seamless data flow from UE through CU, DU/RU, UE using Wireshark.</TextListItem>

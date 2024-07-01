@@ -27,9 +27,9 @@ const componentData = {
     DU: { 'GNB ID': '', 'DU ID': '', 'Cell ID': '', 'F1 IP Address': '', 'F1 CU Port': '', 'F1 DU Port': '', 'MCC': '', 'MNC': '', 'TAC': '', 'SST': '', 'USRP': '', 'CU Host': '' },
     DU1: { 'GNB ID': '', 'DU ID': '', 'Cell ID': '', 'Physical Cell ID': '', 'F1 IP Address': '', 'F1 CU Port': '', 'F1 DU Port': '', 'MCC': '', 'MNC': '', 'TAC': '', 'SST': '', 'USRP': '', 'CU Host': '' },
     DU2: { 'GNB ID': '', 'DU ID': '', 'Cell ID': '', 'Physical Cell ID': '', 'F1 IP Address': '', 'F1 CU Port': '', 'F1 DU Port': '', 'MCC': '', 'MNC': '', 'TAC': '', 'SST': '', 'USRP': '', 'CU Host': '' },
-    UE: { 'IP Address': '', 'RF Sim Server': '', 'Full Imsi': '', 'Full Key': '', 'OPC': '', 'DNN': '', 'SST': '', 'SD': '', 'USRP': '' },
-    UE1: { 'IP Address': '', 'RF Sim Server': '', 'Full Imsi': '', 'Full Key': '', 'OPC': '', 'DNN': '', 'SST': '', 'SD': '', 'USRP': '' },
-    UE2: { 'IP Address': '', 'RF Sim Server': '', 'Full Imsi': '', 'Full Key': '', 'OPC': '', 'DNN': '', 'SST': '', 'SD': '', 'USRP': '' },
+    UE: { 'IP Address': '', 'RF Sim Server': '', 'Full IMSI': '', 'Full Key': '', 'OPC': '', 'DNN': '', 'SST': '', 'SD': '', 'USRP': '' },
+    UE1: { 'IP Address': '', 'RF Sim Server': '', 'Full IMSI': '', 'Full Key': '', 'OPC': '', 'DNN': '', 'SST': '', 'SD': '', 'USRP': '' },
+    UE2: { 'IP Address': '', 'RF Sim Server': '', 'Full IMSI': '', 'Full Key': '', 'OPC': '', 'DNN': '', 'SST': '', 'SD': '', 'USRP': '' },
 };
 
 const levelComponents = {
@@ -98,7 +98,7 @@ const ConfigurationPanel = () => {
     phyCellId: 'Physical Cell ID',
     multusIPadd: 'IP Address',
     rfSimServer: 'RF Sim Server',
-    fullImsi: 'Full Imsi',
+    fullImsi: 'Full IMSI',
     fullKey: 'Full Key',
     opc: 'OPC',
     dnn: 'DNN',
@@ -126,7 +126,7 @@ const ConfigurationPanel = () => {
     'Physical Cell ID': 'phycell_id',
     'IP Address': 'multus_ipadd',
     'RF Sim Server': 'rfsimserver',
-    'Full Imsi': 'fullimsi',
+    'Full IMSI': 'fullimsi',
     'Full Key': 'fullkey',
     'OPC': 'opc',
     'DNN': 'dnn',
