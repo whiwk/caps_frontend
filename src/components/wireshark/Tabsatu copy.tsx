@@ -15,21 +15,30 @@ import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } 
 import MuiAlert from '@mui/material/Alert';
 
 const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
-  const tableCellStyle = {
+
+  const tableCellStyle: React.CSSProperties = {
     height: '50px', // Customize the height
     verticalAlign: 'middle', // Center content vertically
     padding: '8px', // Adjust padding as needed
   };
+
+  const tableHeaderStyle: React.CSSProperties = {
+    position: 'sticky' as 'sticky',
+    top: 0,
+    backgroundColor: 'white',
+    zIndex: 1,
+  };
+  
   return (
-    <div>
+    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
       <Table variant={TableVariant.compact} aria-label="Wireshark Data Table">
         <Thead>
           <Tr>
-            <Th style={tableCellStyle}>No.</Th>
-            <Th style={tableCellStyle}>Timestamp</Th>
-            <Th style={tableCellStyle}>IP src</Th>
-            <Th style={tableCellStyle}>IP dst</Th>
-            <Th style={tableCellStyle}>Protocol Info</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>No.</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>Timestamp</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>IP src</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>IP dst</Th>
+            <Th style={{ ...tableCellStyle, ...tableHeaderStyle }}>Protocol Info</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -72,6 +81,13 @@ export const Tabsatu: React.FunctionComponent = () => {
     useEffect(() => {
       fetchPods(); // Fetch the pods when the component mounts
     }, []);
+
+    const formatTimestamp = (timestamp) => {
+      const date = new Date(timestamp);
+      const formattedDate = date.toISOString().split('T')[0]; // Get the date part
+      const formattedTime = date.toTimeString().split(' ')[0]; // Get the time part (up to seconds)
+      return `${formattedDate} ${formattedTime}`;
+    };
 
     const fetchPods = async () => {
       const authToken = localStorage.getItem('authToken');
@@ -143,63 +159,70 @@ export const Tabsatu: React.FunctionComponent = () => {
       } catch (error) {
         console.error('Error starting sniffing:', error.message);
       }
-    };
+    };    
     
     const fetchSniffingData = async (sniffingId: string) => {
       const authToken = localStorage.getItem('authToken');
-      try {
-        const response = await api.get(`shark/check_sniffing_status/${sniffingId}/`, {
-          headers: {
-            Authorization: `Bearer ${authToken}`,
-          },
-        });
-  
-        if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
-          const parsedData = response.data.packets
-            .filter((item: any) => item.layers && item.layers.ip && item.layers.frame) // Filter out packets without required layers
-            .map((item: any) => {
-              const timestamp = item.timestamp || 'N/A';
-              const ipLayer = item.layers.ip || {};
-              const frameLayer = item.layers.frame || {};
-  
-              return {
-                timestamp: timestamp,
-                layers: {
-                  ip: {
-                    ip_ip_src: ipLayer["ip_ip_src"] || 'N/A',
-                    ip_ip_dst: ipLayer["ip_ip_dst"] || 'N/A',
+      let running = true;
+    
+      while (running && isRunning) {
+        console.log(`Checking sniffing status for ID: ${sniffingId}`);
+        try {
+          const response = await api.get(`shark/check_sniffing_status/${sniffingId}/`, {
+            headers: {
+              Authorization: `Bearer ${authToken}`,
+            },
+          });
+    
+          console.log('API response:', response); // Log the entire response object
+    
+          if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
+            const parsedData = response.data.packets
+              .filter((item: any) => item.layers && item.layers.ip && item.layers.frame) // Filter out packets without required layers
+              .map((item: any) => {
+                const frameLayer = item.layers.frame || {};
+                const ipLayer = item.layers.ip || {};
+                
+                const parsedItem = {
+                  timestamp: frameLayer["frame_frame_time"] ? formatTimestamp(frameLayer["frame_frame_time"]) : 'N/A',
+                  layers: {
+                    ip: {
+                      ip_ip_src: ipLayer["ip_ip_src"] || 'N/A',
+                      ip_ip_dst: ipLayer["ip_ip_dst"] || 'N/A',
+                    },
+                    frame: {
+                      frame_frame_protocols: frameLayer["frame_frame_protocols"] || 'N/A',
+                    },
                   },
-                  frame: {
-                    frame_frame_protocols: frameLayer["frame_frame_protocols"] || 'N/A',
-                  },
-                },
-              };
-            });
-  
-          for (let i = 0; i < parsedData.length; i++) {
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Delay for 1 second
-            setData((prevData) => [...prevData, parsedData[i]]);
+                };
+                console.log('Parsed item:', parsedItem); // Log each parsed item
+                return parsedItem;
+              });
+    
+            for (let i = 0; i < parsedData.length; i++) {
+              await new Promise((resolve) => setTimeout(resolve, 1000)); // Delay for 1 second
+              setData((prevData) => [...prevData, parsedData[i]]);
+            }
+          } else {
+            console.log('No packets found, retrying...');
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Short delay before retrying
           }
-  
-          // Continue fetching data if still running
-          if (isRunning) {
-            fetchSniffingData(sniffingId);
-          }
+        } catch (error) {
+          console.error('Error fetching sniffing data:', error.message);
+          running = false; // Stop the loop if there's an error
         }
-      } catch (error) {
-        console.error('Error fetching sniffing data:', error.message);
       }
     };
-  
 
-    const stopSniffing = async (podName: string) => {
+    const stopSniffing = async (sniffingId: string) => {
       const authToken = localStorage.getItem('authToken');
       try {
-        const response = await api.post(`shark/stop_sniffing/${podName}/`, {
+        const response = await api.post(`shark/stop_sniffing/${sniffingId}/`, {}, {
           headers: {
             Authorization: `Bearer ${authToken}`,
           },
         });
+        console.log('API response:', response); // Log the entire response object
         if (response.data.message) {
           console.log('Sniffing stopped successfully:', response.data);
           setDialogMessage(response.data.message);
@@ -235,8 +258,8 @@ export const Tabsatu: React.FunctionComponent = () => {
           setLoading(false);
         }
       } else {
-        if (podsName) {
-          await stopSniffing(podsName);
+        if (sniffingId) {
+          await stopSniffing(sniffingId);
           setIsRunning(false);
         }
       }
@@ -246,10 +269,11 @@ export const Tabsatu: React.FunctionComponent = () => {
       if (value.trim() === '') {
         setFilteredData([]); // Reset the filter if the input is empty
       } else {
-        const filteredResult = data.filter(item => item.frame.protocols && item.frame.protocols.includes(value));
-        setFilteredData(filteredResult);
+        const filteredResult = data.filter(item => item.layers?.frame?.frame_frame_protocols && item.layers.frame.frame_frame_protocols.includes(value));
+        setFilteredData(filteredResult.length > 0 ? filteredResult : []); // Show nothing if no matches
       }
     };
+  
 
     const onToggleClick = () => {
       setIsOpen(!isOpen);
@@ -317,7 +341,7 @@ export const Tabsatu: React.FunctionComponent = () => {
                 </SelectList>
               </Select>
             </div>
-            <div style={{ height: '385px', border: '1px solid #ccc', padding: '16px', marginBottom: '10px', marginTop: '10px', overflow: 'auto', position: 'relative' }}>
+            <div style={{ height: '385px', border: '1px solid #ccc', padding: '16px', marginBottom: '10px', marginTop: '10px', overflow: 'hidden', position: 'relative' }}>
               {loading && <Spinner size="xl" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />}
               {selected && <WiresharkDataTable data={filteredData.length > 0 ? filteredData : data} />}
             </div>

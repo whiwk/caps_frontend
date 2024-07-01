@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import api from '../services/apiService';
 import { CircularProgress, Alert, Snackbar } from '@mui/material';
-import Graph from './Graph'; // Import the Graph component
 import './Table.css';
 
 export const TableMisc = () => {
@@ -15,15 +14,6 @@ export const TableMisc = () => {
     { content: 'PDSCH unscrambling', value: '' }, 
     { content: 'PDCCH handling', value: '' },
   ]);
-  const [graphData, setGraphData] = useState({
-    l1RxProcessing: [],
-    l1TxProcessing: [],
-    pdschDecoding: [],
-    pdschReceiver: [],
-    pdcchHandling: [],
-    ulschEncoding: [],
-    ulIndication: []
-  });
   const [loading, setLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('info');
@@ -36,13 +26,13 @@ export const TableMisc = () => {
       while (isMounted) {
         setLoading(true);
         try {
-          console.log('Fetching list of pods...');
+          // console.log('Fetching list of pods...');
           // Step 1: Fetch the list of pods
           const podsResponse = await api.get('kube/pods/');
-          console.log('Pods response:', podsResponse.data); // Log the response to inspect its structure
+          // console.log('Pods response:', podsResponse.data); // Log the response to inspect its structure
 
           const podsData = podsResponse.data.pods; // Extract the array of pods from the response
-          console.log('Extracted pods data:', podsData);
+          // console.log('Extracted pods data:', podsData);
 
           // Check if podsData is an array
           if (!Array.isArray(podsData) || podsData.length === 0) {
@@ -51,7 +41,7 @@ export const TableMisc = () => {
 
           // Step 2: Find the pod with 'oai-nr-ue' in its name
           const uePod = podsData.find(pod => pod.name.includes('oai-nr-ue'));
-          console.log('Found UE pod:', uePod);
+          // console.log('Found UE pod:', uePod);
 
           if (!uePod) {
             throw new Error('No UE pod found for the user.');
@@ -59,16 +49,16 @@ export const TableMisc = () => {
 
           const podName = uePod.name;
           const namespace = uePod.namespace;
-          console.log('Pod name:', podName);
-          console.log('Namespace:', namespace);
+          // console.log('Pod name:', podName);
+          // console.log('Namespace:', namespace);
 
           // Step 3: Fetch the log data for the identified UE pod
-          console.log(`Fetching log data for pod: ${podName} in namespace: ${namespace}...`);
+          // console.log(`Fetching log data for pod: ${podName} in namespace: ${namespace}...`);
           const logResponse = await api.get(`kube/get_ue_log/${namespace}/${podName}/`);
-          console.log('Log response:', logResponse.data);
+          // console.log('Log response:', logResponse.data);
 
           const logData = logResponse.data.log;
-          console.log('Extracted log data:', logData);
+          // console.log('Extracted log data:', logData);
 
           // Map the log data to the repository entries and prepare data for the graph
           const updatedRepositories = repositories.map(repo => {
@@ -82,40 +72,8 @@ export const TableMisc = () => {
             };
           });
 
-          console.log('Updated repositories:', updatedRepositories);
+          // console.log('Updated repositories:', updatedRepositories);
           setRepositories(updatedRepositories);
-
-          // Process and set data for graphs
-          const l1RxProcessing = [];
-          const l1TxProcessing = [];
-          const pdschDecoding = [];
-          const pdschReceiver = [];
-          const pdcchHandling = [];
-          const ulschEncoding = [];
-          const ulIndication = [];
-
-          logData.forEach(log => {
-            const timestamp = new Date(log.timestamp); // Ensure this is a valid date
-            const formattedTimestamp = timestamp.toLocaleTimeString(); // Use this or a more appropriate format
-
-            l1RxProcessing.push({ x: formattedTimestamp, y: parseFloat(log['L1 RX processing']) || 0 });
-            l1TxProcessing.push({ x: formattedTimestamp, y: parseFloat(log['L1 TX processing']) || 0 });
-            pdschDecoding.push({ x: formattedTimestamp, y: parseFloat(log['PDSCH Decoding']) || 0 });
-            pdschReceiver.push({ x: formattedTimestamp, y: parseFloat(log['PDSCH Receiver']) || 0 });
-            pdcchHandling.push({ x: formattedTimestamp, y: parseFloat(log['PDCCH Handling']) || 0 });
-            ulschEncoding.push({ x: formattedTimestamp, y: parseFloat(log['ULSCH Encoding']) || 0 });
-            ulIndication.push({ x: formattedTimestamp, y: parseFloat(log['UL Indication']) || 0 });
-          });
-
-          setGraphData({
-            l1RxProcessing,
-            l1TxProcessing,
-            pdschDecoding,
-            pdschReceiver,
-            pdcchHandling,
-            ulschEncoding,
-            ulIndication
-          });
         } catch (error) {
           console.error('Error fetching UE log:', error);
           setRepositories(repositories.map(repo => ({ ...repo, value: repo.value || null })));
@@ -188,8 +146,6 @@ export const TableMisc = () => {
           {alertMessage}
         </Alert>
       </Snackbar>
-      {/* Pass the graphData to the Graph component */}
-      <Graph graphData={graphData} />
     </div>
   );
 };

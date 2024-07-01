@@ -143,6 +143,15 @@ export const Tabsatu: React.FunctionComponent = () => {
       }
     }, [selected, pods]);
 
+    useEffect(() => {
+      let intervalId: NodeJS.Timeout;
+      if (isRunning && sniffingId) {
+        intervalId = setInterval(() => fetchSniffingData(sniffingId), 2000);
+      }
+      return () => clearInterval(intervalId);
+    }, [isRunning, sniffingId]);
+  
+
     const startSniffing = async (podName: string) => {
       const authToken = localStorage.getItem('authToken');
       try {
@@ -154,15 +163,16 @@ export const Tabsatu: React.FunctionComponent = () => {
         if (response.data.sniffing_id) {
           console.log('Sniffing started successfully:', response.data);
           setSniffingId(response.data.sniffing_id);
-          fetchSniffingData(response.data.sniffing_id);
         }
       } catch (error) {
         console.error('Error starting sniffing:', error.message);
       }
     };
+  
     
     const fetchSniffingData = async (sniffingId: string) => {
       const authToken = localStorage.getItem('authToken');
+      console.log(`Checking sniffing status for ID: ${sniffingId}`);
       try {
         const response = await api.get(`shark/check_sniffing_status/${sniffingId}/`, {
           headers: {
@@ -194,15 +204,9 @@ export const Tabsatu: React.FunctionComponent = () => {
               return parsedItem;
             });
   
-          for (let i = 0; i < parsedData.length; i++) {
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Delay for 1 second
-            setData((prevData) => [...prevData, parsedData[i]]);
-          }
-  
-          // Continue fetching data if still running
-          if (isRunning) {
-            fetchSniffingData(sniffingId);
-          }
+          setData((prevData) => [...prevData, ...parsedData]);
+        } else {
+          console.log('No packets found, retrying...');
         }
       } catch (error) {
         console.error('Error fetching sniffing data:', error.message);
@@ -227,6 +231,7 @@ export const Tabsatu: React.FunctionComponent = () => {
         console.error('Error stopping sniffing:', error.message);
       }
     };
+  
 
     const handleStartClick = async () => {
       if (!isRunning) {
@@ -259,7 +264,7 @@ export const Tabsatu: React.FunctionComponent = () => {
         }
       }
     };
-
+    
     const handleFilter = () => {
       if (value.trim() === '') {
         setFilteredData([]); // Reset the filter if the input is empty

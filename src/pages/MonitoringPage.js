@@ -5,8 +5,6 @@ import { Helmet } from 'react-helmet';
 import Graph from '../components/Graph';
 import TableMisc from '../components/Table';
 
-
-
 function MonitoringPage() {
   return (
     <div style={{ display: 'flex', backgroundColor: '#f0f0f0' }}>

@@ -5,7 +5,8 @@ import './Introduction.css'
 import TableCU from './TableCU';
 import TableDU from './TableDU';
 import TableUE from './TableUE';
-import Task from './TaskandValidation';
+import Task from './Task';
+import Validation from './Validation';
 
 function LabonePage() {
   return (
@@ -33,11 +34,7 @@ function LabonePage() {
             <Task />
 
             <Text component={TextVariants.h3}>Test & Validation:</Text>
-            <TextList component={TextListVariants.ol}>
-              <TextListItem>Verify connectivity and signal strength between UE and CU.</TextListItem>
-              <TextListItem>Ensure seamless data flow from UE through CU, DU, and RU.</TextListItem>
-              <TextListItem>Analyze logs for any errors or performance issues.</TextListItem>
-            </TextList>
+            <Validation />
           </TextContent>
         </main>
       </div>
