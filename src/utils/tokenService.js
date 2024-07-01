@@ -5,7 +5,7 @@ import axios from 'axios';
 export const getNewToken = async () => {
   try {
     const refreshToken = localStorage.getItem('refreshToken');
-    const response = await axios.post('http://10.30.1.221:8000/api/v1/token/refresh/', {
+    const response = await axios.post('https://arigints.my.id/api/v1/token/refresh/', {
       refresh: refreshToken
     });
     const { access, refresh } = response.data;

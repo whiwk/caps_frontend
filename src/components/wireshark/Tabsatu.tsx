@@ -46,9 +46,9 @@ const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
             <Tr key={index}>
               <Td style={tableCellStyle}>{index + 1}</Td>
               <Td style={tableCellStyle}>{item.timestamp || 'N/A'}</Td>
-              <Td style={tableCellStyle}>{item.layers?.ip?.ip_ip_src || 'N/A'}</Td>
-              <Td style={tableCellStyle}>{item.layers?.ip?.ip_ip_dst || 'N/A'}</Td>
-              <Td style={tableCellStyle}>{item.layers?.frame?.frame_frame_protocols || 'N/A'}</Td>
+              <Td style={tableCellStyle}>{item.layers?.ip?.ip_src || 'N/A'}</Td>
+              <Td style={tableCellStyle}>{item.layers?.ip?.ip_dst || 'N/A'}</Td>
+              <Td style={tableCellStyle}>{item.layers?.frame?.frame_protocols || 'N/A'}</Td>
             </Tr>
           ))}
         </Tbody>
@@ -82,11 +82,23 @@ export const Tabsatu: React.FunctionComponent = () => {
       fetchPods(); // Fetch the pods when the component mounts
     }, []);
 
-    const formatTimestamp = (timestamp) => {
-      const date = new Date(timestamp);
-      const formattedDate = date.toISOString().split('T')[0]; // Get the date part
-      const formattedTime = date.toTimeString().split(' ')[0]; // Get the time part (up to seconds)
-      return `${formattedDate} ${formattedTime}`;
+    const formatTimestamp = (timestamp: string) => {
+      try {
+        const [datePart, timePart, , timezone] = timestamp.split(' ');
+        const dateStr = `${datePart} ${timePart}`;
+        const date = new Date(dateStr + ' UTC'); // Assuming the time is in UTC
+  
+        if (isNaN(date.getTime())) {
+          throw new Error('Invalid date');
+        }
+  
+        const formattedDate = date.toISOString().split('T')[0]; // Get the date part
+        const formattedTime = date.toTimeString().split(' ')[0]; // Get the time part (up to seconds)
+        return `${formattedDate} ${formattedTime}`;
+      } catch (error) {
+        console.error("Invalid timestamp format:", timestamp);
+        return 'N/A';
+      }
     };
 
     const fetchPods = async () => {
@@ -171,6 +183,7 @@ export const Tabsatu: React.FunctionComponent = () => {
   
     
     const fetchSniffingData = async (sniffingId: string) => {
+      setLoading(true);
       const authToken = localStorage.getItem('authToken');
       console.log(`Checking sniffing status for ID: ${sniffingId}`);
       try {
@@ -183,20 +196,20 @@ export const Tabsatu: React.FunctionComponent = () => {
   
         if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
           const parsedData = response.data.packets
-            .filter((item: any) => item.layers && item.layers.ip && item.layers.frame) // Filter out packets without required layers
+            .filter((item: any) => item._source && item._source.layers && item._source.layers.ip && item._source.layers.frame) // Filter out packets without required layers
             .map((item: any) => {
-              const frameLayer = item.layers.frame || {};
-              const ipLayer = item.layers.ip || {};
-              
+              const frameLayer = item._source.layers.frame || {};
+              const ipLayer = item._source.layers.ip || {};
+  
               const parsedItem = {
-                timestamp: frameLayer["frame_frame_time"] ? formatTimestamp(frameLayer["frame_frame_time"]) : 'N/A',
+                timestamp: frameLayer["frame.time"] || 'N/A',
                 layers: {
                   ip: {
-                    ip_ip_src: ipLayer["ip_ip_src"] || 'N/A',
-                    ip_ip_dst: ipLayer["ip_ip_dst"] || 'N/A',
+                    ip_src: ipLayer["ip.src"] || 'N/A',
+                    ip_dst: ipLayer["ip.dst"] || 'N/A',
                   },
                   frame: {
-                    frame_frame_protocols: frameLayer["frame_frame_protocols"] || 'N/A',
+                    frame_protocols: frameLayer["frame.protocols"] || 'N/A',
                   },
                 },
               };
@@ -204,12 +217,18 @@ export const Tabsatu: React.FunctionComponent = () => {
               return parsedItem;
             });
   
-          setData((prevData) => [...prevData, ...parsedData]);
+          // Append parsed data one by one
+          for (let i = 0; i < parsedData.length; i++) {
+            setData((prevData) => [...prevData, parsedData[i]]);
+            await new Promise((resolve) => setTimeout(resolve, 100)); // Adjust delay as needed
+          }
         } else {
           console.log('No packets found, retrying...');
         }
       } catch (error) {
         console.error('Error fetching sniffing data:', error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
