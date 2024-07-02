@@ -14,8 +14,8 @@ const Graph = ({ data }) => {
   const [data5, setData5] = useState([]);
   const [data6, setData6] = useState([]);
   const [data7, setData7] = useState([]);
-  const maxDomain1 = 3000;
-  const tickValues1 = [0, 500, 1000, 1500, 2000, 2500, 3000];
+  const maxDomain1 = 4000;
+  const tickValues1 = [1000, 2000, 3000, 4000];
   const maxDomain2 = 2500;
   const tickValues2 = [0, 500, 1000, 1500, 2000, 2500];
   const maxDomain = 2000;

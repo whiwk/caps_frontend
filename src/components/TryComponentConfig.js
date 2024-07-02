@@ -297,7 +297,7 @@ const ConfigurationPanel = () => {
                   fontSize: '12px',
                   backgroundColor: selectedComponent === component ? '#004080' : '',
                   color: selectedComponent === component ? '#fff' : '',
-                  borderRadius: '20px'
+                  borderRadius: '0px'
                   }}>
                 {component}
               </Button>
