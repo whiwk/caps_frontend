@@ -9,7 +9,7 @@ import {
   Grid,
   GridItem, Title
 } from '@patternfly/react-core';
-import { CheckCircleIcon } from '@patternfly/react-icons';
+import { CheckCircleIcon, TimesCircleIcon } from '@patternfly/react-icons';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import Dialog from '@mui/material/Dialog';
@@ -50,6 +50,7 @@ const ConfigurationPanel = () => {
   const [alertSeverity, setAlertSeverity] = useState('success');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [comparisonResults, setComparisonResults] = useState({});
 
   useEffect(() => {
     const fetchUserLevel = async () => {
@@ -68,13 +69,12 @@ const ConfigurationPanel = () => {
     });
   }, []);
 
-  // This function simulates fetching data from the API.
   const fetchComponentValues = async (componentKey) => {
       const componentVariable = {
         'CU': 'single_cu',
         'DU': 'single_du',
         'UE': 'single_ue',
-        'DU1': 'multi_du1', // Add the appropriate variables here
+        'DU1': 'multi_du1', 
         'DU2': 'multi_du2',
         'UE1': 'multi_ue1',
         'UE2': 'multi_ue2'
@@ -82,10 +82,27 @@ const ConfigurationPanel = () => {
 
     try {
       const response = await api.get(`oai/values_${componentVariable}/`);
-      return mapApiValuesToComponentDataKeys(response.data.values, componentKey);
+      const mappedData = mapApiValuesToComponentDataKeys(response.data.values, componentKey);
+      setValues(mappedData); // Set fetched values to state
+      await fetchComparisonResults(componentKey); // Fetch comparison results
     } catch (error) {
       console.error('Failed to fetch component values for:', componentVariable, error);
-      return {};
+    }
+  };
+
+  const fetchComparisonResults = async (componentKey) => {
+    const compareEndpoint = componentKey.toLowerCase().startsWith('cu') ? 'user/compare/cu/' :
+                            componentKey.toLowerCase().startsWith('du') ? 'user/compare/du/' :
+                            componentKey.toLowerCase().startsWith('ue') ? 'user/compare/ue/' : '';
+
+    if (compareEndpoint) {
+      try {
+        const compareResponse = await api.get(compareEndpoint);
+        console.log(`Comparison results for ${componentKey}:`, compareResponse.data.matches);
+        setComparisonResults(compareResponse.data.matches);
+      } catch (error) {
+        console.error(`Failed to fetch comparison results for ${componentKey}:`, error);
+      }
     }
   };
 
@@ -118,30 +135,30 @@ const ConfigurationPanel = () => {
   };
 
   const keyMap = {
-    'CU ID': 'cu_id',
-    'Cell ID': 'cell_id',
-    'GNB ID': 'gnb_id',
-    'DU ID': 'du_id',
+    'CU ID': 'cuId',
+    'Cell ID': 'cellId',
+    'GNB ID': 'gnbId',
+    'DU ID': 'duId',
     'USRP': 'usrp',
-    'CU Host': 'cu_host',
-    'Physical Cell ID': 'phycell_id',
-    'IP Address': 'multus_ipadd',
-    'RF Sim Server': 'rfsimserver',
-    'Full IMSI': 'fullimsi',
-    'Full Key': 'fullkey',
+    'CU Host': 'cuHost',
+    'Physical Cell ID': 'phyCellId',
+    'IP Address': 'multusIPadd',
+    'RF Sim Server': 'rfSimServer',
+    'Full IMSI': 'fullImsi',
+    'Full Key': 'fullKey',
     'OPC': 'opc',
     'DNN': 'dnn',
     'SD': 'sd',
-    'F1 IP Address': 'f1_int',
-    'F1 CU Port': 'f1_cuport',
-    'F1 DU Port': 'f1_duport',
-    'N2 IP Address': 'n2_int',
-    'N3 IP Address': 'n3_int',
+    'F1 IP Address': 'f1InterfaceIPadd',
+    'F1 CU Port': 'f1cuPort',
+    'F1 DU Port': 'f1duPort',
+    'N2 IP Address': 'n2InterfaceIPadd',
+    'N3 IP Address': 'n3InterfaceIPadd',
     'MCC': 'mcc',
     'MNC': 'mnc',
     'TAC': 'tac',
     'SST': 'sst',
-    'AMF Host': 'amf_host',
+    'AMF Host': 'amfhost',
   };
 
   const transformDataForAPI = (data) => {
@@ -168,11 +185,7 @@ const ConfigurationPanel = () => {
 
   const handleComponentSelection = async (componentKey) => {
     setSelectedComponent(componentKey);
-    const fetchedData = await fetchComponentValues(componentKey); // This will be a new function to fetch and process data.
-    setValues({
-      ...componentData[componentKey], // This sets default values
-      ...fetchedData // This overrides with fetched data
-    });
+    await fetchComponentValues(componentKey);
   };
 
   const componentToApiMap = {
@@ -225,30 +238,10 @@ const ConfigurationPanel = () => {
       if (response.status === 200) {
         setAlertMessage('Configuration updated successfully!');
         setAlertSeverity('success');
-        const updatedValues = await fetchComponentValues(selectedComponent);
-        setValues({
-          ...componentData[selectedComponent],
-          ...updatedValues
-        });
+        await handleComponentSelection(selectedComponent); // Re-fetch values and comparison results
         setSetValuesState({});
         setRefreshTopology(true);
-
-        // Make additional API call based on component type
-        let compareEndpoint = '';
-        if (selectedComponent.startsWith('CU')) {
-          compareEndpoint = 'user/compare/cu/';
-        } else if (selectedComponent.startsWith('DU')) {
-          compareEndpoint = 'user/compare/du/';
-        } else if (selectedComponent.startsWith('UE')) {
-          compareEndpoint = 'user/compare/ue/';
-        }
-
-        if (compareEndpoint) {
-          await api.get(compareEndpoint);
-          console.log(`Successfully called compare endpoint: ${compareEndpoint}`);
-          setRefreshNavbar(true);
-        }
-
+        setRefreshNavbar(true);
       } else {
         throw new Error('Failed to update due to server error');
       }
@@ -308,17 +301,18 @@ const ConfigurationPanel = () => {
         </Grid>
       </CardHeader>
       <CardBody>
+        <br/>
       {selectedComponent ? (
           <>
         <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '10px', borderBottom: '1px solid #ccc', marginLeft: '-15px', marginRight: '-15px' }}>
-          <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-40px' }}>Key</Title>
-          <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-30px' }}>Set Value</Title>
+          <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-70px' }}>Key</Title>
+          <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem', marginLeft: '-70px' }}>Set Value</Title>
           <Title headingLevel="h6" size="md" style={{ flex: 1, textAlign: 'center', fontSize: '0.75rem' }}>Current Value</Title>
         </div>
-        <div style={shouldScroll ? { position: 'relative', overflowY: 'auto', maxHeight: '360px', width: '475px', paddingLeft: '15px', paddingRight: '20px', marginLeft: '-15px', overflowX: 'hidden', } : {}}>
+        <div style={shouldScroll ? { position: 'relative', overflowY: 'auto', maxHeight: '360px', width: '475px', paddingLeft: '15px', paddingRight: '16px', marginLeft: '-15px', overflowX: 'hidden', } : {}}>
           {Object.entries(componentData[selectedComponent]).map(([key, _]) => (
-            <div key={key} style={{ display: 'flex', paddingTop: '10px', marginLeft: '-15px', marginRight: '-15px' }}>
-              <span style={{ width: '150px', textAlign: 'left', fontSize: '0.75rem', marginTop: '6px' }}>{key}</span>
+            <div key={key} style={{ display: 'flex', paddingTop: '10px', marginLeft: '-10px', marginRight: '-10px' }}>
+              <span style={{ width: '80px', textAlign: 'left', fontSize: '0.75rem', marginTop: '6px' }}>{key}</span>
               <TextInput
                 id={`${key}-new`}
                 type="text"
@@ -332,9 +326,17 @@ const ConfigurationPanel = () => {
                   value={values[key] || ''}
                   type="text"
                   isReadOnly
-                  style={{ margin: '0 0px', fontSize: '0.75rem', boxSizing: 'border-box', flex: '1 1 100%' }}
+                  style={{ margin: '0 0px', fontSize: '0.75rem', boxSizing: 'border-box'}}
                 />
-                <CheckCircleIcon style={{ marginLeft: '8px', marginTop: '8px' }} />
+                {comparisonResults[keyMap[key]] !== undefined ? (
+                  comparisonResults[keyMap[key]] ? (
+                    <CheckCircleIcon style={{ marginLeft: '8px', marginTop: '8px' }} />
+                  ) : (
+                    <TimesCircleIcon style={{ marginLeft: '8px', marginTop: '8px' }} />
+                  )
+                ) : (
+                  <span style={{ marginLeft: '8px', marginTop: '8px' }} />
+                )}
               </div>
             </div>
           ))}

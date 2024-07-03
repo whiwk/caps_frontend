@@ -339,9 +339,10 @@ export const TopologyCustomEdgeDemo = () => {
     useEffect(() => {
       if (refreshTopology) {
         fetchDeployments();
+        fetchPods();
         setRefreshTopology(false);
       }
-    }, [refreshTopology, fetchDeployments, setRefreshTopology]);
+    }, [refreshTopology, fetchDeployments, setRefreshTopology, fetchPods]);
 
     React.useEffect(() => {
       if (selectedIds.length > 0) {

@@ -17,3 +17,11 @@ div::-webkit-scrollbar-thumb {
     background-color: '#E39514';
     color: #fff;
 }
+
+.pf-v5-c-form-control {
+    width: 180px !important;
+}
+
+.pf-v5-svg {
+    margin-top: 2px !important;
+}
