@@ -14,7 +14,7 @@ function MonitoringPage() {
     <PageSection>
       <Grid hasGutter>
         <GridItem span={12} rowSpan={6}>
-          <Card ouiaId="BasicCard" style={{height: '775px', borderRadius: '8px'}}>
+          <Card ouiaId="BasicCard" style={{height: '880px', borderRadius: '8px'}}>
             <CardTitle style={{ backgroundColor: '#0A7373', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
               UE Simulator: L1 Graph
             </CardTitle>

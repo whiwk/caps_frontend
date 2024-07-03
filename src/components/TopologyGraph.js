@@ -179,7 +179,7 @@ export const TopologyCustomEdgeDemo = () => {
     const [showSideBar, setShowSideBar] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
     const [actionLoading, setActionLoading] = React.useState(false);
-    const [logs, setLogs] = React.useState('');
+    const [logs, setLogs] = React.useState([]);
     const [pods, setPods] = React.useState([]);
     const [sidebarContent, setSidebarContent] = React.useState('protocolStack');
     const [sidebarLoading, setSidebarLoading] = React.useState(false);
@@ -1086,7 +1086,7 @@ export const TopologyCustomEdgeDemo = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              logs.slice(0, currentLogIndex + 1).map((log, index) => (
+              Array.isArray(logs) && logs.slice(0, currentLogIndex + 1).map((log, index) => (
                 <TableRow key={index}>
                   <TableCell style={{ backgroundColor: '#F2F2F2', fontFamily: 'monospace', fontSize: '12px' }}>{log.log}</TableCell>
                 </TableRow>

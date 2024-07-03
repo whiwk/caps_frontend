@@ -9,6 +9,7 @@ import {
   Grid,
   GridItem, Title
 } from '@patternfly/react-core';
+import { CheckCircleIcon } from '@patternfly/react-icons';
 import Snackbar from '@mui/material/Snackbar';
 import MuiAlert from '@mui/material/Alert';
 import Dialog from '@mui/material/Dialog';
@@ -317,21 +318,24 @@ const ConfigurationPanel = () => {
         <div style={shouldScroll ? { position: 'relative', overflowY: 'auto', maxHeight: '360px', width: '475px', paddingLeft: '15px', paddingRight: '20px', marginLeft: '-15px', overflowX: 'hidden', } : {}}>
           {Object.entries(componentData[selectedComponent]).map(([key, _]) => (
             <div key={key} style={{ display: 'flex', paddingTop: '10px', marginLeft: '-15px', marginRight: '-15px' }}>
-              <span style={{ width: '240px', textAlign: 'left', fontSize: '0.75rem', marginTop: '6px' }}>{key}</span>
+              <span style={{ width: '150px', textAlign: 'left', fontSize: '0.75rem', marginTop: '6px' }}>{key}</span>
               <TextInput
                 id={`${key}-new`}
                 type="text"
                 value={setValuesState[key] || ''}
                 onChange={(e) => setSetValuesState({ ...setValuesState, [key]: e.target.value })}
-                style={{ flex: 1, fontSize: '0.75rem', boxSizing: 'border-box'}}
+                style={{ fontSize: '0.75rem', boxSizing: 'border-box'}}
               />
-              <TextInput
-                id={`${key}-current`}
-                value={values[key] || ''}
-                type="text"
-                isreadonly="true"
-                style={{ flex: 1, margin: '0 0px', fontSize: '0.75rem', boxSizing: 'border-box' }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <TextInput
+                  id={`${key}-current`}
+                  value={values[key] || ''}
+                  type="text"
+                  isReadOnly
+                  style={{ margin: '0 0px', fontSize: '0.75rem', boxSizing: 'border-box', flex: '1 1 100%' }}
+                />
+                <CheckCircleIcon style={{ marginLeft: '8px', marginTop: '8px' }} />
+              </div>
             </div>
           ))}
         </div>

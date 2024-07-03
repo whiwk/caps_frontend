@@ -12,36 +12,92 @@ function LoggingPage() {
           <TextContent style={{ marginRight:'200px', marginLeft:'8px'}}>
           <Text component={TextVariants.h1} style={{ fontSize: '36px', marginBottom: '48px'}}>Monitoring and Logging</Text>
 
-            <Text component={TextVariants.h1} style={{ fontSize: '28px'}}>Wireshark</Text>
             <Text component={TextVariants.p}>
-                Wireshark is a powerful tool for analyzing network protocols and troubleshooting network issues.
+              Here's a brief explanation of each of the terms listed, and their functions within a 5G network:
             </Text>
             
-            <Text component={TextVariants.h3}>Protocol Info:</Text>
-            <TextList>
-              <TextListItem>nas-5gs: Handles Non-Access Stratum signaling in 5G.</TextListItem>
-              <TextListItem>f1ap: Manages signaling between CU and DU.</TextListItem>
-              <TextListItem>ngap: Handles signaling between AMF and gNB.</TextListItem>
-              <TextListItem>sctp: Ensures reliable, ordered delivery of data.</TextListItem>
-              <TextListItem>pfcp: Manages packet forwarding control.</TextListItem>
-              <TextListItem>gtp: Handles GPRS Tunneling Protocol for user data transport.</TextListItem>
-            </TextList>
-
-            <Text component={TextVariants.h1} style={{ fontSize: '28px'}}>Monitoring</Text>
+            <Text component={TextVariants.h3}>L1 TX Processing (Layer 1 Transmit Processing)</Text>
             <Text component={TextVariants.p}>
-                Effective monitoring ensures optimal network performance and quick identification of issues.
+              This refers to the physical layer (Layer 1) processing required to transmit data. It includes modulation, 
+              coding, and signal processing tasks that convert digital data into a format suitable for transmission over 
+              the air interface.
             </Text>
-            <TextList>
-              <TextListItem>
-                KPI Explanation: Detailed descriptions of key performance indicators, 
-                their significance, and how they are measured.
-              </TextListItem>
-              <TextListItem style={{ marginBottom: '48px'}}>
-                Monitoring Graph: Visual representations of network performance metrics, 
-                enabling easy tracking and analysis.
-              </TextListItem>
-            </TextList>
 
+            <Text component={TextVariants.h3}>ULSCH Encoding (Uplink Shared Channel Encoding)</Text>
+            <Text component={TextVariants.p}>
+              The Uplink Shared Channel (UL-SCH) is used for transmitting user data from the user equipment (UE) to 
+              the base station (gNodeB). Encoding involves adding error correction codes and other processing to ensure 
+              reliable communication.
+            </Text>
+
+            <Text component={TextVariants.h3}>L1 RX Processing (Layer 1 Receive Processing)</Text>
+            <Text component={TextVariants.p}>
+              This refers to the physical layer (Layer 1) processing required to receive data. It includes tasks such as 
+              demodulation, decoding, and signal processing that convert the received signal into a digital format that 
+              can be further processed by higher layers.
+            </Text>
+
+            <Text component={TextVariants.h3}>UL Indication (Uplink Indication)</Text>
+            <Text component={TextVariants.p}>
+              UL Indication involves signaling from the UE to the gNodeB indicating the UE's readiness to send data, 
+              or signaling specific events like buffer status or power headroom.
+            </Text>
+
+            <Text component={TextVariants.h3}>PDSCH Receiver (Physical Downlink Shared Channel Receiver)</Text>
+            <Text component={TextVariants.p}>
+              The PDSCH is the main channel used for transmitting user data from the gNodeB to the UE. The PDSCH Receiver 
+              processes the downlink data received over this channel, including demodulation and decoding.
+            </Text>
+
+            <Text component={TextVariants.h3}>PDSCH Decoding</Text>
+            <Text component={TextVariants.p}>
+              Decoding is part of the PDSCH Receiver's function, where the encoded data is decoded to retrieve the original 
+              transmitted information. This process includes error detection and correction.
+            </Text>
+
+            <Text component={TextVariants.h3}>Deinterleave</Text>
+            <Text component={TextVariants.p}>
+              Deinterleaving is a process that rearranges data symbols that were interleaved to mitigate the effects of 
+              burst errors. It ensures that the symbols are placed in the correct order for decoding.
+            </Text>
+
+            <Text component={TextVariants.h3}>Rate Unmatch</Text>
+            <Text component={TextVariants.p}>
+              Rate matching involves adjusting the number of bits in the encoded data to fit the available transmission resources. 
+              Rate unmatching reverses this process during reception to retrieve the original encoded data stream.
+            </Text>
+
+            <Text component={TextVariants.h3}>LDPC Decode (Low-Density Parity-Check Decode)</Text>
+            <Text component={TextVariants.p}>
+              LDPC is a type of error-correcting code used in 5G. LDPC decoding involves processing received data to correct 
+              any errors that occurred during transmission, ensuring reliable communication.
+            </Text>
+
+            <Text component={TextVariants.h3}>PDSCH Unscrambling</Text>
+            <Text component={TextVariants.p}>
+              Unscrambling is used to randomize the data in a known way to improve signal quality and reduce interference. 
+              During reception, unscrambling is reversed to retrieve the original data.
+            </Text>
+
+            <Text component={TextVariants.h3}>PDCCH Handling (Physical Downlink Control Channel Handling)</Text>
+            <Text component={TextVariants.p} style={{marginBottom: '48px'}}>
+              The PDCCH carries control information necessary for the UE to decode the PDSCH. PDCCH Handling involves decoding 
+              this control information, which includes scheduling assignments and other control commands.
+            </Text>
+
+            <Text component={TextVariants.h1} style={{ fontSize: '28px'}}>Explanation of Each Field in the Data</Text>
+            <TextList>
+              <TextListItem>Value (us): Represents the time taken for a specific process or function in microseconds.</TextListItem>
+              <TextListItem>Count: The number of times the process or function has occurred.</TextListItem>
+              <TextListItem>Total Time (us): The cumulative time taken for the process or function, summed over all occurrences.</TextListItem>
+          </TextList>
+
+            <Text component={TextVariants.h1} style={{ fontSize: '28px'}}>Function in a 5G Network</Text>
+            <Text component={TextVariants.p}>
+              These processes and functions are essential for ensuring reliable and efficient communication in a 5G network. 
+              They handle the physical transmission and reception of data, error correction, and control signaling, which are critical 
+              for maintaining the high data rates and low latency required by 5G applications.
+            </Text>
           </TextContent>
         </main>
       </div>
