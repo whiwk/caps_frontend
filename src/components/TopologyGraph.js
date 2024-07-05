@@ -77,16 +77,17 @@ const BadgeColors = [{
 const CONNECTOR_SOURCE_DROP = 'connector-src-drop';
 const CONNECTOR_TARGET_DROP = 'connector-src-drop';
 
-const DataEdge = React.memo(({ element, onEdgeClick, ...rest }) => {
-  React.useEffect(() => {
-    // console.log('DataEdge element:', element);
-  }, [element]);
-
+const DataEdge = React.memo(({ element, onEdgeClick, isSuccess, ...rest }) => {
   const handleEdgeClick = (e) => {
-    e.stopPropagation(); // Prevent event from bubbling up
-    // console.log('Edge clicked:', element.getId());
+    e.stopPropagation();
     onEdgeClick(element);
   };
+
+  // Debug log to verify the data
+  console.log('DataEdge element data:', element.getData());
+
+  const data = element.getData();
+  const edgeClass = data?.isSuccess ? 'custom-edge-success' : 'custom-edge-failure';
 
   return (
     <DefaultEdge
@@ -94,6 +95,7 @@ const DataEdge = React.memo(({ element, onEdgeClick, ...rest }) => {
       startTerminalType={EdgeTerminalType.circle}
       endTerminalType={EdgeTerminalType.circle}
       onClick={handleEdgeClick}
+      className={edgeClass}
       {...rest}
     />
   );
@@ -109,10 +111,6 @@ const CustomNode = React.memo(({
   onStatusDecoratorClick,
   ...rest
 }) => {
-  React.useEffect(() => {
-    // console.log('CustomNode element:', element);
-  }, [element]);
-
   const nodeId = element && element.getId ? element.getId() : null;
 
   let iconSrc = '';
@@ -127,19 +125,16 @@ const CustomNode = React.memo(({
   } else if (['AMF', 'UPF'].includes(nodeId)) {
     iconSrc = '/5GC.png';
   }
+
   const data = element ? element.getData() : {};
   const badgeColors = BadgeColors.find(badgeColor => badgeColor.name === data.badge);
   const shouldShowContextMenu = nodeId !== 'AMF' && nodeId !== 'UPF' && nodeId !== 'RRU';
 
   const handleContextMenu = (event) => {
-    event.stopPropagation(); // Ensure the event doesn't propagate
-    if (onSelect) {
-      onSelect(event); // Ensure the event object is passed to onSelect
-    }
-    if (onContextMenu) {
-      onContextMenu(event);
-    }
-    setShowSideBar(false); // Hide the sidebar when context menu is triggered
+    event.stopPropagation();
+    onSelect && onSelect(event);
+    onContextMenu && onContextMenu(event);
+    setShowSideBar(false);
   };
 
   return (
@@ -156,7 +151,6 @@ const CustomNode = React.memo(({
       onContextMenu={shouldShowContextMenu ? handleContextMenu : undefined}
       contextMenuOpen={contextMenuOpen}
       onStatusDecoratorClick={() => onStatusDecoratorClick && onStatusDecoratorClick(nodeId)}
-      className={data.status === 'success' ? 'pf-topology__connector-circle pf-m-source' : 'pf-topology__connector-circle'}
     >
       <g transform={`translate(15, 15)`}>
         <image href={iconSrc} width={70} height={70} />
@@ -691,46 +685,51 @@ export const TopologyCustomEdgeDemo = () => {
     }, [determineNodeStatus, handleStatusDecoratorClick]);
 
     const edges = React.useMemo(() => [
-        {
-          id: `air-interface`,
-          type: 'data-edge',
-          source: 'UE',
-          target: 'RRU',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
-        {
-          id: `Open-Fronthaul-interface`,
-          type: 'data-edge',
-          source: 'RRU',
-          target: 'DU',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
-        {
-          id: `F1-interface`,
-          type: 'data-edge',
-          source: 'DU',
-          target: 'CU',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
-        {
-          id: `N2-interface`,
-          type: 'data-edge',
-          source: 'CU',
-          target: 'AMF',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
-        {
-          id: `N3-interface`,
-          type: 'data-edge',
-          source: 'CU',
-          target: 'UPF',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
+      {
+        id: `air-interface`,
+        type: 'data-edge',
+        source: 'UE',
+        target: 'RRU',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: false }, // Ensure this data structure is correctly defined
+      },
+      {
+        id: `Open-Fronthaul-interface`,
+        type: 'data-edge',
+        source: 'RRU',
+        target: 'DU',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: false }, // Ensure this data structure is correctly defined
+      },
+      {
+        id: `F1-interface`,
+        type: 'data-edge',
+        source: 'DU',
+        target: 'CU',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: false }, // Ensure this data structure is correctly defined
+      },
+      {
+        id: `N2-interface`,
+        type: 'data-edge',
+        source: 'CU',
+        target: 'AMF',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: true }, // Ensure this data structure is correctly defined
+      },
+      {
+        id: `N3-interface`,
+        type: 'data-edge',
+        source: 'CU',
+        target: 'UPF',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: true }, // Ensure this data structure is correctly defined
+      },
     ], []);
 
     React.useEffect(() => {
@@ -791,11 +790,16 @@ export const TopologyCustomEdgeDemo = () => {
                   )
                 );
               case ModelKind.edge:
-                return withSelection()(
-                  (props) => (
-                    <DataEdge {...props} onSelect={() => handleEdgeClick(props.element)} />
-                  )
-                );
+                return withSelection()((props) => {
+                  const data = props.element.getData();
+                  return (
+                    <DataEdge
+                      {...props}
+                      onSelect={() => handleEdgeClick(props.element)}
+                      isSuccess={data?.isSuccess}
+                    />
+                  );
+                });
               default:
                 return undefined;
             }
@@ -1333,6 +1337,20 @@ export const TopologyCustomEdgeDemo = () => {
     const topologyControlBar = (
       <TopologyControlBarWithRefresh controller={controller} onRefresh={handleTopologyRefresh} />
     );  
+
+    const fetchUserInfo = async () => {
+      try {
+        const response = await api.get('user/information/');
+        console.log('User information:', response.data);
+      } catch (error) {
+        console.error('Failed to fetch user information:', error);
+      }
+    };
+
+    // Fetch user information when the component mounts
+    useEffect(() => {
+      fetchUserInfo();
+    }, []);
 
     return (
       <TopologyView sideBar={topologySideBar} controlBar={topologyControlBar}>

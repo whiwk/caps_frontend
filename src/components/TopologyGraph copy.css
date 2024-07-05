@@ -34,7 +34,7 @@
   width: 80% !important;
 }
 
-/* [data-id="air-interface"] .pf-topology__edge__link {
+[data-id="air-interface"] .pf-topology__edge__link {
   stroke: green !important;
 }
 
@@ -92,25 +92,4 @@
 
 [data-id="N3-interface"] .pf-topology__connector-circle {
   fill: green !important;
-} */
-.custom-edge-success {
-  --edge--hover--stroke: green !important;
-  --edge--stroke: green !important;
-}
-
-.custom-edge-success .pf-topology-connector-arrow {
-  fill: green !important; /* Customize the connector arrow fill color */
-  stroke: #004700 !important; /* Customize the connector arrow stroke color */
-  stroke-width: 2px !important; /* Customize the connector arrow stroke width */
-}
-
-.custom-edge-failure {
-  --edge--hover--stroke: red !important;
-  --edge--stroke: red !important;
-}
-
-.custom-edge-failure .pf-topology-connector-arrow {
-  fill: red !important; /* Customize the connector arrow fill color */
-  stroke: #a80303 !important; /* Customize the connector arrow stroke color */
-  stroke-width: 2px !important; /* Customize the connector arrow stroke width */
 }

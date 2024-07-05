@@ -179,7 +179,7 @@ export const TopologyCustomEdgeDemo = () => {
     const [showSideBar, setShowSideBar] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
     const [actionLoading, setActionLoading] = React.useState(false);
-    const [logs, setLogs] = React.useState('');
+    const [logs, setLogs] = React.useState([]);
     const [pods, setPods] = React.useState([]);
     const [sidebarContent, setSidebarContent] = React.useState('protocolStack');
     const [sidebarLoading, setSidebarLoading] = React.useState(false);
@@ -251,10 +251,14 @@ export const TopologyCustomEdgeDemo = () => {
       const currentRequestId = Date.now(); // Unique ID for the current request
       requestIdRef.current = currentRequestId; // Store it in the ref
     
+      console.log(`Fetching protocol stack data for node: ${nodeId}, request ID: ${currentRequestId}`);
+    
       try {
         setSidebarLoading(true);
         const searchNodeId = nodeId.toLowerCase();
         const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
+        console.log(`Found pod for node ${nodeId}:`, pod);
+    
         if (pod) {
           const response = await api.get(`shark/protocolstack/${pod.name}/`, {
             headers: {
@@ -262,13 +266,15 @@ export const TopologyCustomEdgeDemo = () => {
             },
           });
     
+          console.log('API response:', response.data);
+    
           // Check if the response data has the expected structure
           if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
             const parsedData = response.data.packets.map((item) => {
               const sctp = item._source?.layers?.sctp || {};
               const sctpChunk = Object.values(sctp).find(value => value?.['sctp.chunk_type']);
     
-              return {
+              const parsedItem = {
                 ipAddress: item._source?.layers?.ip?.["ip.src"] || null,
                 sctpSrcPort: sctp["sctp.srcport"] || null,
                 sctpDstPort: sctp["sctp.dstport"] || null,
@@ -284,17 +290,27 @@ export const TopologyCustomEdgeDemo = () => {
                 sctpParameterLength: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_length"] || null,
                 sctpHeartbeatInformation: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_heartbeat_information"] || null,
               };
+    
+              console.log('Parsed item:', parsedItem);
+              return parsedItem;
             }).filter(packet => packet.sctpSrcPort !== null && packet.sctpDstPort !== null);
+    
+            console.log('Filtered protocol stack data:', parsedData);
     
             // Only update state if the current request ID is the latest one
             if (requestIdRef.current === currentRequestId) {
               setProtocolStackData(parsedData[0] || {}); // Display the first packet data that contains SCTP information
+              console.log('Protocol stack data set:', parsedData[0] || {});
+            } else {
+              console.log('Ignored outdated response for request ID:', currentRequestId);
             }
           } else {
             setProtocolStackData({});
+            console.log('No valid protocol stack data found.');
           }
         } else {
           setProtocolStackData({});
+          console.log('No matching pod found.');
         }
       } catch (error) {
         console.error('Failed to fetch protocol stack data:', error);
@@ -310,6 +326,7 @@ export const TopologyCustomEdgeDemo = () => {
     // Example usage in useEffect
     React.useEffect(() => {
       if (selectedIds.length > 0) {
+        console.log('Selected node ID:', selectedIds[0]);
         fetchProtocolStackData(selectedIds[0]);
       }
     }, [selectedIds, fetchProtocolStackData]);
@@ -322,9 +339,10 @@ export const TopologyCustomEdgeDemo = () => {
     useEffect(() => {
       if (refreshTopology) {
         fetchDeployments();
+        fetchPods();
         setRefreshTopology(false);
       }
-    }, [refreshTopology, fetchDeployments, setRefreshTopology]);
+    }, [refreshTopology, fetchDeployments, setRefreshTopology, fetchPods]);
 
     React.useEffect(() => {
       if (selectedIds.length > 0) {
@@ -1069,7 +1087,7 @@ export const TopologyCustomEdgeDemo = () => {
                 </TableCell>
               </TableRow>
             ) : (
-              logs.slice(0, currentLogIndex + 1).map((log, index) => (
+              Array.isArray(logs) && logs.slice(0, currentLogIndex + 1).map((log, index) => (
                 <TableRow key={index}>
                   <TableCell style={{ backgroundColor: '#F2F2F2', fontFamily: 'monospace', fontSize: '12px' }}>{log.log}</TableCell>
                 </TableRow>
@@ -1242,16 +1260,17 @@ export const TopologyCustomEdgeDemo = () => {
             </div>
             <Button
               variant="contained"
-              color="secondary"
+              color="primary"
               onClick={handleRefresh}
               style={{
                 borderRadius: '20px',
                 ...createButtonStyles,
                 fontSize: '12px',
-                height: '24px'
+                height: '24px',
+                backgroundColor: '#F2B90F'
               }}
             >
-              Refresh
+              <RefreshIcon style={{ fontSize: '20px', color: '#FFF' }} />
             </Button>
           </Box>
         </Box>
@@ -1314,6 +1333,20 @@ export const TopologyCustomEdgeDemo = () => {
     const topologyControlBar = (
       <TopologyControlBarWithRefresh controller={controller} onRefresh={handleTopologyRefresh} />
     );  
+
+    const fetchUserInfo = async () => {
+      try {
+        const response = await api.get('user/information/');
+        console.log('User information:', response.data);
+      } catch (error) {
+        console.error('Failed to fetch user information:', error);
+      }
+    };
+
+    // Fetch user information when the component mounts
+    useEffect(() => {
+      fetchUserInfo();
+    }, []);
 
     return (
       <TopologyView sideBar={topologySideBar} controlBar={topologyControlBar}>
