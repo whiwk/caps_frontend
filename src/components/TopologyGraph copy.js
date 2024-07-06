@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useRef  } from 'react';
+import React, { useEffect, useContext, useRef, useState, useCallback, useMemo } from 'react';
 import '@patternfly/patternfly/patternfly.css';
 import './TopologyGraph.css';
 import api from '../services/apiService';
@@ -77,16 +77,17 @@ const BadgeColors = [{
 const CONNECTOR_SOURCE_DROP = 'connector-src-drop';
 const CONNECTOR_TARGET_DROP = 'connector-src-drop';
 
-const DataEdge = React.memo(({ element, onEdgeClick, ...rest }) => {
-  React.useEffect(() => {
-    // console.log('DataEdge element:', element);
-  }, [element]);
-
+const DataEdge = React.memo(({ element, onEdgeClick, isSuccess, ...rest }) => {
   const handleEdgeClick = (e) => {
-    e.stopPropagation(); // Prevent event from bubbling up
-    // console.log('Edge clicked:', element.getId());
+    e.stopPropagation();
     onEdgeClick(element);
   };
+
+  // Debug log to verify the data
+  console.log('DataEdge element data:', element.getData());
+
+  const data = element.getData();
+  const edgeClass = data?.isSuccess ? 'custom-edge-success' : 'custom-edge-failure';
 
   return (
     <DefaultEdge
@@ -94,6 +95,7 @@ const DataEdge = React.memo(({ element, onEdgeClick, ...rest }) => {
       startTerminalType={EdgeTerminalType.circle}
       endTerminalType={EdgeTerminalType.circle}
       onClick={handleEdgeClick}
+      className={edgeClass}
       {...rest}
     />
   );
@@ -109,10 +111,6 @@ const CustomNode = React.memo(({
   onStatusDecoratorClick,
   ...rest
 }) => {
-  React.useEffect(() => {
-    // console.log('CustomNode element:', element);
-  }, [element]);
-
   const nodeId = element && element.getId ? element.getId() : null;
 
   let iconSrc = '';
@@ -127,19 +125,16 @@ const CustomNode = React.memo(({
   } else if (['AMF', 'UPF'].includes(nodeId)) {
     iconSrc = '/5GC.png';
   }
+
   const data = element ? element.getData() : {};
   const badgeColors = BadgeColors.find(badgeColor => badgeColor.name === data.badge);
   const shouldShowContextMenu = nodeId !== 'AMF' && nodeId !== 'UPF' && nodeId !== 'RRU';
 
   const handleContextMenu = (event) => {
-    event.stopPropagation(); // Ensure the event doesn't propagate
-    if (onSelect) {
-      onSelect(event); // Ensure the event object is passed to onSelect
-    }
-    if (onContextMenu) {
-      onContextMenu(event);
-    }
-    setShowSideBar(false); // Hide the sidebar when context menu is triggered
+    event.stopPropagation();
+    onSelect && onSelect(event);
+    onContextMenu && onContextMenu(event);
+    setShowSideBar(false);
   };
 
   return (
@@ -156,7 +151,6 @@ const CustomNode = React.memo(({
       onContextMenu={shouldShowContextMenu ? handleContextMenu : undefined}
       contextMenuOpen={contextMenuOpen}
       onStatusDecoratorClick={() => onStatusDecoratorClick && onStatusDecoratorClick(nodeId)}
-      className={data.status === 'success' ? 'pf-topology__connector-circle pf-m-source' : 'pf-topology__connector-circle'}
     >
       <g transform={`translate(15, 15)`}>
         <image href={iconSrc} width={70} height={70} />
@@ -170,32 +164,33 @@ const customLayoutFactory = (type, graph) => new GridLayout(graph, {
 
 export const TopologyCustomEdgeDemo = () => {
     const { refreshTopology, setRefreshTopology } = useContext(RefreshContext);
-    const [selectedIds, setSelectedIds] = React.useState([]);
-    const [deployments, setDeployments] = React.useState([]);
-    const [modalOpen, setModalOpen] = React.useState(false);
-    const [modalAction, setModalAction] = React.useState('');
-    const [snackbarOpen, setSnackbarOpen] = React.useState(false);
-    const [snackbarMessage, setSnackbarMessage] = React.useState('');
-    const [showSideBar, setShowSideBar] = React.useState(false);
-    const [loading, setLoading] = React.useState(true);
-    const [actionLoading, setActionLoading] = React.useState(false);
-    const [logs, setLogs] = React.useState([]);
-    const [pods, setPods] = React.useState([]);
-    const [sidebarContent, setSidebarContent] = React.useState('protocolStack');
-    const [sidebarLoading, setSidebarLoading] = React.useState(false);
-    const [currentLogIndex, setCurrentLogIndex] = React.useState(0);
-    const [statusModalOpen, setStatusModalOpen] = React.useState(false);
-    const [statusModalContent, setStatusModalContent] = React.useState({ deploymentName: '', state: '' });
-    const [protocolStackData, setProtocolStackData] = React.useState({});
-    const [edgeModalOpen, setEdgeModalOpen] = React.useState(false);
-    const [selectedEdge, setSelectedEdge] = React.useState(null);
-    const [snackbarSeverity, setSnackbarSeverity] = React.useState('success'); 
-    const [customMessage, setCustomMessage] = React.useState('');
-    const [dangerStatus, setDangerStatus] = React.useState(false);
-    const [warningModalOpen, setWarningModalOpen] = React.useState(false);
-    const [warningModalMessage, setWarningModalMessage] = React.useState('');
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [deployments, setDeployments] = useState([]);
+    const [modalOpen, setModalOpen] = useState(false);
+    const [modalAction, setModalAction] = useState('');
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState('');
+    const [showSideBar, setShowSideBar] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [actionLoading, setActionLoading] = useState(false);
+    const [logs, setLogs] = useState([]);
+    const [pods, setPods] = useState([]);
+    const [sidebarContent, setSidebarContent] = useState('protocolStack');
+    const [sidebarLoading, setSidebarLoading] = useState(false);
+    const [currentLogIndex, setCurrentLogIndex] = useState(0);
+    const [statusModalOpen, setStatusModalOpen] = useState(false);
+    const [statusModalContent, setStatusModalContent] = useState({ deploymentName: '', state: '' });
+    const [protocolStackData, setProtocolStackData] = useState({});
+    const [edgeModalOpen, setEdgeModalOpen] = useState(false);
+    const [selectedEdge, setSelectedEdge] = useState(null);
+    const [snackbarSeverity, setSnackbarSeverity] = useState('success'); 
+    const [customMessage, setCustomMessage] = useState('');
+    const [dangerStatus, setDangerStatus] = useState(false);
+    const [warningModalOpen, setWarningModalOpen] = useState(false);
+    const [warningModalMessage, setWarningModalMessage] = useState('');
+    const [userInfo, setUserInfo] = useState({ cu_matches: 0, du_matches: 0, ue_matches: 0 }); // Add state for user info
 
-    const handleEdgeClick = React.useCallback((element) => {
+    const handleEdgeClick = useCallback((element) => {
       if (element && element.id) {
         // console.log('Edge clicked:', element.id);
         setSelectedEdge(element);
@@ -205,7 +200,7 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, []);
 
-    const fetchDeployments = React.useCallback(async () => {
+    const fetchDeployments = useCallback(async () => {
       try {
         setLoading(true);
         const response = await api.get('kube/deployments/');
@@ -226,7 +221,7 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, []);
 
-    const fetchPods = React.useCallback(async () => {
+    const fetchPods = useCallback(async () => {
       try {
         const response = await api.get('kube/pods/');
         // console.log('fetchPods response:', response.data);
@@ -246,7 +241,7 @@ export const TopologyCustomEdgeDemo = () => {
       setLoading(false);
     };
 
-    const fetchProtocolStackData = React.useCallback(async (nodeId) => {
+    const fetchProtocolStackData = useCallback(async (nodeId) => {
       const authToken = localStorage.getItem('authToken');
       const currentRequestId = Date.now(); // Unique ID for the current request
       requestIdRef.current = currentRequestId; // Store it in the ref
@@ -324,14 +319,14 @@ export const TopologyCustomEdgeDemo = () => {
     const requestIdRef = useRef(null);
     
     // Example usage in useEffect
-    React.useEffect(() => {
+    useEffect(() => {
       if (selectedIds.length > 0) {
         console.log('Selected node ID:', selectedIds[0]);
         fetchProtocolStackData(selectedIds[0]);
       }
     }, [selectedIds, fetchProtocolStackData]);
 
-    React.useEffect(() => {
+    useEffect(() => {
       fetchDeployments();
       fetchPods();
     }, [fetchDeployments, fetchPods]);
@@ -344,13 +339,13 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, [refreshTopology, fetchDeployments, setRefreshTopology, fetchPods]);
 
-    React.useEffect(() => {
+    useEffect(() => {
       if (selectedIds.length > 0) {
         fetchProtocolStackData(selectedIds[0]);
       }
     }, [selectedIds, fetchProtocolStackData]);
 
-    const fetchLogs = React.useCallback(async (nodeId) => {
+    const fetchLogs = useCallback(async (nodeId) => {
       try {
         setSidebarLoading(true);
         // console.log('Fetching logs for nodeId:', nodeId);
@@ -387,7 +382,7 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, [pods]);
 
-    const pingGoogle = React.useCallback(async () => {
+    const pingGoogle = useCallback(async () => {
       try {
         setSidebarLoading(true);
         const response = await api.post('kube/ping_google/');
@@ -406,7 +401,7 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, []);
 
-    const curlGoogle = React.useCallback(async () => {
+    const curlGoogle = useCallback(async () => {
       try {
         setSidebarLoading(true);
         const response = await api.post('kube/curl_google/');
@@ -423,7 +418,7 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, []);
 
-    React.useEffect(() => {
+    useEffect(() => {
       if (selectedIds.length > 0) {
         if (sidebarContent === 'protocolStack') {
           fetchProtocolStackData(selectedIds[0]);
@@ -437,7 +432,7 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, [selectedIds, sidebarContent, fetchLogs, pingGoogle, curlGoogle, fetchProtocolStackData]);
 
-    React.useEffect(() => {
+    useEffect(() => {
       if (sidebarContent === 'pingGoogle' && logs.length > 0 && currentLogIndex < logs.length) {
         const timer = setTimeout(() => {
           setCurrentLogIndex(currentLogIndex + 1);
@@ -446,7 +441,7 @@ export const TopologyCustomEdgeDemo = () => {
       }
     }, [currentLogIndex, logs, sidebarContent]);
 
-    const determineNodeStatus = React.useCallback((nodeName) => {
+    const determineNodeStatus = useCallback((nodeName) => {
       if (nodeName === 'AMF' || nodeName === 'UPF') {
         return NodeStatus.success;
       }
@@ -461,7 +456,7 @@ export const TopologyCustomEdgeDemo = () => {
       return deployment.replicas > 0 ? NodeStatus.success : NodeStatus.warning;
     }, [deployments]);
 
-    const handleStatusDecoratorClick = React.useCallback(async (nodeId) => {
+    const handleStatusDecoratorClick = useCallback(async (nodeId) => {
       try {
         setSidebarLoading(true);
         let response;
@@ -546,7 +541,7 @@ export const TopologyCustomEdgeDemo = () => {
       }
     };
 
-    const nodes = React.useMemo(() => {
+    const nodes = useMemo(() => {
         const NODE_DIAMETER = 100;
         return [
             {
@@ -690,57 +685,62 @@ export const TopologyCustomEdgeDemo = () => {
         ];
     }, [determineNodeStatus, handleStatusDecoratorClick]);
 
-    const edges = React.useMemo(() => [
-        {
-          id: `air-interface`,
-          type: 'data-edge',
-          source: 'UE',
-          target: 'RRU',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
-        {
-          id: `Open-Fronthaul-interface`,
-          type: 'data-edge',
-          source: 'RRU',
-          target: 'DU',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
-        {
-          id: `F1-interface`,
-          type: 'data-edge',
-          source: 'DU',
-          target: 'CU',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
-        {
-          id: `N2-interface`,
-          type: 'data-edge',
-          source: 'CU',
-          target: 'AMF',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
-        {
-          id: `N3-interface`,
-          type: 'data-edge',
-          source: 'CU',
-          target: 'UPF',
-          edgeStyle: EdgeStyle.dashedMd,
-          animationSpeed: EdgeAnimationSpeed.medium,
-        },
-    ], []);
+    const edges = useMemo(() => [
+      {
+        id: `air-interface`,
+        type: 'data-edge',
+        source: 'UE',
+        target: 'RRU',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: userInfo.du_matches === 12 && userInfo.ue_matches === 9 },
+      },
+      {
+        id: `Open-Fronthaul-interface`,
+        type: 'data-edge',
+        source: 'RRU',
+        target: 'DU',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: userInfo.du_matches === 12 },
+      },
+      {
+        id: `F1-interface`,
+        type: 'data-edge',
+        source: 'DU',
+        target: 'CU',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: userInfo.cu_matches === 12 && userInfo.du_matches === 12 },
+      },
+      {
+        id: `N2-interface`,
+        type: 'data-edge',
+        source: 'CU',
+        target: 'AMF',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: userInfo.cu_matches === 12 },
+      },
+      {
+        id: `N3-interface`,
+        type: 'data-edge',
+        source: 'CU',
+        target: 'UPF',
+        edgeStyle: EdgeStyle.dashedMd,
+        animationSpeed: EdgeAnimationSpeed.medium,
+        data: { isSuccess: userInfo.cu_matches === 12 },
+      },
+    ], [userInfo]);
 
-    React.useEffect(() => {
+    useEffect(() => {
       if (!loading) {
         // console.log('Nodes:', nodes);
         // console.log('Edges:', edges);
       }
     }, [loading, nodes, edges]);
 
-    const controller = React.useMemo(() => {
+    const controller = useMemo(() => {
       const customComponentFactory = (kind, type) => {
         const contextMenuItem = (label, i) => {
           if (label === '-') {
@@ -791,11 +791,16 @@ export const TopologyCustomEdgeDemo = () => {
                   )
                 );
               case ModelKind.edge:
-                return withSelection()(
-                  (props) => (
-                    <DataEdge {...props} onSelect={() => handleEdgeClick(props.element)} />
-                  )
-                );
+                return withSelection()((props) => {
+                  const data = props.element.getData();
+                  return (
+                    <DataEdge
+                      {...props}
+                      onSelect={() => handleEdgeClick(props.element)}
+                      isSuccess={data?.isSuccess}
+                    />
+                  );
+                });
               default:
                 return undefined;
             }
@@ -839,7 +844,7 @@ export const TopologyCustomEdgeDemo = () => {
       return newController;
     }, [nodes, edges, handleStatusDecoratorClick, handleEdgeClick, determineNodeStatus]);
 
-      React.useEffect(() => {
+      useEffect(() => {
         if (controller) {
           // console.log('Updating Controller with new Nodes and Edges');
           controller.fromModel({
@@ -1338,6 +1343,11 @@ export const TopologyCustomEdgeDemo = () => {
       try {
         const response = await api.get('user/information/');
         console.log('User information:', response.data);
+        setUserInfo({
+          cu_matches: response.data.cu_matches,
+          du_matches: response.data.du_matches,
+          ue_matches: response.data.ue_matches,
+        });
       } catch (error) {
         console.error('Failed to fetch user information:', error);
       }
