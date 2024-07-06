@@ -333,6 +333,7 @@ export const TopologyCustomEdgeDemo = () => {
 
     useEffect(() => {
       if (refreshTopology) {
+        fetchUserInfo();
         fetchDeployments();
         fetchPods();
         setRefreshTopology(false);
@@ -1405,6 +1406,7 @@ export const TopologyCustomEdgeDemo = () => {
           </DialogTitle>
           <DialogContent>
             <p><strong>Interface Name:</strong> {selectedEdge ? selectedEdge.getId() : ''}</p>
+            <p><strong>Link Status:</strong> {selectedEdge && selectedEdge.getData().isSuccess ? 'Connected' : 'Disconnected'}</p>
           </DialogContent>
           <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
             <Button sx={cancelButtonStyles} onClick={() => setEdgeModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
