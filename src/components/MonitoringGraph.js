@@ -6,7 +6,7 @@ import DataContext from '../contexts/DataContext';
 import { toPng } from 'html-to-image';
 import { saveAs } from 'file-saver';
 
-const Graph = ({ data, ueStopped }) => {
+const MonitoringGraph = ({ data, ueStopped }) => {
   const containerRef = useRef(null);
   const graph1Ref = useRef(null);
   const graph2Ref = useRef(null);
@@ -233,9 +233,9 @@ const Graph = ({ data, ueStopped }) => {
   );
 };
 
-const GraphWithContext = () => {
+const MonitoringGraphWithContext = () => {
   const { data, ueStopped } = useContext(DataContext);
-  return <Graph data={data} ueStopped={ueStopped} />;
+  return <MonitoringGraph data={data} ueStopped={ueStopped} />;
 };
 
-export default GraphWithContext;
+export default MonitoringGraphWithContext;

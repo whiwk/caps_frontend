@@ -58,7 +58,7 @@ const WiresharkDataTable: React.FC<{ data: any[] }> = ({ data }) => {
 };
 
 
-export const Tabsatu: React.FunctionComponent = () => {
+export const SniffTab: React.FunctionComponent = () => {
   const [value, setValue] = React.useState('');
   const [filteredData, setFilteredData] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -81,25 +81,6 @@ export const Tabsatu: React.FunctionComponent = () => {
     useEffect(() => {
       fetchPods(); // Fetch the pods when the component mounts
     }, []);
-
-    const formatTimestamp = (timestamp: string) => {
-      try {
-        const [datePart, timePart, , timezone] = timestamp.split(' ');
-        const dateStr = `${datePart} ${timePart}`;
-        const date = new Date(dateStr + ' UTC'); // Assuming the time is in UTC
-  
-        if (isNaN(date.getTime())) {
-          throw new Error('Invalid date');
-        }
-  
-        const formattedDate = date.toISOString().split('T')[0]; // Get the date part
-        const formattedTime = date.toTimeString().split(' ')[0]; // Get the time part (up to seconds)
-        return `${formattedDate} ${formattedTime}`;
-      } catch (error) {
-        console.error("Invalid timestamp format:", timestamp);
-        return 'N/A';
-      }
-    };
 
     const fetchPods = async () => {
       const authToken = localStorage.getItem('authToken');
@@ -400,4 +381,4 @@ export const Tabsatu: React.FunctionComponent = () => {
     );
 };
 
-export default Tabsatu;
+export default SniffTab;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode'; // Make sure to install jwt-decode package
 import './Navbar.css';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import Tooltip from '@mui/material/Tooltip';
@@ -87,8 +87,8 @@ const Navbar = () => {
     }
   };
 
-  const isActive = (path) => {
-    return location.pathname === path;
+  const isActive = (paths) => {
+    return paths.includes(location.pathname);
   };
 
   return (
@@ -96,18 +96,18 @@ const Navbar = () => {
       {loading ? <CircularProgress /> : (
         <>
           <div className="navbar__logo">
-            <Link to="/">
+            <Link to="/introduction/orca">
               <img src="/logo-orca-white.png" alt="Logo" />
             </Link>
           </div>
           <nav className="navbar__nav">
             {user.isAdmin ? (
-              <Link to="/user-management" className={isActive('/user-management') ? 'active' : ''}>User Management</Link>
+              <Link to="/admin/user-management" className={isActive(['/admin/user-management']) ? 'active' : ''}>User Management</Link>
             ) : (
               <>
-                <Link to="/introduction" className={isActive('/introduction') ? 'active' : ''}>Introduction</Link>
-                <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>Dashboard</Link>
-                <Link to="/monitoring" className={isActive('/monitoring') ? 'active' : ''}>Monitoring</Link>
+                <Link to="/introduction/orca" className={isActive(['/introduction/orca', '/introduction/5g-overview', '/introduction/lab-guidance', '/introduction/behind-the-technology', '/introduction/monitoring-and-logging']) ? 'active' : ''}>Introduction</Link>
+                <Link to="/dashboard" className={isActive(['/dashboard']) ? 'active' : ''}>Dashboard</Link>
+                <Link to="/monitoring" className={isActive(['/monitoring']) ? 'active' : ''}>Monitoring</Link>
               </>
             )}
           </nav>

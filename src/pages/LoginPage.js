@@ -67,9 +67,9 @@ export default function SignInSide() {
       localStorage.setItem('authToken', response.data.access);
       localStorage.setItem('refreshToken', response.data.refresh);
       if (response.data.is_staff === true) {
-        navigate('/user-management'); // Redirect admin to user management page
+        navigate('/admin/user-management'); // Redirect admin to user management page
       } else {
-        navigate('/introduction'); // Redirect common user to introduction page
+        navigate('/introduction/orca'); // Redirect common user to introduction page
       } 
     } catch (error) {
       setLoading(false);

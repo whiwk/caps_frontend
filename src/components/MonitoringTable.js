@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import api from '../services/apiService';
 import { Alert, Snackbar } from '@mui/material';
-import './Table.css';
+import './MonitoringTable.css';
 import DataContext from '../contexts/DataContext';
 
 const initialRepositories = [
@@ -19,7 +19,7 @@ const initialRepositories = [
   { content: 'PDCCH handling', value: '', count: '', totalTime: '' }
 ];
 
-export const TableMisc = () => {
+export const MonitoringTable = () => {
   const [repositories, setRepositories] = useState(initialRepositories);
   const { setData, setUeStopped } = useContext(DataContext); // Get setUeStopped from context
   const [loading, setLoading] = useState(false);
@@ -198,4 +198,4 @@ export const TableMisc = () => {
   );
 };
 
-export default TableMisc;
+export default MonitoringTable;

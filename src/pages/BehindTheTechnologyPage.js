@@ -1,9 +1,9 @@
 import React from 'react';
 import Sidebar from '../components/sidebar/Sidebar'; // Adjust the import path as needed
-import {TextContent, Text, TextVariants, TextList, TextListVariants, TextListItem} from '@patternfly/react-core';
+import {TextContent, Text, TextVariants } from '@patternfly/react-core';
 import './Introduction.css'
 
-function BehindPage() {
+function BehindTheTechnologyPage() {
   return (
     <div style={{ display: 'flex', backgroundColor: '#f0f0f0' }} className='page-container'>
       <div className="main-content-container">
@@ -40,4 +40,4 @@ function BehindPage() {
   );
 }
 
-export default BehindPage;
+export default BehindTheTechnologyPage;

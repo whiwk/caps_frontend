@@ -20,9 +20,9 @@ const CheckToken = () => {
         } else {
           // Check if the decoded token has the is_staff property and redirect accordingly
           if (decoded.is_staff) {
-            navigate('/user-management'); // Redirect admin users to the user management page
+            navigate('/admin/user-management'); // Redirect admin users to the user management page
           } else {
-            navigate('/introduction'); // Redirect common users to the introduction page
+            navigate('/introduction/orca'); // Redirect common users to the introduction page
           }
         }
       } catch (error) {

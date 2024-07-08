@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import './TryComponentConfig.css';
+import './ConfigurationPanel.css';
 import {
   Card,
   CardBody,

@@ -1,10 +1,10 @@
 import React from 'react';
 import Sidebar from '../components/sidebar/Sidebar'; // Adjust the import path as needed
-import { Grid, GridItem, PageSection, Card, CardTitle, CardBody, TextContent, Text, TextVariants, TextListItem, TextList, TextListVariants} from '@patternfly/react-core';
+import { Grid, GridItem, Card, CardTitle, CardBody, TextContent, Text, TextVariants, TextListItem, TextList } from '@patternfly/react-core';
 import { Helmet } from 'react-helmet';
 import './Introduction.css'
 
-function IntroductionPage() {
+function OrcaIntroductionPage() {
   return (
     <div style={{ display: 'flex', backgroundColor: '#f0f0f0' }} className='page-container'>
       <Helmet>
@@ -144,7 +144,7 @@ function IntroductionPage() {
   );
 }
 
-export default IntroductionPage;
+export default OrcaIntroductionPage;
 
 // import React from 'react';
 // import Sidebar from '../components/sidebar/Sidebar'; // Adjust the import path as needed

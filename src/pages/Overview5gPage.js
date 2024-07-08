@@ -3,7 +3,7 @@ import Sidebar from '../components/sidebar/Sidebar'; // Adjust the import path a
 import { TextContent, Text, TextVariants, TextList, TextListVariants, TextListItem} from '@patternfly/react-core';
 import './Introduction.css'
 
-function ImplementationPage() {
+function Overview5gPage() {
   return (
     <div style={{ display: 'flex', backgroundColor: '#f0f0f0'}} className='page-container'>
       <div className="main-content-container">
@@ -134,7 +134,7 @@ function ImplementationPage() {
   );
 }
 
-export default ImplementationPage;
+export default Overview5gPage;
 
 
 

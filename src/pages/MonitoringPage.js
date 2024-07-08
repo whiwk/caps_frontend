@@ -2,8 +2,8 @@
 import React from 'react';
 import { Grid, GridItem, PageSection, Card, CardTitle, CardBody } from '@patternfly/react-core';
 import { Helmet } from 'react-helmet';
-import Graph from '../components/Graph';
-import TableMisc from '../components/Table';
+import MonitoringGraph from '../components/MonitoringGraph';
+import MonitoringTable from '../components/MonitoringTable';
 
 function MonitoringPage() {
   return (
@@ -19,14 +19,14 @@ function MonitoringPage() {
               UE Simulator: L1 Graph
             </CardTitle>
             <CardBody>
-              <Graph />
+              <MonitoringGraph />
             </CardBody>
           </Card>
         </GridItem>
         <GridItem span={12} rowSpan={6}>
           <Card ouiaId="BasicCard" style={{height: '500px', borderRadius: '8px'}}>
             <CardBody>
-              <TableMisc />
+              <MonitoringTable />
             </CardBody>
           </Card>
         </GridItem>
