@@ -1,6 +1,7 @@
 import React, { useEffect, useContext, useRef, useState, useCallback, useMemo } from 'react';
 import '@patternfly/patternfly/patternfly.css';
 import './TopologyGraph.css';
+import './Terminal.css';
 import api from '../services/apiService';
 import { RefreshContext } from '../contexts/RefreshContext';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -83,9 +84,6 @@ const DataEdge = React.memo(({ element, onEdgeClick, isSuccess, ...rest }) => {
     onEdgeClick(element);
   };
 
-  // Debug log to verify the data
-  console.log('DataEdge element data:', element.getData());
-
   const data = element.getData();
   const edgeClass = data?.isSuccess ? 'custom-edge-success' : 'custom-edge-failure';
 
@@ -162,7 +160,7 @@ const CustomNode = React.memo(({
 const customLayoutFactory = (type, graph) => new GridLayout(graph, {
 });
 
-export const TopologyCustomEdgeDemo = () => {
+export const TopologyGraph = () => {
     const { refreshTopology, setRefreshTopology } = useContext(RefreshContext);
     const [selectedIds, setSelectedIds] = useState([]);
     const [deployments, setDeployments] = useState([]);
@@ -177,7 +175,6 @@ export const TopologyCustomEdgeDemo = () => {
     const [pods, setPods] = useState([]);
     const [sidebarContent, setSidebarContent] = useState('protocolStack');
     const [sidebarLoading, setSidebarLoading] = useState(false);
-    const [currentLogIndex, setCurrentLogIndex] = useState(0);
     const [statusModalOpen, setStatusModalOpen] = useState(false);
     const [statusModalContent, setStatusModalContent] = useState({ deploymentName: '', state: '' });
     const [protocolStackData, setProtocolStackData] = useState({});
@@ -188,11 +185,10 @@ export const TopologyCustomEdgeDemo = () => {
     const [dangerStatus, setDangerStatus] = useState(false);
     const [warningModalOpen, setWarningModalOpen] = useState(false);
     const [warningModalMessage, setWarningModalMessage] = useState('');
-    const [userInfo, setUserInfo] = useState({ cu_matches: 0, du_matches: 0, ue_matches: 0 }); // Add state for user info
+    const [userInfo, setUserInfo] = useState({ cu_matches: 0, du_matches: 0, ue_matches: 0 });
 
     const handleEdgeClick = useCallback((element) => {
       if (element && element.id) {
-        // console.log('Edge clicked:', element.id);
         setSelectedEdge(element);
         setEdgeModalOpen(true);
       } else {
@@ -224,12 +220,10 @@ export const TopologyCustomEdgeDemo = () => {
     const fetchPods = useCallback(async () => {
       try {
         const response = await api.get('kube/pods/');
-        // console.log('fetchPods response:', response.data);
         const podsData = response.data.pods.map((pod) => ({
           name: pod.name,
         }));
         setPods(podsData);
-        // console.log('pod name:', podsData )
       } catch (error) {
         console.error('Failed to fetch pods:', error);
       }
@@ -246,13 +240,10 @@ export const TopologyCustomEdgeDemo = () => {
       const currentRequestId = Date.now(); // Unique ID for the current request
       requestIdRef.current = currentRequestId; // Store it in the ref
     
-      console.log(`Fetching protocol stack data for node: ${nodeId}, request ID: ${currentRequestId}`);
-    
       try {
         setSidebarLoading(true);
         const searchNodeId = nodeId.toLowerCase();
         const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
-        console.log(`Found pod for node ${nodeId}:`, pod);
     
         if (pod) {
           const response = await api.get(`shark/protocolstack/${pod.name}/`, {
@@ -261,9 +252,6 @@ export const TopologyCustomEdgeDemo = () => {
             },
           });
     
-          console.log('API response:', response.data);
-    
-          // Check if the response data has the expected structure
           if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
             const parsedData = response.data.packets.map((item) => {
               const sctp = item._source?.layers?.sctp || {};
@@ -286,26 +274,17 @@ export const TopologyCustomEdgeDemo = () => {
                 sctpHeartbeatInformation: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_heartbeat_information"] || null,
               };
     
-              console.log('Parsed item:', parsedItem);
               return parsedItem;
             }).filter(packet => packet.sctpSrcPort !== null && packet.sctpDstPort !== null);
     
-            console.log('Filtered protocol stack data:', parsedData);
-    
-            // Only update state if the current request ID is the latest one
             if (requestIdRef.current === currentRequestId) {
               setProtocolStackData(parsedData[0] || {}); // Display the first packet data that contains SCTP information
-              console.log('Protocol stack data set:', parsedData[0] || {});
-            } else {
-              console.log('Ignored outdated response for request ID:', currentRequestId);
             }
           } else {
             setProtocolStackData({});
-            console.log('No valid protocol stack data found.');
           }
         } else {
           setProtocolStackData({});
-          console.log('No matching pod found.');
         }
       } catch (error) {
         console.error('Failed to fetch protocol stack data:', error);
@@ -318,10 +297,8 @@ export const TopologyCustomEdgeDemo = () => {
     // useRef to store the current request ID
     const requestIdRef = useRef(null);
     
-    // Example usage in useEffect
     useEffect(() => {
       if (selectedIds.length > 0) {
-        console.log('Selected node ID:', selectedIds[0]);
         fetchProtocolStackData(selectedIds[0]);
       }
     }, [selectedIds, fetchProtocolStackData]);
@@ -349,8 +326,6 @@ export const TopologyCustomEdgeDemo = () => {
     const fetchLogs = useCallback(async (nodeId) => {
       try {
         setSidebarLoading(true);
-        // console.log('Fetching logs for nodeId:', nodeId);
-        // console.log('Current pods:', pods);
         let response;
         if (nodeId === 'AMF') {
           response = await api.get('kube/get_amf_logs/');
@@ -359,17 +334,14 @@ export const TopologyCustomEdgeDemo = () => {
         } else {
           const searchNodeId = nodeId.toLowerCase();
           const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
-          // console.log('Found pod:', pod);
           if (pod) {
             response = await api.get(`kube/pods/${pod.name}/logs/`);
           } else {
-            // console.log(`No matching pod found for nodeId: ${nodeId}`);
             setLogs([]);
             setSidebarLoading(false);
             return;
           }
         }
-        // console.log('fetchLogs response:', response.data);
         if (Array.isArray(response.data)) {
           setLogs(response.data);
         } else {
@@ -382,65 +354,6 @@ export const TopologyCustomEdgeDemo = () => {
         setSidebarLoading(false);
       }
     }, [pods]);
-
-    const pingGoogle = useCallback(async () => {
-      try {
-        setSidebarLoading(true);
-        const response = await api.post('kube/ping_google/');
-        if (response.data && response.data.output) {
-          const lines = response.data.output.split('\n').map(line => ({ log: line }));
-          setLogs(lines);
-          setCurrentLogIndex(0);
-        } else {
-          setLogs([]);
-        }
-      } catch (error) {
-        console.error('Failed to ping Google:', error);
-        setLogs([]);
-      } finally {
-        setSidebarLoading(false);
-      }
-    }, []);
-
-    const curlGoogle = useCallback(async () => {
-      try {
-        setSidebarLoading(true);
-        const response = await api.post('kube/curl_google/');
-        if (response.data && response.data.output) {
-          setLogs([{ timestamp: new Date().toISOString(), log: response.data.output }]);
-        } else {
-          setLogs([]);
-        }
-      } catch (error) {
-        console.error('Failed to curl Google:', error);
-        setLogs([]);
-      } finally {
-        setSidebarLoading(false);
-      }
-    }, []);
-
-    useEffect(() => {
-      if (selectedIds.length > 0) {
-        if (sidebarContent === 'protocolStack') {
-          fetchProtocolStackData(selectedIds[0]);
-        } else if (sidebarContent === 'logs') {
-          fetchLogs(selectedIds[0]);
-        } else if (sidebarContent === 'pingGoogle') {
-          pingGoogle();
-        } else if (sidebarContent === 'curlGoogle') {
-          curlGoogle();
-        }
-      }
-    }, [selectedIds, sidebarContent, fetchLogs, pingGoogle, curlGoogle, fetchProtocolStackData]);
-
-    useEffect(() => {
-      if (sidebarContent === 'pingGoogle' && logs.length > 0 && currentLogIndex < logs.length) {
-        const timer = setTimeout(() => {
-          setCurrentLogIndex(currentLogIndex + 1);
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
-    }, [currentLogIndex, logs, sidebarContent]);
 
     const determineNodeStatus = useCallback((nodeName) => {
       if (nodeName === 'AMF' || nodeName === 'UPF') {
@@ -757,9 +670,8 @@ export const TopologyCustomEdgeDemo = () => {
 
         const createContextMenu = (nodeStatus) => {
           setWarningModalOpen(false)
-          // console.log('Creating context menu for node status:', nodeStatus);
           if (nodeStatus === NodeStatus.danger) {
-              setStatusModalOpen(true); // Close the status modal if the node status is danger
+              setStatusModalOpen(true); 
           }
           switch (nodeStatus) {
               case NodeStatus.success:
@@ -783,7 +695,6 @@ export const TopologyCustomEdgeDemo = () => {
                   withDragNode(nodeDragSourceSpec('node', true, true))(
                     withSelection()(
                       withContextMenu((element) => {
-                        // console.log('Context menu element data:', element.getData());
                         return createContextMenu(element.getData().status);
                       })(
                         (props) => <CustomNode {...props} setShowSideBar={setShowSideBar} onStatusDecoratorClick={handleStatusDecoratorClick} />
@@ -816,7 +727,6 @@ export const TopologyCustomEdgeDemo = () => {
         const selectedNode = nodes.find(node => node.id === selectedNodeId);
         const nodeStatus = selectedNode ? determineNodeStatus(selectedNode.id) : null;
     
-        // Always show sidebar for AMF and UPF nodes
         if (selectedNodeId === 'AMF' || selectedNodeId === 'UPF') {
           setSelectedIds(ids);
           setShowSideBar(true);
@@ -847,7 +757,6 @@ export const TopologyCustomEdgeDemo = () => {
 
       useEffect(() => {
         if (controller) {
-          // console.log('Updating Controller with new Nodes and Edges');
           controller.fromModel({
             graph: {
               id: 'g1',
@@ -861,7 +770,6 @@ export const TopologyCustomEdgeDemo = () => {
       }, [controller, nodes, edges]);
 
     const handleContextMenuAction = (action) => {
-      // console.log('Context menu action:', action);
       setModalAction(action);
       setModalOpen(true);
       setShowSideBar(false);
@@ -873,7 +781,6 @@ export const TopologyCustomEdgeDemo = () => {
             'DU': 'single_du',
             'UE': 'single_ue',
             'RRU': 'single_du',
-            // Add other mappings as necessary
         };
         return mapping[nodeLabel] || nodeLabel.toLowerCase();
     };
@@ -1082,73 +989,21 @@ export const TopologyCustomEdgeDemo = () => {
       </TableContainer>
     );
 
-    const renderPingGoogleTable = () => (
-      <TableContainer component={Paper}>
-        <Table>
-          <TableBody>
-            {sidebarLoading ? (
-              <TableRow>
-                <TableCell colSpan={1} align="center">
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : (
-              Array.isArray(logs) && logs.slice(0, currentLogIndex + 1).map((log, index) => (
-                <TableRow key={index}>
-                  <TableCell style={{ backgroundColor: '#F2F2F2', fontFamily: 'monospace', fontSize: '12px' }}>{log.log}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
-
-    const renderCurlGoogleOutput = () => (
-      <TableContainer component={Paper}>
-        <Table>
-          <TableBody>
-            {sidebarLoading ? (
-              <TableRow>
-                <TableCell align="center" colSpan={1} style={{ height: '100px' }}>
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : logs.length > 0 ? (
-              logs.map((log, index) => (
-                <TableRow key={index}>
-                  <TableCell style={{ whiteSpace: 'pre-wrap', fontFamily: 'monospace', fontSize: '12px' }}>
-                    {log.log}
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell align="center" colSpan={1}>No curl output available</TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
-
     const renderSidebarContent = () => {      
       switch (sidebarContent) {
         case 'logs':
           return renderLogsTable();
-        case 'pingGoogle':
-          return renderPingGoogleTable();
-        case 'curlGoogle':
-          return renderCurlGoogleOutput();
         case 'protocolStack':
           return renderProtocolStack();
+        case 'terminal':
+          return <Terminal />;
         default:
           return null;
       }
     };
 
     const createButtonStyles = {
-      textTransform: 'none' // Prevent text from being uppercased
+      textTransform: 'none'
     };
 
     const renderWarningModal = () => (
@@ -1173,12 +1028,6 @@ export const TopologyCustomEdgeDemo = () => {
       switch (sidebarContent) {
         case 'logs':
           await fetchLogs(selectedNodeId);
-          break;
-        case 'pingGoogle':
-          await pingGoogle();
-          break;
-        case 'curlGoogle':
-          await curlGoogle();
           break;
         case 'protocolStack':
           await fetchProtocolStackData(selectedNodeId);
@@ -1230,38 +1079,21 @@ export const TopologyCustomEdgeDemo = () => {
                 Logs
               </Button>
               {selectedIds.length > 0 && selectedIds[0] === 'UE' && (
-                <>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleSidebarContentChange('pingGoogle')}
-                    style={{
-                      marginRight: '10px',
-                      backgroundColor: sidebarContent === 'pingGoogle' ? '#2E3B55' : undefined,
-                      borderRadius: '20px',
-                      ...createButtonStyles,
-                      fontSize: '12px',
-                      height: '24px'
-                    }}
-                  >
-                    Ping
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    onClick={() => handleSidebarContentChange('curlGoogle')}
-                    style={{
-                      marginRight: '10px',
-                      backgroundColor: sidebarContent === 'curlGoogle' ? '#2E3B55' : undefined,
-                      borderRadius: '20px',
-                      ...createButtonStyles,
-                      fontSize: '12px',
-                      height: '24px'
-                    }}
-                  >
-                    Curl
-                  </Button>
-                </>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleSidebarContentChange('terminal')}
+                  style={{
+                    marginRight: '10px',
+                    backgroundColor: sidebarContent === 'terminal' ? '#2E3B55' : undefined,
+                    borderRadius: '20px',
+                    ...createButtonStyles,
+                    fontSize: '12px',
+                    height: '24px'
+                  }}
+                >
+                  Terminal
+                </Button>
               )}
             </div>
             <Button
@@ -1312,7 +1144,7 @@ export const TopologyCustomEdgeDemo = () => {
     
       const refreshButton = {
         id: 'refresh',
-        icon: <RefreshIcon viewBox="0 0 20 20" style={{ width: 16, height: 16 }} />, // Adjust viewBox and fontSize
+        icon: <RefreshIcon viewBox="0 0 20 20" style={{ width: 16, height: 16 }} />,
         tooltip: 'Refresh Topology',
         ariaLabel: 'Refresh Topology',
         callback: onRefresh,
@@ -1343,7 +1175,6 @@ export const TopologyCustomEdgeDemo = () => {
     const fetchUserInfo = async () => {
       try {
         const response = await api.get('user/information/');
-        console.log('User information:', response.data);
         setUserInfo({
           cu_matches: response.data.cu_matches,
           du_matches: response.data.du_matches,
@@ -1354,7 +1185,6 @@ export const TopologyCustomEdgeDemo = () => {
       }
     };
 
-    // Fetch user information when the component mounts
     useEffect(() => {
       fetchUserInfo();
     }, []);
@@ -1426,4 +1256,140 @@ export const TopologyCustomEdgeDemo = () => {
       </TopologyView>
     );
 };
-export default TopologyCustomEdgeDemo;
+
+const Terminal = () => {
+  const [input, setInput] = useState('');
+  const [output, setOutput] = useState([]);
+  const [podName, setPodName] = useState('');
+  const [namespace, setNamespace] = useState('');
+  const [websocketUrl, setWebsocketUrl] = useState('');
+  const terminalBodyRef = useRef(null);
+  const websocketRef = useRef(null);
+
+  useEffect(() => {
+    // Fetch the pod name and namespace
+    const fetchPodAndNamespace = async () => {
+      try {
+        const podResponse = await api.get('/kube/pods/');
+        const userResponse = await api.get('user/information/'); // Assuming you have an endpoint to get user info
+
+        const pod = podResponse.data.pods.find(pod => pod.name.includes('ue'));
+        const userNamespace = userResponse.data.username;
+
+        setPodName(pod.name);
+        setNamespace(userNamespace);
+
+        // Define the WebSocket URL based on your server address
+        setWebsocketUrl('ws://10.30.1.221:8020/ws/shell/');
+      } catch (error) {
+        console.error('Error fetching pod name or namespace:', error);
+      }
+    };
+
+    fetchPodAndNamespace();
+  }, []);
+
+  useEffect(() => {
+    if (websocketUrl) {
+      // Initialize WebSocket connection
+      websocketRef.current = new WebSocket(websocketUrl);
+
+      websocketRef.current.onopen = () => {
+        console.log('WebSocket connected');
+      };
+
+      websocketRef.current.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.command_output) {
+          setOutput((prevOutput) => [...prevOutput, data.command_output]);
+        } else if (data.error) {
+          setOutput((prevOutput) => [...prevOutput, `Error: ${data.error}`]);
+        }
+      };
+
+      websocketRef.current.onclose = () => {
+        console.log('WebSocket disconnected');
+      };
+
+      websocketRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      // Cleanup on component unmount
+      return () => {
+        if (websocketRef.current) {
+          websocketRef.current.close();
+        }
+      };
+    }
+  }, [websocketUrl]);
+
+  const handleInputChange = (e) => {
+    setInput(e.target.value);
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      processCommand(input);
+      setInput('');
+    }
+  };
+
+  const processCommand = (command) => {
+    if (command.toLowerCase() === 'clear') {
+      setOutput([]);
+      return;
+    }
+
+    if (websocketRef.current) {
+      websocketRef.current.send(
+        JSON.stringify({
+          pod_name: podName,
+          namespace: namespace,
+          command: command,
+        })
+      );
+    }
+
+    setOutput((prevOutput) => [...prevOutput, '', `> ${command}`]);
+  };
+
+  useEffect(() => {
+    if (terminalBodyRef.current) {
+      terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
+    }
+  }, [output]);
+
+  return (
+    <div className="terminal-container">
+      <div className="terminal-header">
+        <div className="terminal-buttons">
+          <div className="terminal-button close"></div>
+          <div className="terminal-button minimize"></div>
+          <div className="terminal-button maximize"></div>
+        </div>
+        <div className="terminal-title">Terminal</div>
+      </div>
+      <div className="terminal-input-container">
+        <div className="prompt">ue\terminal&gt;</div>
+        <textarea
+          className="terminal-input"
+          value={input}
+          onChange={handleInputChange}
+          onKeyPress={handleKeyPress}
+          rows="1"
+        />
+      </div>
+      <div className="terminal-body" ref={terminalBodyRef}>
+        <div className="terminal-output">
+          {output.map((line, index) => (
+            <div key={index}>{line}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TopologyGraph;

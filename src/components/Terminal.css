@@ -1,0 +1,90 @@
+.terminal-container {
+  background-color: #000000;
+  color: #ffffff;
+  font-family: 'Consolas', 'Courier New', Courier, monospace;
+  padding: 0;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  height: 400px;
+}
+
+.terminal-header {
+  background-color: #202020;
+  padding: 5px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.terminal-buttons {
+  display: flex;
+  gap: 5px;
+}
+
+.terminal-button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #ff5f56; /* Close button color */
+}
+
+.terminal-button.minimize {
+  background-color: #ffbd2e; /* Minimize button color */
+}
+
+.terminal-button.maximize {
+  background-color: #27c93f; /* Maximize button color */
+}
+
+.terminal-title {
+  flex-grow: 1;
+  text-align: center;
+  color: #ffffff;
+  font-size: 12px;
+  margin-left: -50px;
+}
+
+.terminal-body {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.terminal-output {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column; /* This will ensure the new lines are added at the bottom */
+  font-size: 12px;
+}
+
+.terminal-input-container {
+  display: flex;
+  align-items: center;
+}
+
+.terminal-prompt {
+  color: #ffffff;
+  font-family: 'Consolas', 'Courier New', Courier, monospace;
+  font-size: 12px;
+}
+
+.terminal-input {
+  background-color: transparent;
+  color: #ffffff;
+  border: none;
+  outline: none;
+  font-family: 'Consolas', 'Courier New', Courier, monospace;
+  font-size: 12px;
+  width: 100%;
+  resize: none;
+}
+
+.prompt {
+  font-size: 12px;
+}

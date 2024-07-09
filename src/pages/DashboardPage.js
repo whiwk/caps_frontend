@@ -1,7 +1,7 @@
 // src/pages/DashboardPage.js
 import React from 'react';
 import { Grid, GridItem, PageSection, Card, CardTitle, CardBody } from '@patternfly/react-core';
-import TopologyCustomEdgeDemo from '../components/TopologyGraph.js';
+import TopologyGraph from '../components/TopologyGraph.js';
 import ConfigurationPanel from '../components/ConfigurationPanel.js'; 
 import Wireshark from '../components/wireshark/Wireshark.tsx';
 import { Helmet } from 'react-helmet';
@@ -42,7 +42,7 @@ function DashboardPage() {
                 Topology Graph
               </CardTitle>
               <CardBody>
-                <TopologyCustomEdgeDemo />
+                <TopologyGraph />
               </CardBody>
             </Card>
           </GridItem>
