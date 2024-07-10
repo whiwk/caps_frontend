@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
-import api from '../services/apiService';
 import { Alert, Snackbar } from '@mui/material';
+import api from '../services/apiService';
 import './MonitoringTable.css';
 import DataContext from '../contexts/DataContext';
 
@@ -26,6 +26,7 @@ export const MonitoringTable = () => {
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('info');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const websocketRef = useRef(null);
 
   useEffect(() => {
     let isMounted = true; // Track if the component is mounted
@@ -79,36 +80,74 @@ export const MonitoringTable = () => {
           const podName = uePod.name;
           const namespace = uePod.namespace;
 
-          // Fetch the log data for the identified UE pod
-          const logResponse = await api.get(`kube/get_ue_log/${namespace}/${podName}/`);
-          const logData = logResponse.data.log;
+          // Establish WebSocket connection and send initial data
+          const ws = new WebSocket('ws://10.30.1.221:8020/ws/monitoring/');
+          websocketRef.current = ws;
 
-          // Map the log data to the repository entries and prepare data for the graph
-          const updatedRepositories = initialRepositories.map(repo => {
-            const regex = new RegExp(`\\s*${repo.content.replace('->', '\\->')}\\s*:\\s*([\\d\\.]+)\\s*us;\\s*(\\d+);\\s*([\\d\\.]+)\\s*us;`);
-            const logEntry = logData.find(log => regex.test(log.log));
-            const match = logEntry ? logEntry.log.match(regex) : null;
-            const value = match ? match[1] : repo.value || 'No data';
-            const count = match ? match[2] : repo.count || 'No data';
-            const totalTime = match ? match[3] : repo.totalTime || 'No data';
-            return {
-              ...repo,
-              value: value,
-              count: count,
-              totalTime: totalTime
-            };
-          });
+          ws.onopen = () => {
+            console.log('WebSocket connected');
+            ws.send(JSON.stringify({ pod_name: podName, namespace: namespace }));
+          };
 
-          setRepositories(updatedRepositories);
+          ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log('WebSocket message received:', data);
 
-          // Prepare data for the graph
-          const graphData = updatedRepositories.map(repo => ({
-            name: repo.content,
-            value: parseFloat(repo.value) || 0
-          }));
+            if (data.error) {
+              console.error('WebSocket error:', data.error);
+              setAlertMessage(data.error);
+              setAlertSeverity('error');
+              setSnackbarOpen(true);
+              return;
+            }
 
-          setData(graphData); // Update the context with the new data
+            if (data.monitoring_output) {
+              setRepositories((prevRepositories) => {
+                const updatedRepositories = prevRepositories.map(repo => {
+                  const regex = new RegExp(`\\s*${repo.content.replace('->', '\\->')}\\s*:\\s*([\\d\\.]+)\\s*us;\\s*(\\d+);\\s*([\\d\\.]+)\\s*us;`);
+                  const match = data.monitoring_output.match(regex);
+                  const value = match ? match[1] : repo.value;
+                  const count = match ? match[2] : repo.count;
+                  const totalTime = match ? match[3] : repo.totalTime;
+                  return {
+                    ...repo,
+                    value: value,
+                    count: count,
+                    totalTime: totalTime
+                  };
+                });
 
+                // Prepare data for the graph
+                const graphData = updatedRepositories.map(repo => ({
+                  name: repo.content,
+                  value: parseFloat(repo.value) || 0
+                }));
+
+                setData(graphData); // Update the context with the new data
+                return updatedRepositories;
+              });
+
+              setUeStopped(false); // Update the context to indicate UE is running
+            }
+          };
+
+          ws.onclose = () => {
+            console.log('WebSocket disconnected');
+          };
+
+          ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            setAlertMessage('WebSocket error');
+            setAlertSeverity('error');
+            setSnackbarOpen(true);
+          };
+
+          // Cleanup on component unmount
+          return () => {
+            if (ws) {
+              ws.close();
+            }
+          };
         } catch (error) {
           console.error('Error fetching UE log:', error);
           setRepositories(repositories.map(repo => ({ ...repo, value: repo.value || null, count: repo.count || null, totalTime: repo.totalTime || null })));

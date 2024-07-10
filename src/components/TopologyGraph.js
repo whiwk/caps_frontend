@@ -1282,7 +1282,7 @@ const Terminal = () => {
         setNamespace(userNamespace);
 
         // Define the WebSocket URL based on your server address
-        setWebsocketUrl('ws://10.30.1.221:8002/ws/shell/');
+        setWebsocketUrl('ws://10.30.1.221:8020/ws/shell/');
       } catch (error) {
         console.error('Error fetching pod name or namespace:', error);
       }
