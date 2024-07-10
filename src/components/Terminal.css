@@ -6,7 +6,7 @@
   border-radius: 5px;
   display: flex;
   flex-direction: column;
-  height: 400px;
+  height: 355px;
 }
 
 .terminal-header {
@@ -83,8 +83,45 @@
   font-size: 12px;
   width: 100%;
   resize: none;
+  margin-top: 0px;
+}
+
+.prompt-container {
+  display: flex;
+  align-items: center;
 }
 
 .prompt {
   font-size: 12px;
+  margin-right: 5px; /* Adjust margin as needed */
+}
+
+.command {
+  font-size: 12px;
+}
+
+.output {
+  margin-left: 15px; /* Indent output */
+}
+
+.artwork-container {
+  width: 100%;
+  max-height: 60px; /* Set a fixed height for the artwork */
+  overflow: hidden; /* Hide any overflow */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.artwork-container pre {
+  transform: scale(0.2); /* Scale down the artwork */
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+}
+
+.spacer {
+  height: 1em; /* Height of the spacer line */
 }

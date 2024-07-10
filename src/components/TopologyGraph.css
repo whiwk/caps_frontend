@@ -20,7 +20,7 @@
 
 .pf-topology__group__background {
   fill: var(--pf-topology__group__background--Fill);
-  stroke: #0A7373 !important;
+  stroke: #4B5563 !important;
   stroke-width: 8px !important;
 }
 

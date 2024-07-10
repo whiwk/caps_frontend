@@ -3,7 +3,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 20px; /* Added padding for overall alignment */
-  background-color: #049BAC;
+  background-color: #1E3A8A;
   /* background-color: #17252a; */
   position: fixed;      /* Fix navbar's position */
   top: 0;               /* Align top edge at the top of the viewport */
@@ -35,13 +35,13 @@
 }
 
 .navbar__nav a:hover {
-  color: #083E4A; /* Lighter color on hover */
+  color: #93C5FD; /* Lighter color on hover */
   text-decoration: none; /* Ensure underline doesn't reappear on hover */
 }
 
 
 .navbar__nav a.active {
-  color: #083E4A; /* Active link text color */
+  color: #93C5FD; /* Active link text color */
   text-decoration: none; /* Ensure underline doesn't reappear on hover */
 }
 

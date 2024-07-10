@@ -995,7 +995,7 @@ export const TopologyGraph = () => {
           return renderLogsTable();
         case 'protocolStack':
           return renderProtocolStack();
-        case 'terminal':
+        case 'shell':
           return <Terminal />;
         default:
           return null;
@@ -1082,17 +1082,17 @@ export const TopologyGraph = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={() => handleSidebarContentChange('terminal')}
+                  onClick={() => handleSidebarContentChange('shell')}
                   style={{
                     marginRight: '10px',
-                    backgroundColor: sidebarContent === 'terminal' ? '#2E3B55' : undefined,
+                    backgroundColor: sidebarContent === 'shell' ? '#2E3B55' : undefined,
                     borderRadius: '20px',
                     ...createButtonStyles,
                     fontSize: '12px',
                     height: '24px'
                   }}
                 >
-                  Terminal
+                  Shell
                 </Button>
               )}
             </div>
@@ -1263,8 +1263,10 @@ const Terminal = () => {
   const [podName, setPodName] = useState('');
   const [namespace, setNamespace] = useState('');
   const [websocketUrl, setWebsocketUrl] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   const terminalBodyRef = useRef(null);
   const websocketRef = useRef(null);
+  const outputBuffer = useRef('');
 
   useEffect(() => {
     // Fetch the pod name and namespace
@@ -1298,21 +1300,44 @@ const Terminal = () => {
         console.log('WebSocket connected');
       };
 
-      websocketRef.current.onmessage = (event) => {
+      websocketRef.current.onmessage = async (event) => {
         const data = JSON.parse(event.data);
+        console.log('WebSocket message received:', data);
+
+        // Buffer the output
         if (data.command_output) {
-          setOutput((prevOutput) => [...prevOutput, data.command_output]);
+          outputBuffer.current += data.command_output;
         } else if (data.error) {
-          setOutput((prevOutput) => [...prevOutput, `Error: ${data.error}`]);
+          outputBuffer.current += `Error: ${data.error}`;
+        } else if (data.message) {
+          outputBuffer.current += `Message: ${data.message}`;
+        }
+
+        // Assuming a newline character indicates the end of a command output part
+        if (outputBuffer.current.includes('\n')) {
+          setOutput((prevOutput) => {
+            const newOutput = [...prevOutput];
+            const lines = outputBuffer.current.split('\n');
+            lines.forEach((line) => {
+              if (line.trim()) {
+                newOutput[newOutput.length - 1].output.push(line.trim());
+              }
+            });
+            outputBuffer.current = '';
+            return newOutput;
+          });
+          setIsProcessing(false);
         }
       };
 
       websocketRef.current.onclose = () => {
         console.log('WebSocket disconnected');
+        setIsProcessing(false); // Ensure the prompt is displayed if WebSocket closes unexpectedly
       };
 
       websocketRef.current.onerror = (error) => {
         console.error('WebSocket error:', error);
+        setIsProcessing(false); // Ensure the prompt is displayed if WebSocket errors
       };
 
       // Cleanup on component unmount
@@ -1336,11 +1361,36 @@ const Terminal = () => {
     }
   };
 
+  const handleCtrlC = useCallback((e) => {
+    if (e.ctrlKey && e.key === 'c') {
+      e.preventDefault();
+      if (websocketRef.current) {
+        websocketRef.current.send(
+          JSON.stringify({
+            pod_name: podName,
+            namespace: namespace,
+            command: 'stop',
+          })
+        );
+      }
+      setOutput((prevOutput) => [...prevOutput, '^C']);
+    }
+  }, [podName, namespace]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleCtrlC);
+    return () => {
+      document.removeEventListener('keydown', handleCtrlC);
+    };
+  }, [handleCtrlC]);
+
   const processCommand = (command) => {
     if (command.toLowerCase() === 'clear') {
       setOutput([]);
       return;
     }
+
+    setIsProcessing(true);
 
     if (websocketRef.current) {
       websocketRef.current.send(
@@ -1352,7 +1402,10 @@ const Terminal = () => {
       );
     }
 
-    setOutput((prevOutput) => [...prevOutput, '', `> ${command}`]);
+    setOutput((prevOutput) => [
+      ...prevOutput,
+      { command: command, output: [] }
+    ]);
   };
 
   useEffect(() => {
@@ -1360,6 +1413,24 @@ const Terminal = () => {
       terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
     }
   }, [output]);
+
+  useEffect(() => {
+    if (!isProcessing && terminalBodyRef.current) {
+      terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
+    }
+  }, [isProcessing]);
+
+  const artwork = `                                              &                                 
+                                         &&&&&&&&&&&&&&&&                       
+                                          &&&&&&&&&&&&&&&&&%                    
+   &&&&&&&&&&&&&     &&&&&&&&&&&&&&     &&&&&&&&&&&&&&&&&&&&&      &&&&&&&&     
+ &&&&&&&&&&&&&&&&&   &&&&&/  #&&&&&&  &&&&&&&&&&&&&&&&&&&&&&&&    &&&&&&&&&&    
+ &&&&&*      &&&&&&  &&&&&&//&&&&&&% (&&&&&,#&&&& &&&%   &&&&&   &&&&&&&&&&&&   
+ &&&&&       &&&&&&  &&&&&&&&&&&&&   &&&&/ &&&& *&&&&&&&&&&%    &&&&&&  &&&&&&  
+ &&&&&&&,  &&&&&&&   &&&&&.&&&&&&    &&&&       &              &&&&&&&&&&&&&&&& 
+   &&&&&&&&&&&&&(    &&&&&. &&&&&&&   &&       &&&            &&&&&&&&&&&&&&&&&&
+      /&&&&&%        %%%%%    %%%%%    &      &&&&&&&&&&&&&  &&&&&&       ,&&&&&
+                                            &&&&&&&&&&&(                        `;
 
   return (
     <div className="terminal-container">
@@ -1369,23 +1440,39 @@ const Terminal = () => {
           <div className="terminal-button minimize"></div>
           <div className="terminal-button maximize"></div>
         </div>
-        <div className="terminal-title">Terminal</div>
+        <div className="terminal-title">Shell</div>
       </div>
-      <div className="terminal-input-container">
-        <div className="prompt">ue\terminal&gt;</div>
-        <textarea
-          className="terminal-input"
-          value={input}
-          onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
-          rows="1"
-        />
+      <div className="artwork-container">
+        <pre>{artwork}</pre>
       </div>
       <div className="terminal-body" ref={terminalBodyRef}>
         <div className="terminal-output">
-          {output.map((line, index) => (
-            <div key={index}>{line}</div>
+          {output.map((entry, index) => (
+            <div key={index}>
+              <div className="prompt-container">
+                <div className="prompt">{`orca\\ue\\shell>`}</div>
+                <div className="command">{entry.command}</div>
+              </div>
+              <div className="output">
+                {entry.output.map((line, idx) => (
+                  <div key={idx}>{line}</div>
+                ))}
+              </div>
+              <div className="spacer"></div> {/* Spacer line */}
+            </div>
           ))}
+          {!isProcessing && (
+            <div className="input-container">
+              <div className="prompt">orca\ue\shell&gt;</div>
+              <textarea
+                className="terminal-input"
+                value={input}
+                onChange={handleInputChange}
+                onKeyPress={handleKeyPress}
+                rows="1"
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>
