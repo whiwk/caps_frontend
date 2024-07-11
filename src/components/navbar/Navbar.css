@@ -3,7 +3,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 0 20px; /* Added padding for overall alignment */
-  background-color: #1E3A8A;
+  /* background-color: #1E3A8A; */
+  background-color: #083344;
   /* background-color: #17252a; */
   position: fixed;      /* Fix navbar's position */
   top: 0;               /* Align top edge at the top of the viewport */
@@ -35,13 +36,15 @@
 }
 
 .navbar__nav a:hover {
-  color: #93C5FD; /* Lighter color on hover */
+  color: #a5f3fc ; /* Lighter color on hover */
+  /* color: #93C5FD; */
   text-decoration: none; /* Ensure underline doesn't reappear on hover */
 }
 
 
 .navbar__nav a.active {
-  color: #93C5FD; /* Active link text color */
+  color: #a5f3fc ; /* Active link text color */
+  /* color: #93C5FD; */
   text-decoration: none; /* Ensure underline doesn't reappear on hover */
 }
 
@@ -74,7 +77,7 @@
 }
 
 .navbar__logout:hover {
-  color: #d30000; /* Change color on hover if needed */
+  color: #dc2626; /* Change color on hover if needed */
 }
 
 .navbar__username, .navbar__level, .navbar__completion {

@@ -81,7 +81,7 @@ export const MonitoringTable = () => {
           const namespace = uePod.namespace;
 
           // Establish WebSocket connection and send initial data
-          const ws = new WebSocket('ws://10.30.1.221:8020/ws/monitoring/');
+          const ws = new WebSocket('ws://10.30.1.221:8002/ws/monitoring/');
           websocketRef.current = ws;
 
           ws.onopen = () => {

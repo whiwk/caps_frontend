@@ -38,7 +38,7 @@ function DashboardPage() {
 
           <GridItem span={12} rowSpan={6}>
             <Card ouiaId="BasicCard" style={{height: '500px', borderRadius: '8px'}}>
-              <CardTitle style={{ backgroundColor: '#1E3A8A', color:'#ffffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
+              <CardTitle style={{ backgroundColor: '#0891B2', color:'#ffffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
                 Topology Graph
               </CardTitle>
               <CardBody>
@@ -49,7 +49,7 @@ function DashboardPage() {
 
           <GridItem span={5} rowSpan={6}>
             <Card ouiaId="BasicCard" style={{ height: '610px', borderRadius: '8px' }}>
-              <CardTitle style={{ backgroundColor: '#0A7373', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
+              <CardTitle style={{ backgroundColor: '#0891B2', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
                 Configuration Panel
               </CardTitle>
               {/* <CardBody style={{ overflowX: 'hidden', // Enables vertical scrolling, 
@@ -63,7 +63,7 @@ function DashboardPage() {
 
           <GridItem span={7} rowSpan={6} >
             <Card ouiaId="BasicCard" style={{height: '610px', borderRadius: '8px'}}>
-              <CardTitle style={{ backgroundColor: '#0A7373', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
+              <CardTitle style={{ backgroundColor: '#0891B2', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
                 Wireshark
               </CardTitle>
               <CardBody>
