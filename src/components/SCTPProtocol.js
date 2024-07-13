@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import api from '../services/apiService';
 
-const SCTPProtocol = () => {
+const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
   const defaultKeys = useMemo(() => [
     'sctp.srcport', 'sctp.dstport', 'sctp.verification_tag', 'sctp.assoc_index',
     'sctp.port', 'sctp.checksum', 'sctp.checksum.status', 'sctp.chunk_type',
@@ -21,20 +21,22 @@ const SCTPProtocol = () => {
   const websocketRef = useRef(null);
 
   useEffect(() => {
+    console.log(`SCTPProtocol received nodeName: ${nodeName}`); // Log the received nodeName
+
     // Fetch the pod name and namespace
     const fetchPodAndNamespace = async () => {
       try {
         const podResponse = await api.get('/kube/pods/');
         const userResponse = await api.get('user/information/'); // Assuming you have an endpoint to get user info
 
-        const pod = podResponse.data.pods.find(pod => pod.name.includes('cu') || pod.name.includes('du') || pod.name.includes('ue'));
+        const pod = podResponse.data.pods.find(pod => pod.name.includes(nodeName.toLowerCase()));
         const userNamespace = userResponse.data.username;
 
         setPodName(pod.name);
         setNamespace(userNamespace);
 
         // Determine component type based on pod name
-        const type = pod.name.includes('cu') ? 'cu' : pod.name.includes('du') ? 'du' : 'ue';
+        const type = pod.name.includes('du') ? 'du' : pod.name.includes('cu') ? 'cu' : 'ue';
         setComponentType(type);
 
         // Define the WebSocket URL based on your server address
@@ -59,7 +61,7 @@ const SCTPProtocol = () => {
     };
 
     fetchPodAndNamespace();
-  }, [defaultKeys]);
+  }, [defaultKeys, nodeName]);
 
   const parsePlainText = useCallback((plainText) => {
     const dataValues = plainText.split('\t').map(item => item.trim());

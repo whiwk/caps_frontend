@@ -263,7 +263,7 @@ export const TopologyGraph = () => {
         } else if (nodeId === 'UPF') {
           response = await api.get('kube/get_upf_logs/');
         } else {
-          const searchNodeId = nodeId.toLowerCase();
+          const searchNodeId = nodeId.toLowerCase() === 'rru' ? 'du' : nodeId.toLowerCase();
           const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
           if (pod) {
             response = await api.get(`kube/pods/${pod.name}/logs/`);
@@ -825,13 +825,15 @@ export const TopologyGraph = () => {
     );
 
     const renderSidebarContent = () => {
+      console.log(`Selected nodeId in TopologyGraph: ${selectedNodeId}`); // Log the selected nodeId
+    
       switch (sidebarContent) {
         case 'logs':
           return renderLogsTable();
         case 'shell':
           return <Terminal />;
         case 'protocol':
-          return <SCTPProtocol nodeName={selectedNodeId} />;
+          return <SCTPProtocol nodeName={selectedNodeId} />; // Pass nodeName to SCTPProtocol
         default:
           return null;
       }
