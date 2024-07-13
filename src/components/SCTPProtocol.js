@@ -19,6 +19,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
   const [componentType, setComponentType] = useState(''); // New state for component type
   const [websocketUrl, setWebsocketUrl] = useState('');
   const websocketRef = useRef(null);
+  const timerRef = useRef(null);
 
   useEffect(() => {
     console.log(`SCTPProtocol received nodeName: ${nodeName}`); // Log the received nodeName
@@ -49,7 +50,21 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
           initialProtocolData[key] = sessionStorage.getItem(prefixedKey) || 'Loading...';
           console.log(`Loaded ${prefixedKey} from session storage: ${initialProtocolData[key]}`);
         });
+
         setProtocolData(initialProtocolData);
+
+        // Set a timer for 30 seconds
+        timerRef.current = setTimeout(() => {
+          setProtocolData((prevData) => {
+            const updatedData = { ...prevData };
+            defaultKeys.forEach(key => {
+              if (updatedData[key] === 'Loading...') {
+                updatedData[key] = 'No data';
+              }
+            });
+            return updatedData;
+          });
+        }, 30000); // 30 seconds
 
         console.log(`Component Type Detected: ${type}`);
         console.log(`Pod Name: ${pod.name}`);
@@ -99,6 +114,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
           console.log('WebSocket message received:', data);
 
           if (data.data) {
+            clearTimeout(timerRef.current); // Clear the timer when a message is received
             const parsedData = parsePlainText(data.data);
             setProtocolData((prevData) => ({
               ...prevData,
@@ -112,10 +128,12 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
 
       websocketRef.current.onclose = () => {
         console.log('WebSocket disconnected');
+        clearTimeout(timerRef.current); // Clear the timer if WebSocket closes
       };
 
       websocketRef.current.onerror = (error) => {
         console.error('WebSocket error:', error);
+        clearTimeout(timerRef.current); // Clear the timer if WebSocket errors
       };
 
       // Cleanup on component unmount
@@ -123,6 +141,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
         if (websocketRef.current) {
           websocketRef.current.close();
         }
+        clearTimeout(timerRef.current); // Clear the timer on unmount
       };
     }
   }, [websocketUrl, podName, namespace, parsePlainText]);

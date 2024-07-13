@@ -201,7 +201,6 @@ function UserManagementPage() {
             <TableHead style={{ backgroundColor: '#e0e0e0' }}>
               <TableRow>
                 <TableCell>Username</TableCell>
-                <TableCell align="right">Level</TableCell>
                 <TableCell align="right">Completion (%)</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -210,7 +209,6 @@ function UserManagementPage() {
               {users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell component="th" scope="row">{user.username}</TableCell>
-                  <TableCell align="right">{user.profile.level}</TableCell>
                   <TableCell align="right">{Math.round(user.profile.completion)}%</TableCell>
                   <TableCell align="right">
                     <Button color="primary" onClick={() => handleEdit(user)}>Edit</Button>

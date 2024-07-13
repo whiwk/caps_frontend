@@ -81,6 +81,7 @@ const Navbar = () => {
         refresh: localStorage.getItem('refreshToken')
       });
       localStorage.clear();
+      sessionStorage.clear(); // Clear session storage
       navigate('/auth/login');
     } catch (error) {
       console.error('Logout failed:', error);
