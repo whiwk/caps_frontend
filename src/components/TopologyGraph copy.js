@@ -1264,6 +1264,7 @@ const Terminal = () => {
   const [namespace, setNamespace] = useState('');
   const [websocketUrl, setWebsocketUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(true); // New state for connection status
   const terminalBodyRef = useRef(null);
   const websocketRef = useRef(null);
   const outputBuffer = useRef('');
@@ -1282,7 +1283,7 @@ const Terminal = () => {
         setNamespace(userNamespace);
 
         // Define the WebSocket URL based on your server address
-        setWebsocketUrl('ws://10.30.1.221:8020/ws/shell/');
+        setWebsocketUrl('ws://10.30.1.221:8002/ws/shell/');
       } catch (error) {
         console.error('Error fetching pod name or namespace:', error);
       }
@@ -1298,6 +1299,7 @@ const Terminal = () => {
 
       websocketRef.current.onopen = () => {
         console.log('WebSocket connected');
+        setIsConnecting(false); // Set to false when connected
       };
 
       websocketRef.current.onmessage = async (event) => {
@@ -1434,47 +1436,55 @@ const Terminal = () => {
 
   return (
     <div className="terminal-container">
-      <div className="terminal-header">
-        <div className="terminal-buttons">
-          <div className="terminal-button close"></div>
-          <div className="terminal-button minimize"></div>
-          <div className="terminal-button maximize"></div>
+      {isConnecting ? (
+        <div className="loading-container">
+          <CircularProgress />
         </div>
-        <div className="terminal-title">Shell</div>
-      </div>
-      <div className="artwork-container">
-        <pre>{artwork}</pre>
-      </div>
-      <div className="terminal-body" ref={terminalBodyRef}>
-        <div className="terminal-output">
-          {output.map((entry, index) => (
-            <div key={index}>
-              <div className="prompt-container">
-                <div className="prompt">{`orca\\ue\\shell>`}</div>
-                <div className="command">{entry.command}</div>
-              </div>
-              <div className="output">
-                {entry.output.map((line, idx) => (
-                  <div key={idx}>{line}</div>
-                ))}
-              </div>
-              <div className="spacer"></div> {/* Spacer line */}
+      ) : (
+        <>
+          <div className="terminal-header">
+            <div className="terminal-buttons">
+              <div className="terminal-button close"></div>
+              <div className="terminal-button minimize"></div>
+              <div className="terminal-button maximize"></div>
             </div>
-          ))}
-          {!isProcessing && (
-            <div className="input-container">
-              <div className="prompt">orca\ue\shell&gt;</div>
-              <textarea
-                className="terminal-input"
-                value={input}
-                onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
-                rows="1"
-              />
+            <div className="terminal-title">Shell</div>
+          </div>
+          <div className="artwork-container">
+            <pre>{artwork}</pre>
+          </div>
+          <div className="terminal-body" ref={terminalBodyRef}>
+            <div className="terminal-output">
+              {output.map((entry, index) => (
+                <div key={index}>
+                  <div className="prompt-container">
+                    <div className="prompt">{`orca\\ue\\shell#`}</div>
+                    <div className="command">{entry.command}</div>
+                  </div>
+                  <div className="output">
+                    {entry.output.map((line, idx) => (
+                      <div key={idx}>{line}</div>
+                    ))}
+                  </div>
+                  <div className="spacer"></div> {/* Spacer line */}
+                </div>
+              ))}
+              {!isProcessing && (
+                <div className="input-container">
+                  <div className="prompt">orca\ue\shell#</div>
+                  <textarea
+                    className="terminal-input"
+                    value={input}
+                    onChange={handleInputChange}
+                    onKeyPress={handleKeyPress}
+                    rows="1"
+                  />
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

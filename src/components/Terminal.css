@@ -9,6 +9,13 @@
   height: 355px;
 }
 
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
 .terminal-header {
   background-color: #202020;
   padding: 5px 10px;
@@ -94,6 +101,7 @@
 .prompt {
   font-size: 12px;
   margin-right: 5px; /* Adjust margin as needed */
+  color: #27c93f;
 }
 
 .command {

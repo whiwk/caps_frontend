@@ -1,10 +1,13 @@
-import React, { useEffect, useContext, useRef, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useContext, useState, useCallback, useMemo } from 'react';
 import '@patternfly/patternfly/patternfly.css';
 import './TopologyGraph.css';
+import Terminal from './Terminal'
 import './Terminal.css';
+import SCTPProtocol from './SCTPProtocol'
 import api from '../services/apiService';
 import { RefreshContext } from '../contexts/RefreshContext';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord';
 import {
   action,
   ContextMenuItem,
@@ -173,11 +176,10 @@ export const TopologyGraph = () => {
     const [actionLoading, setActionLoading] = useState(false);
     const [logs, setLogs] = useState([]);
     const [pods, setPods] = useState([]);
-    const [sidebarContent, setSidebarContent] = useState('protocolStack');
+    const [sidebarContent, setSidebarContent] = useState('logs');
     const [sidebarLoading, setSidebarLoading] = useState(false);
     const [statusModalOpen, setStatusModalOpen] = useState(false);
     const [statusModalContent, setStatusModalContent] = useState({ deploymentName: '', state: '' });
-    const [protocolStackData, setProtocolStackData] = useState({});
     const [edgeModalOpen, setEdgeModalOpen] = useState(false);
     const [selectedEdge, setSelectedEdge] = useState(null);
     const [snackbarSeverity, setSnackbarSeverity] = useState('success'); 
@@ -235,74 +237,6 @@ export const TopologyGraph = () => {
       setLoading(false);
     };
 
-    const fetchProtocolStackData = useCallback(async (nodeId) => {
-      const authToken = localStorage.getItem('authToken');
-      const currentRequestId = Date.now(); // Unique ID for the current request
-      requestIdRef.current = currentRequestId; // Store it in the ref
-    
-      try {
-        setSidebarLoading(true);
-        const searchNodeId = nodeId.toLowerCase();
-        const pod = pods.find(pod => pod.name.toLowerCase().includes(searchNodeId));
-    
-        if (pod) {
-          const response = await api.get(`shark/protocolstack/${pod.name}/`, {
-            headers: {
-              Authorization: `Bearer ${authToken}`,
-            },
-          });
-    
-          if (response.data && response.data.packets && Array.isArray(response.data.packets)) {
-            const parsedData = response.data.packets.map((item) => {
-              const sctp = item._source?.layers?.sctp || {};
-              const sctpChunk = Object.values(sctp).find(value => value?.['sctp.chunk_type']);
-    
-              const parsedItem = {
-                ipAddress: item._source?.layers?.ip?.["ip.src"] || null,
-                sctpSrcPort: sctp["sctp.srcport"] || null,
-                sctpDstPort: sctp["sctp.dstport"] || null,
-                sctpVerificationTag: sctp["sctp.verification_tag"] || null,
-                sctpAssocIndex: sctp["sctp.assoc_index"] || null,
-                sctpPort: sctp["sctp.port"] || null,
-                sctpChecksum: sctp["sctp.checksum"] || null,
-                sctpChecksumStatus: sctp["sctp.checksum.status"] || null,
-                sctpChunkType: sctpChunk?.["sctp.chunk_type"] || null,
-                sctpChunkFlags: sctpChunk?.["sctp.chunk_flags"] || null,
-                sctpChunkLength: sctpChunk?.["sctp.chunk_length"] || null,
-                sctpParameterType: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_type"] || null,
-                sctpParameterLength: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_length"] || null,
-                sctpHeartbeatInformation: sctpChunk?.["Heartbeat info parameter (Information: 52 bytes)"]?.["sctp.parameter_heartbeat_information"] || null,
-              };
-    
-              return parsedItem;
-            }).filter(packet => packet.sctpSrcPort !== null && packet.sctpDstPort !== null);
-    
-            if (requestIdRef.current === currentRequestId) {
-              setProtocolStackData(parsedData[0] || {}); // Display the first packet data that contains SCTP information
-            }
-          } else {
-            setProtocolStackData({});
-          }
-        } else {
-          setProtocolStackData({});
-        }
-      } catch (error) {
-        console.error('Failed to fetch protocol stack data:', error);
-        setProtocolStackData({});
-      } finally {
-        setSidebarLoading(false);
-      }
-    }, [pods]);
-    
-    // useRef to store the current request ID
-    const requestIdRef = useRef(null);
-    
-    useEffect(() => {
-      if (selectedIds.length > 0) {
-        fetchProtocolStackData(selectedIds[0]);
-      }
-    }, [selectedIds, fetchProtocolStackData]);
-
     useEffect(() => {
       fetchDeployments();
       fetchPods();
@@ -316,12 +250,6 @@ export const TopologyGraph = () => {
         setRefreshTopology(false);
       }
     }, [refreshTopology, fetchDeployments, setRefreshTopology, fetchPods]);
-
-    useEffect(() => {
-      if (selectedIds.length > 0) {
-        fetchProtocolStackData(selectedIds[0]);
-      }
-    }, [selectedIds, fetchProtocolStackData]);
 
     const fetchLogs = useCallback(async (nodeId) => {
       try {
@@ -855,106 +783,10 @@ export const TopologyGraph = () => {
 
     const handleSidebarContentChange = (content) => {
       setSidebarContent(content);
+      if (content === 'logs') {
+        fetchLogs(selectedNodeId);
+      }
     };
-    
-    const renderProtocolStack = () => (
-      <TableContainer component={Paper}>
-        <Table>
-          <TableBody>
-            <TableRow>
-              <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>IP Layer</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>IP Address</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.ipAddress ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell align="center" colSpan={2} style={{ fontWeight: 'bold', backgroundColor: '#F2F2F2' }}>SCTP Layer</TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.srcport</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpSrcPort ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.dstport</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpDstPort ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.verification_tag</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpVerificationTag ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.assoc_index</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpAssocIndex ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.port</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpPort ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.checksum</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChecksum ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.checksum.status</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChecksumStatus ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.chunk_type</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChunkType ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.chunk_flags</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChunkFlags ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.chunk_length</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpChunkLength ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.parameter_type</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpParameterType ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.parameter_length</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpParameterLength ?? 'null')}
-              </TableCell>
-            </TableRow>
-            <TableRow>
-              <TableCell>sctp.parameter_heartbeat_information</TableCell>
-              <TableCell>
-                {sidebarLoading ? <CircularProgress size={20} /> : (protocolStackData.sctpHeartbeatInformation ?? 'null')}
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </TableContainer>
-    );
 
     const renderLogsTable = () => (
       <TableContainer component={Paper}>
@@ -989,14 +821,14 @@ export const TopologyGraph = () => {
       </TableContainer>
     );
 
-    const renderSidebarContent = () => {      
+    const renderSidebarContent = () => {
       switch (sidebarContent) {
         case 'logs':
           return renderLogsTable();
-        case 'protocolStack':
-          return renderProtocolStack();
         case 'shell':
           return <Terminal />;
+        case 'protocol':
+          return <SCTPProtocol nodeName={selectedNodeId} />;
         default:
           return null;
       }
@@ -1023,20 +855,6 @@ export const TopologyGraph = () => {
       </Dialog>
     );
 
-    const handleRefresh = async () => {
-      const selectedNodeId = selectedIds.length > 0 ? selectedIds[0] : '';
-      switch (sidebarContent) {
-        case 'logs':
-          await fetchLogs(selectedNodeId);
-          break;
-        case 'protocolStack':
-          await fetchProtocolStackData(selectedNodeId);
-          break;
-        default:
-          break;
-      }
-    };
-
     const topologySideBar = (
       <TopologySideBar
         className="topology-example-sidebar"
@@ -1046,23 +864,6 @@ export const TopologyGraph = () => {
         <Box p={2}>
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <div>
-              {selectedIds.length > 0 && selectedIds[0] !== 'AMF' && selectedIds[0] !== 'UPF' && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  onClick={() => handleSidebarContentChange('protocolStack')}
-                  style={{
-                    marginRight: '10px',
-                    backgroundColor: sidebarContent === 'protocolStack' ? '#2E3B55' : undefined,
-                    borderRadius: '20px',
-                    ...createButtonStyles,
-                    fontSize: '12px',
-                    height: '24px'
-                  }}
-                >
-                  Protocol Stack
-                </Button>
-              )}
               <Button
                 variant="contained"
                 color="primary"
@@ -1085,7 +886,7 @@ export const TopologyGraph = () => {
                   onClick={() => handleSidebarContentChange('shell')}
                   style={{
                     marginRight: '10px',
-                    backgroundColor: sidebarContent === 'shell' ? '#2E3B55' : undefined,
+                    backgroundColor: sidebarContent === 'shell' ? '#004080' : undefined,
                     borderRadius: '20px',
                     ...createButtonStyles,
                     fontSize: '12px',
@@ -1095,21 +896,23 @@ export const TopologyGraph = () => {
                   Shell
                 </Button>
               )}
+              {selectedIds.length > 0 && ['CU', 'DU'].includes(selectedIds[0]) && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleSidebarContentChange('protocol')}
+                  style={{
+                    backgroundColor: sidebarContent === 'protocol' ? '#004080' : undefined,
+                    borderRadius: '20px',
+                    ...createButtonStyles,
+                    fontSize: '12px',
+                    height: '24px'
+                  }}
+                >
+                  Protocol
+                </Button>
+              )}
             </div>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleRefresh}
-              style={{
-                borderRadius: '20px',
-                ...createButtonStyles,
-                fontSize: '12px',
-                height: '24px',
-                backgroundColor: '#F2B90F'
-              }}
-            >
-              <RefreshIcon style={{ fontSize: '20px', color: '#FFF' }} />
-            </Button>
           </Box>
         </Box>
         {renderSidebarContent()}
@@ -1236,7 +1039,20 @@ export const TopologyGraph = () => {
           </DialogTitle>
           <DialogContent>
             <p><strong>Interface Name:</strong> {selectedEdge ? selectedEdge.getId() : ''}</p>
-            <p><strong>Link Status:</strong> {selectedEdge && selectedEdge.getData().isSuccess ? 'Connected' : 'Disconnected'}</p>
+            <p style={{ display: 'flex', alignItems: 'center' }}>
+              <strong>Link Status:</strong>
+              {selectedEdge && selectedEdge.getData().isSuccess ? (
+                <span style={{ display: 'flex', alignItems: 'center', marginLeft: '8px' }}>
+                  Connected
+                  <FiberManualRecordIcon style={{ color: 'green', marginLeft: '-2px' }} />
+                </span>
+              ) : (
+                <span style={{ display: 'flex', alignItems: 'center', marginLeft: '8px' }}>
+                  Disconnected
+                  <FiberManualRecordIcon style={{ color: 'red', marginLeft: '-2px' }} />
+                </span>
+              )}
+            </p>
           </DialogContent>
           <DialogActions style={{ justifyContent: "flex-end", marginTop: '-10px', marginRight: '16px' }}>
             <Button sx={cancelButtonStyles} onClick={() => setEdgeModalOpen(false)} color="primary" style={{ minWidth: '80px', borderRadius: '20px', ...createButtonStyles }}>
@@ -1255,228 +1071,6 @@ export const TopologyGraph = () => {
         </Snackbar>
       </TopologyView>
     );
-};
-
-const Terminal = () => {
-  const [input, setInput] = useState('');
-  const [output, setOutput] = useState([]);
-  const [podName, setPodName] = useState('');
-  const [namespace, setNamespace] = useState('');
-  const [websocketUrl, setWebsocketUrl] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const terminalBodyRef = useRef(null);
-  const websocketRef = useRef(null);
-  const outputBuffer = useRef('');
-
-  useEffect(() => {
-    // Fetch the pod name and namespace
-    const fetchPodAndNamespace = async () => {
-      try {
-        const podResponse = await api.get('/kube/pods/');
-        const userResponse = await api.get('user/information/'); // Assuming you have an endpoint to get user info
-
-        const pod = podResponse.data.pods.find(pod => pod.name.includes('ue'));
-        const userNamespace = userResponse.data.username;
-
-        setPodName(pod.name);
-        setNamespace(userNamespace);
-
-        // Define the WebSocket URL based on your server address
-        setWebsocketUrl('ws://10.30.1.221:8002/ws/shell/');
-      } catch (error) {
-        console.error('Error fetching pod name or namespace:', error);
-      }
-    };
-
-    fetchPodAndNamespace();
-  }, []);
-
-  useEffect(() => {
-    if (websocketUrl) {
-      // Initialize WebSocket connection
-      websocketRef.current = new WebSocket(websocketUrl);
-
-      websocketRef.current.onopen = () => {
-        console.log('WebSocket connected');
-      };
-
-      websocketRef.current.onmessage = async (event) => {
-        const data = JSON.parse(event.data);
-        console.log('WebSocket message received:', data);
-
-        // Buffer the output
-        if (data.command_output) {
-          outputBuffer.current += data.command_output;
-        } else if (data.error) {
-          outputBuffer.current += `Error: ${data.error}`;
-        } else if (data.message) {
-          outputBuffer.current += `Message: ${data.message}`;
-        }
-
-        // Assuming a newline character indicates the end of a command output part
-        if (outputBuffer.current.includes('\n')) {
-          setOutput((prevOutput) => {
-            const newOutput = [...prevOutput];
-            const lines = outputBuffer.current.split('\n');
-            lines.forEach((line) => {
-              if (line.trim()) {
-                newOutput[newOutput.length - 1].output.push(line.trim());
-              }
-            });
-            outputBuffer.current = '';
-            return newOutput;
-          });
-          setIsProcessing(false);
-        }
-      };
-
-      websocketRef.current.onclose = () => {
-        console.log('WebSocket disconnected');
-        setIsProcessing(false); // Ensure the prompt is displayed if WebSocket closes unexpectedly
-      };
-
-      websocketRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setIsProcessing(false); // Ensure the prompt is displayed if WebSocket errors
-      };
-
-      // Cleanup on component unmount
-      return () => {
-        if (websocketRef.current) {
-          websocketRef.current.close();
-        }
-      };
-    }
-  }, [websocketUrl]);
-
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      processCommand(input);
-      setInput('');
-    }
-  };
-
-  const handleCtrlC = useCallback((e) => {
-    if (e.ctrlKey && e.key === 'c') {
-      e.preventDefault();
-      if (websocketRef.current) {
-        websocketRef.current.send(
-          JSON.stringify({
-            pod_name: podName,
-            namespace: namespace,
-            command: 'stop',
-          })
-        );
-      }
-      setOutput((prevOutput) => [...prevOutput, '^C']);
-    }
-  }, [podName, namespace]);
-
-  useEffect(() => {
-    document.addEventListener('keydown', handleCtrlC);
-    return () => {
-      document.removeEventListener('keydown', handleCtrlC);
-    };
-  }, [handleCtrlC]);
-
-  const processCommand = (command) => {
-    if (command.toLowerCase() === 'clear') {
-      setOutput([]);
-      return;
-    }
-
-    setIsProcessing(true);
-
-    if (websocketRef.current) {
-      websocketRef.current.send(
-        JSON.stringify({
-          pod_name: podName,
-          namespace: namespace,
-          command: command,
-        })
-      );
-    }
-
-    setOutput((prevOutput) => [
-      ...prevOutput,
-      { command: command, output: [] }
-    ]);
-  };
-
-  useEffect(() => {
-    if (terminalBodyRef.current) {
-      terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
-    }
-  }, [output]);
-
-  useEffect(() => {
-    if (!isProcessing && terminalBodyRef.current) {
-      terminalBodyRef.current.scrollTop = terminalBodyRef.current.scrollHeight;
-    }
-  }, [isProcessing]);
-
-  const artwork = `                                              &                                 
-                                         &&&&&&&&&&&&&&&&                       
-                                          &&&&&&&&&&&&&&&&&%                    
-   &&&&&&&&&&&&&     &&&&&&&&&&&&&&     &&&&&&&&&&&&&&&&&&&&&      &&&&&&&&     
- &&&&&&&&&&&&&&&&&   &&&&&/  #&&&&&&  &&&&&&&&&&&&&&&&&&&&&&&&    &&&&&&&&&&    
- &&&&&*      &&&&&&  &&&&&&//&&&&&&% (&&&&&,#&&&& &&&%   &&&&&   &&&&&&&&&&&&   
- &&&&&       &&&&&&  &&&&&&&&&&&&&   &&&&/ &&&& *&&&&&&&&&&%    &&&&&&  &&&&&&  
- &&&&&&&,  &&&&&&&   &&&&&.&&&&&&    &&&&       &              &&&&&&&&&&&&&&&& 
-   &&&&&&&&&&&&&(    &&&&&. &&&&&&&   &&       &&&            &&&&&&&&&&&&&&&&&&
-      /&&&&&%        %%%%%    %%%%%    &      &&&&&&&&&&&&&  &&&&&&       ,&&&&&
-                                            &&&&&&&&&&&(                        `;
-
-  return (
-    <div className="terminal-container">
-      <div className="terminal-header">
-        <div className="terminal-buttons">
-          <div className="terminal-button close"></div>
-          <div className="terminal-button minimize"></div>
-          <div className="terminal-button maximize"></div>
-        </div>
-        <div className="terminal-title">Shell</div>
-      </div>
-      <div className="artwork-container">
-        <pre>{artwork}</pre>
-      </div>
-      <div className="terminal-body" ref={terminalBodyRef}>
-        <div className="terminal-output">
-          {output.map((entry, index) => (
-            <div key={index}>
-              <div className="prompt-container">
-                <div className="prompt">{`orca\\ue\\shell>`}</div>
-                <div className="command">{entry.command}</div>
-              </div>
-              <div className="output">
-                {entry.output.map((line, idx) => (
-                  <div key={idx}>{line}</div>
-                ))}
-              </div>
-              <div className="spacer"></div> {/* Spacer line */}
-            </div>
-          ))}
-          {!isProcessing && (
-            <div className="input-container">
-              <div className="prompt">orca\ue\shell&gt;</div>
-              <textarea
-                className="terminal-input"
-                value={input}
-                onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
-                rows="1"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 };
 
 export default TopologyGraph;

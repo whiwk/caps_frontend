@@ -172,7 +172,7 @@ export const MonitoringTable = () => {
   }, [repositories, setData, setUeStopped]);
 
   const columnNames = {
-    content: 'Content',
+    content: 'Key Performance Indicator',
     value: 'Value (us)',
     count: 'Count',
     totalTime: 'Total Time (us)',

@@ -66,6 +66,7 @@ function DashboardPage() {
               <CardTitle style={{ backgroundColor: '#0891B2', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
                 Wireshark
               </CardTitle>
+              
               <CardBody>
                 <Wireshark />
               </CardBody>
