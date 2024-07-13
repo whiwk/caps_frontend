@@ -111,7 +111,10 @@ const Terminal = () => {
       if (e.ctrlKey && e.key === 'c') {
         e.preventDefault();
         setOutput((prevOutput) => [...prevOutput, { command: '^C', output: [] }]);
-        setIsProcessing(false);
+        if (websocketRef.current) {
+          websocketRef.current.close();
+          setIsProcessing(false);
+        }
       }
     }, []);
   

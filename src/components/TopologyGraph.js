@@ -1,9 +1,9 @@
 import React, { useEffect, useContext, useState, useCallback, useMemo } from 'react';
 import '@patternfly/patternfly/patternfly.css';
 import './TopologyGraph.css';
-import Terminal from './Terminal'
+import Terminal from './Terminal';
 import './Terminal.css';
-import SCTPProtocol from './SCTPProtocol'
+import SCTPProtocol from './SCTPProtocol';
 import api from '../services/apiService';
 import { RefreshContext } from '../contexts/RefreshContext';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -221,6 +221,7 @@ export const TopologyGraph = () => {
 
     const fetchPods = useCallback(async () => {
       try {
+        setLoading(true);
         const response = await api.get('kube/pods/');
         const podsData = response.data.pods.map((pod) => ({
           name: pod.name,
@@ -228,6 +229,8 @@ export const TopologyGraph = () => {
         setPods(podsData);
       } catch (error) {
         console.error('Failed to fetch pods:', error);
+      } finally {
+        setLoading(false);
       }
     }, []);
 

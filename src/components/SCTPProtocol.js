@@ -5,21 +5,21 @@ import {
 } from '@mui/material';
 import api from '../services/apiService';
 
-const SCTPProtocol = ({ nodeName }) => {
+const SCTPProtocol = () => {
   const defaultKeys = useMemo(() => [
     'sctp.srcport', 'sctp.dstport', 'sctp.verification_tag', 'sctp.assoc_index',
     'sctp.port', 'sctp.checksum', 'sctp.checksum.status', 'sctp.chunk_type',
-    'sctp.chunk_flags', 'sctp.chunk_length', 'sctp.parameter_type',
+    'sctp.chunk_flags', 'sctp.chunk_length', 'sctp.parameter_type', 
     'sctp.parameter_length'
   ], []);
 
   const initialProtocolData = useMemo(() => {
     const data = {};
     defaultKeys.forEach(key => {
-      data[key] = localStorage.getItem(`${nodeName}-${key}`) || 'Loading...';
+      data[key] = sessionStorage.getItem(key) || 'Loading...';
     });
     return data;
-  }, [defaultKeys, nodeName]);
+  }, [defaultKeys]);
 
   const [protocolData, setProtocolData] = useState(initialProtocolData);
   const [podName, setPodName] = useState('');
@@ -34,14 +34,10 @@ const SCTPProtocol = ({ nodeName }) => {
         const podResponse = await api.get('/kube/pods/');
         const userResponse = await api.get('user/information/'); // Assuming you have an endpoint to get user info
 
-        const pod = podResponse.data.pods.find(pod => pod.name && pod.name.toLowerCase().includes(nodeName.toLowerCase()));
+        const pod = podResponse.data.pods.find(pod => pod.name.includes('cu') || pod.name.includes('du') || pod.name.includes('ue'));
         const userNamespace = userResponse.data.username;
 
-        if (pod) {
-          setPodName(pod.name);
-        } else {
-          console.error('No pod found matching the component type');
-        }
+        setPodName(pod.name);
         setNamespace(userNamespace);
 
         // Define the WebSocket URL based on your server address
@@ -52,7 +48,7 @@ const SCTPProtocol = ({ nodeName }) => {
     };
 
     fetchPodAndNamespace();
-  }, [nodeName]);
+  }, []);
 
   const parsePlainText = useCallback((plainText) => {
     const dataValues = plainText.split('\t').map(item => item.trim());
@@ -60,11 +56,11 @@ const SCTPProtocol = ({ nodeName }) => {
 
     defaultKeys.forEach((key, index) => {
       parsedData[key] = dataValues[index] || '';
-      localStorage.setItem(`${nodeName}-${key}`, dataValues[index] || ''); // Store each value in localStorage
+      sessionStorage.setItem(key, dataValues[index] || ''); // Store each value in sessionStorage
     });
 
     return parsedData;
-  }, [defaultKeys, nodeName]);
+  }, [defaultKeys]);
 
   useEffect(() => {
     if (websocketUrl) {
