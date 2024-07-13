@@ -13,17 +13,10 @@ const SCTPProtocol = () => {
     'sctp.parameter_length'
   ], []);
 
-  const initialProtocolData = useMemo(() => {
-    const data = {};
-    defaultKeys.forEach(key => {
-      data[key] = sessionStorage.getItem(key) || 'Loading...';
-    });
-    return data;
-  }, [defaultKeys]);
-
-  const [protocolData, setProtocolData] = useState(initialProtocolData);
+  const [protocolData, setProtocolData] = useState({});
   const [podName, setPodName] = useState('');
   const [namespace, setNamespace] = useState('');
+  const [componentType, setComponentType] = useState(''); // New state for component type
   const [websocketUrl, setWebsocketUrl] = useState('');
   const websocketRef = useRef(null);
 
@@ -40,27 +33,47 @@ const SCTPProtocol = () => {
         setPodName(pod.name);
         setNamespace(userNamespace);
 
+        // Determine component type based on pod name
+        const type = pod.name.includes('cu') ? 'cu' : pod.name.includes('du') ? 'du' : 'ue';
+        setComponentType(type);
+
         // Define the WebSocket URL based on your server address
         setWebsocketUrl('ws://10.30.1.221:8002/ws/protocolstack/');
+
+        // Load initial data from session storage based on component type
+        const initialProtocolData = {};
+        defaultKeys.forEach(key => {
+          const prefixedKey = `${type}.${key}`;
+          initialProtocolData[key] = sessionStorage.getItem(prefixedKey) || 'Loading...';
+          console.log(`Loaded ${prefixedKey} from session storage: ${initialProtocolData[key]}`);
+        });
+        setProtocolData(initialProtocolData);
+
+        console.log(`Component Type Detected: ${type}`);
+        console.log(`Pod Name: ${pod.name}`);
+        console.log(`Namespace: ${userNamespace}`);
+
       } catch (error) {
         console.error('Error fetching pod name or namespace:', error);
       }
     };
 
     fetchPodAndNamespace();
-  }, []);
+  }, [defaultKeys]);
 
   const parsePlainText = useCallback((plainText) => {
     const dataValues = plainText.split('\t').map(item => item.trim());
     const parsedData = {};
 
     defaultKeys.forEach((key, index) => {
+      const prefixedKey = `${componentType}.${key}`;
       parsedData[key] = dataValues[index] || '';
-      sessionStorage.setItem(key, dataValues[index] || ''); // Store each value in sessionStorage
+      sessionStorage.setItem(prefixedKey, dataValues[index] || ''); // Store each value in sessionStorage with prefix
+      console.log(`Stored ${prefixedKey} in session storage: ${dataValues[index]}`);
     });
 
     return parsedData;
-  }, [defaultKeys]);
+  }, [defaultKeys, componentType]);
 
   useEffect(() => {
     if (websocketUrl) {

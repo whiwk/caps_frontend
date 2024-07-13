@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs, Tab } from '@patternfly/react-core';
-import SniffTab from './SniffTab.tsx';
+import SniffTab from './SniffTab.js';
 import FilesTab from './FilesTab.tsx';
 
 export const Wireshark: React.FunctionComponent = () => {

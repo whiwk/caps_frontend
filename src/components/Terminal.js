@@ -177,7 +177,7 @@ const Terminal = () => {
       <div className="terminal-container">
         {isConnecting ? (
           <div className="loading-container">
-            Loading...
+            One moment please...
           </div>
         ) : (
           <>
