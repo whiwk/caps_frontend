@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { Tabs, Tab } from '@patternfly/react-core';
 import SniffTab from './SniffTab.js';
-import FilesTab from './FilesTab.tsx';
+import FilesTab from './FilesTab.js';
 
-export const Wireshark: React.FunctionComponent = () => {
+const Wireshark = () => {
   const [activeTabKey, setActiveTabKey] = useState(0);
 
-  const handleTabClick = (event: React.MouseEvent<HTMLElement>, tabIndex: number) => {
+  const handleTabClick = (event, tabIndex) => {
     setActiveTabKey(tabIndex);
   };
 

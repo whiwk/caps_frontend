@@ -825,7 +825,7 @@ export const TopologyGraph = () => {
     );
 
     const renderSidebarContent = () => {
-      console.log(`Selected nodeId in TopologyGraph: ${selectedNodeId}`); // Log the selected nodeId
+      // console.log(`Selected nodeId in TopologyGraph: ${selectedNodeId}`); // Log the selected nodeId
     
       switch (sidebarContent) {
         case 'logs':

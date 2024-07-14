@@ -3,7 +3,7 @@ import React from 'react';
 import { Grid, GridItem, PageSection, Card, CardTitle, CardBody } from '@patternfly/react-core';
 import TopologyGraph from '../components/TopologyGraph.js';
 import ConfigurationPanel from '../components/ConfigurationPanel.js'; 
-import Wireshark from '../components/wireshark/Wireshark.tsx';
+import Wireshark from '../components/wireshark/Wireshark.js';
 import { Helmet } from 'react-helmet';
 import './DashboardPage.css'
 

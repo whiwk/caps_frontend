@@ -80,36 +80,35 @@ const SniffTab = () => {
   const [noPodsFound, setNoPodsFound] = useState(false);
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState('success');
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState('');
+  const [isComponentOpen, setIsComponentOpen] = useState(false);
+  const [isInterfaceOpen, setIsInterfaceOpen] = useState(false);
+  const [selectedComponent, setSelectedComponent] = useState('');
+  const [selectedInterface, setSelectedInterface] = useState('');
   const [data, setData] = useState([]);
   const [podsName, setPodsName] = useState(null);
   const [pods, setPods] = useState([]);
   const [podState, setPodState] = useState('');
+  const [namespace, setNamespace] = useState('');
   const websocketRef = useRef(null);
 
   useEffect(() => {
-    fetchPods(); // Fetch the pods when the component mounts
-  }, []);
+    // Fetch the pod name and namespace
+    const fetchPodAndNamespace = async () => {
+      try {
+        const podResponse = await api.get('kube/pods/');
+        const userResponse = await api.get('user/information/');
 
-  const fetchPods = async () => {
-    const authToken = localStorage.getItem('authToken');
-    try {
-      const response = await api.get('kube/pods/', {
-        headers: {
-          Authorization: `Bearer ${authToken}`,
-        },
-      });
-      if (response.data && Array.isArray(response.data.pods)) {
-        setPods(response.data.pods);
-      } else {
-        console.error('API response does not contain pods array:', response.data);
+        setPods(podResponse.data.pods);
+        setNamespace(userResponse.data.namespace || userResponse.data.username);
+      } catch (error) {
+        console.error('Error fetching pod name or namespace:', error.message);
       }
-    } catch (error) {
-      console.error('Error fetching pods:', error.message);
-    }
-  };
+    };
+
+    fetchPodAndNamespace();
+  }, []);
 
   const filterPods = (pods, selectedComponent) => {
     if (!selectedComponent) {
@@ -119,8 +118,8 @@ const SniffTab = () => {
     const searchPattern = `${selectedComponent.toLowerCase()}-level1`;
     const selectedPods = pods.filter(pod => pod.name && pod.name.toLowerCase().includes(searchPattern));
     if (selectedPods.length > 0) {
-      setPodsName(selectedPods[0].name); // Assuming name is the field in the response
-      setPodState(selectedPods[0].state); // Assuming state is the field for pod state
+      setPodsName(selectedPods[0].name);
+      setPodState(selectedPods[0].state);
       setNoPodsFound(false);
     } else {
       setPodsName(null);
@@ -129,27 +128,31 @@ const SniffTab = () => {
   };
 
   useEffect(() => {
-    if (selected !== '') {
-      filterPods(pods, selected); // Filter pods based on selected component
+    if (selectedComponent !== '') {
+      filterPods(pods, selectedComponent);
     }
-  }, [selected, pods]);
+  }, [selectedComponent, pods]);
 
-  const startWebSocketConnection = (podName, namespace) => {
+  const startWebSocketConnection = (podName, namespace, interfaceName) => {
     const uri = "ws://10.30.1.221:8002/ws/sniff/";
     websocketRef.current = new WebSocket(uri);
 
     websocketRef.current.onopen = () => {
-      const message = JSON.stringify({ pod_name: podName, namespace });
+      const message = JSON.stringify({
+        pod_name: podName,
+        namespace: namespace,
+        interface: interfaceName,
+      });
       websocketRef.current.send(message);
     };
 
     websocketRef.current.onmessage = (event) => {
-      console.log('WebSocket message received:', event.data); // Add console log here
+      console.log('WebSocket message received:', event.data);
       const response = JSON.parse(event.data);
       if (response.data) {
         const parsedData = parseWebSocketData(response.data);
         setData(prevData => [...prevData, parsedData]);
-        setLoading(false); // Stop loading when data is received
+        setLoading(false);
       }
     };
 
@@ -163,12 +166,30 @@ const SniffTab = () => {
     };
   };
 
-  const stopWebSocketConnection = () => {
+  const stopWebSocketConnection = async () => {
     if (websocketRef.current) {
       websocketRef.current.send(JSON.stringify({ action: 'stop' }));
       websocketRef.current.close();
     }
-    setLoading(false); // Stop loading when WebSocket is closed
+    setLoading(false);
+
+    // Call the backend endpoint to store the pcap file in the database
+    try {
+      const response = await api.post(`pcap/fetch/${namespace}/${podsName}/`);
+      if (response.status === 200) {
+        setAlertSeverity('success'); // Set the severity to success
+        setAlertMessage('PCAP file stored successfully');
+      } else {
+        setAlertSeverity('warning'); // Set the severity to warning
+        setAlertMessage('Failed to store PCAP file');
+      }
+    } catch (error) {
+      setAlertSeverity('warning'); // Set the severity to warning
+      setAlertMessage('Failed to store PCAP file');
+      console.error('Error storing PCAP file:', error.message);
+    } finally {
+      setAlertOpen(true);
+    }
   };
 
   const parseWebSocketData = (data) => {
@@ -194,8 +215,13 @@ const SniffTab = () => {
 
   const handleStartClick = async () => {
     if (!isRunning) {
-      if (!selected) {
+      if (!selectedComponent) {
         setAlertMessage('Please select a component.');
+        setAlertOpen(true);
+        return;
+      }
+      if ((selectedComponent === 'CU' || selectedComponent === 'UE') && !selectedInterface) {
+        setAlertMessage('Please select an interface.');
         setAlertOpen(true);
         return;
       }
@@ -212,43 +238,67 @@ const SniffTab = () => {
         }
         setIsRunning(true);
         setLoading(true);
-        setData([]); // Clear previous data
-        startWebSocketConnection(podsName, 'user1'); // Replace 'user1' with the actual namespace
+        setData([]);
+        startWebSocketConnection(podsName, namespace, selectedInterface);
       }
     } else {
-      stopWebSocketConnection();
+      await stopWebSocketConnection();
       setIsRunning(false);
     }
   };
 
   const handleFilter = () => {
     if (value.trim() === '') {
-      setFilteredData([]); // Reset the filter if the input is empty
+      setFilteredData([]);
     } else {
       const filteredResult = data.filter(item => item.layers?.frame?.frame_protocols && item.layers.frame.frame_protocols.includes(value));
-      setFilteredData(filteredResult.length > 0 ? filteredResult : []); // Show nothing if no matches
+      setFilteredData(filteredResult.length > 0 ? filteredResult : []);
     }
   };
 
-  const onToggleClick = () => {
-    setIsOpen(!isOpen);
+  const onComponentToggleClick = () => {
+    setIsComponentOpen(!isComponentOpen);
   };
 
-  const onSelect = (_event, value) => {
-    setSelected(value);
-    setIsOpen(false);
+  const onInterfaceToggleClick = () => {
+    setIsInterfaceOpen(!isInterfaceOpen);
   };
 
-  const toggle = (toggleRef) => (
+  const onComponentSelect = (_event, value) => {
+    setSelectedComponent(value);
+    setIsComponentOpen(false);
+    setSelectedInterface(value === 'CU' ? '' : value === 'DU' ? 'f1' : 'oaitun');
+    setIsInterfaceOpen(false);
+  };
+
+  const onInterfaceSelect = (_event, value) => {
+    setSelectedInterface(value);
+    setIsInterfaceOpen(false);
+  };
+
+  const componentToggle = (toggleRef) => (
     <MenuToggle
       ref={toggleRef}
-      onClick={onToggleClick}
-      isExpanded={isOpen}
+      onClick={onComponentToggleClick}
+      isExpanded={isComponentOpen}
       style={{
         width: '200px'
       }}
     >
-      {selected || 'Select a Component'}
+      {selectedComponent || 'Select a Component'}
+    </MenuToggle>
+  );
+
+  const interfaceToggle = (toggleRef) => (
+    <MenuToggle
+      ref={toggleRef}
+      onClick={onInterfaceToggleClick}
+      isExpanded={isInterfaceOpen}
+      style={{
+        width: '200px'
+      }}
+    >
+      {selectedInterface || 'Select an Interface'}
     </MenuToggle>
   );
 
@@ -265,8 +315,7 @@ const SniffTab = () => {
             elevation={6}
             variant="filled"
             onClose={() => setAlertOpen(false)}
-            severity="warning"
-            sx={{ backgroundColor: '#FFC107', color: '#000' }}
+            severity={alertSeverity} // Use the alertSeverity state
           >
             {alertMessage}
           </MuiAlert>
@@ -282,12 +331,12 @@ const SniffTab = () => {
               {isRunning ? 'Stop' : 'Start'}
             </Button>
             <Select
-              id="single-grouped-select"
-              isOpen={isOpen}
-              selected={selected}
-              onSelect={onSelect}
-              onOpenChange={(isOpen) => setIsOpen(isOpen)}
-              toggle={toggle}
+              id="single-grouped-select-component"
+              isOpen={isComponentOpen}
+              selected={selectedComponent}
+              onSelect={onComponentSelect}
+              onOpenChange={(isOpen) => setIsComponentOpen(isOpen)}
+              toggle={componentToggle}
               shouldFocusToggleOnSelect
             >
               <SelectList>
@@ -296,6 +345,42 @@ const SniffTab = () => {
                 <SelectOption value="UE">UE</SelectOption>
               </SelectList>
             </Select>
+            {selectedComponent === 'CU' && (
+              <Select
+                id="single-grouped-select-interface"
+                isOpen={isInterfaceOpen}
+                selected={selectedInterface}
+                onSelect={onInterfaceSelect}
+                onOpenChange={(isOpen) => setIsInterfaceOpen(isOpen)}
+                toggle={interfaceToggle}
+                shouldFocusToggleOnSelect
+                style={{ marginLeft: '10px' }}
+              >
+                <SelectList>
+                  <SelectOption value="f1">f1</SelectOption>
+                  <SelectOption value="n2">n2</SelectOption>
+                  <SelectOption value="n3">n3</SelectOption>
+                </SelectList>
+              </Select>
+            )}
+            {selectedComponent === 'DU' && (
+              <TextInput
+                value={selectedInterface}
+                type="text"
+                isDisabled
+                aria-label="text input example"
+                style={{ marginLeft: '10px', width: '200px' }}
+              />
+            )}
+            {selectedComponent === 'UE' && (
+              <TextInput
+                value={selectedInterface}
+                type="text"
+                isDisabled
+                aria-label="text input example"
+                style={{ marginLeft: '10px', width: '200px' }}
+              />
+            )}
           </div>
           <div style={{ height: '385px', border: '1px solid #ccc', padding: '16px', marginBottom: '10px', marginTop: '10px', overflow: 'hidden', position: 'relative' }}>
             <WiresharkDataTable data={filteredData.length > 0 ? filteredData : data} loading={loading} />

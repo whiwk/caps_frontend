@@ -14,7 +14,6 @@ const Terminal = () => {
   const outputBuffer = useRef('');
 
   useEffect(() => {
-    // Fetch the pod name and namespace
     const fetchPodAndNamespace = async () => {
       try {
         const podResponse = await api.get('kube/pods/');
@@ -26,7 +25,6 @@ const Terminal = () => {
         setPodName(pod.name);
         setNamespace(userNamespace);
 
-        // Define the WebSocket URL based on your server address
         setWebsocketUrl('ws://10.30.1.221:8002/ws/shell/');
       } catch (error) {
         console.error('Error fetching pod name or namespace:', error);
@@ -36,9 +34,8 @@ const Terminal = () => {
     fetchPodAndNamespace();
   }, []);
 
-  useEffect(() => {
+  const initializeWebSocket = useCallback(() => {
     if (websocketUrl) {
-      // Initialize WebSocket connection
       websocketRef.current = new WebSocket(websocketUrl);
 
       websocketRef.current.onopen = () => {
@@ -50,7 +47,6 @@ const Terminal = () => {
         const data = JSON.parse(event.data);
         console.log('WebSocket message received:', data);
 
-        // Buffer the output
         if (data.command_output) {
           outputBuffer.current += data.command_output;
         } else if (data.error) {
@@ -59,7 +55,6 @@ const Terminal = () => {
           outputBuffer.current += `Message: ${data.message}`;
         }
 
-        // Assuming a newline character indicates the end of a command output part
         if (outputBuffer.current.includes('\n')) {
           setOutput((prevOutput) => {
             const newOutput = [...prevOutput];
@@ -72,7 +67,6 @@ const Terminal = () => {
             outputBuffer.current = '';
             return newOutput;
           });
-          // Check if the command has ended based on specific conditions
           if (data.command_output && data.command_output.includes('ping statistics')) {
             setIsProcessing(false);
           }
@@ -89,7 +83,6 @@ const Terminal = () => {
         setIsProcessing(false);
       };
 
-      // Cleanup on component unmount
       return () => {
         if (websocketRef.current) {
           websocketRef.current.close();
@@ -97,6 +90,10 @@ const Terminal = () => {
       };
     }
   }, [websocketUrl]);
+
+  useEffect(() => {
+    initializeWebSocket();
+  }, [websocketUrl, initializeWebSocket]);
 
   const handleInputChange = (e) => {
     setInput(e.target.value);
@@ -117,9 +114,12 @@ const Terminal = () => {
       if (websocketRef.current) {
         websocketRef.current.close();
         setIsProcessing(false);
+        setTimeout(() => {
+          initializeWebSocket();
+        }, 1000); // Delay to ensure the WebSocket reconnects properly
       }
     }
-  }, []);
+  }, [initializeWebSocket]);
 
   useEffect(() => {
     document.addEventListener('keydown', handleCtrlC);
