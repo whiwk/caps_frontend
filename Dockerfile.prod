@@ -1,0 +1,27 @@
+FROM quay.tiplab.local/orca/node:18.17.0-base AS build
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+COPY package*.json .
+
+COPY . .
+
+RUN npm install
+
+RUN npm run build
+
+# after run npm run build we get build folder in our project
+
+FROM nginx:1.25.3 AS production
+
+ENV NODE_ENV=production
+
+COPY --from=build /app/build /usr/share/nginx/html
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD [ "nginx","-g","daemon off;" ]

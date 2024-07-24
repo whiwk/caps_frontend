@@ -96,7 +96,7 @@ export default function SignInSide() {
           item
           xs={12}
           sx={{
-            backgroundImage: 'url(/login-orca-full.png)',
+            backgroundImage: 'url(/login-orca-full-min.png)',
             backgroundRepeat: 'no-repeat',
             backgroundColor: (t) =>
               t.palette.mode === 'light' ? t.palette.grey[50] : t.palette.grey[900],
