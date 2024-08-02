@@ -4,6 +4,7 @@ import {
   TableHead, TableRow, Paper, Box
 } from '@mui/material';
 import api from '../services/apiService';
+import apiConfig from '../config/apiConfig';
 
 const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
   const defaultKeys = useMemo(() => [
@@ -41,7 +42,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
         setComponentType(type);
 
         // Define the WebSocket URL based on your server address
-        setWebsocketUrl('ws://10.30.1.221:8002/ws/protocolstack/');
+        setWebsocketUrl(`${apiConfig.wsURL}ws/protocolstack/`);
 
         // Load initial data from session storage based on component type
         const initialProtocolData = {};

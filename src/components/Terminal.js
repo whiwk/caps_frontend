@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import api from '../services/apiService';
+import apiConfig from '../config/apiConfig';
 
 const Terminal = () => {
   const [input, setInput] = useState('');
@@ -25,7 +26,7 @@ const Terminal = () => {
         setPodName(pod.name);
         setNamespace(userNamespace);
 
-        setWebsocketUrl('ws://10.30.1.221:8002/ws/shell/');
+        setWebsocketUrl(`${apiConfig.wsURL}ws/shell/`);
       } catch (error) {
         console.error('Error fetching pod name or namespace:', error);
       }

@@ -4,6 +4,7 @@ import { Alert, Snackbar } from '@mui/material';
 import api from '../services/apiService';
 import './MonitoringTable.css';
 import DataContext from '../contexts/DataContext';
+import apiConfig from '../config/apiConfig';
 
 const initialRepositories = [
   { content: 'L1 TX processing', value: '', count: '', totalTime: '' },
@@ -81,7 +82,7 @@ export const MonitoringTable = () => {
           const namespace = uePod.namespace;
 
           // Establish WebSocket connection and send initial data
-          const ws = new WebSocket('ws://10.30.1.221:8002/ws/monitoring/');
+          const ws = new WebSocket(`${apiConfig.wsURL}ws/monitoring/`);
           websocketRef.current = ws;
 
           ws.onopen = () => {

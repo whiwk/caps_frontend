@@ -11,6 +11,7 @@ import api from '../../services/apiService';
 import { Table, Tbody, Td, Th, Thead, Tr, TableVariant } from '@patternfly/react-table';
 import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Snackbar, CircularProgress } from '@mui/material';
 import MuiAlert from '@mui/material/Alert';
+import apiConfig from '../../config/apiConfig';
 
 const WiresharkDataTable = ({ data, loading }) => {
   const tableCellStyle = {
@@ -134,7 +135,7 @@ const SniffTab = () => {
   }, [selectedComponent, pods]);
 
   const startWebSocketConnection = (podName, namespace, interfaceName) => {
-    const uri = "ws://10.30.1.221:8002/ws/sniff/";
+    const uri = `${apiConfig.wsURL}ws/sniff/`;
     websocketRef.current = new WebSocket(uri);
 
     websocketRef.current.onopen = () => {

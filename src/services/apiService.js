@@ -1,8 +1,9 @@
 import axios from 'axios';
 import { getNewToken, isTokenExpired } from '../utils/tokenService';
+import apiConfig from '../config/apiConfig';
 
 const api = axios.create({
-  baseURL: 'http://10.30.1.221:8000/api/v1/'
+  baseURL: `${apiConfig.baseURL}api/v1/`
 });
 
 api.interceptors.request.use(
