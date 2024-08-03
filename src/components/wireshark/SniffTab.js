@@ -148,7 +148,7 @@ const SniffTab = () => {
     };
 
     websocketRef.current.onmessage = (event) => {
-      console.log('WebSocket message received:', event.data);
+      // console.log('WebSocket message received:', event.data);
       const response = JSON.parse(event.data);
       if (response.data) {
         const parsedData = parseWebSocketData(response.data);
@@ -181,11 +181,11 @@ const SniffTab = () => {
         setAlertSeverity('success'); // Set the severity to success
         setAlertMessage('PCAP file stored successfully');
       } else {
-        setAlertSeverity('warning'); // Set the severity to warning
+        setAlertSeverity('error'); // Set the severity to warning
         setAlertMessage('Failed to store PCAP file');
       }
     } catch (error) {
-      setAlertSeverity('warning'); // Set the severity to warning
+      setAlertSeverity('error'); // Set the severity to warning
       setAlertMessage('Failed to store PCAP file');
       console.error('Error storing PCAP file:', error.message);
     } finally {
@@ -217,11 +217,13 @@ const SniffTab = () => {
   const handleStartClick = async () => {
     if (!isRunning) {
       if (!selectedComponent) {
+        setAlertSeverity('warning');
         setAlertMessage('Please select a component.');
         setAlertOpen(true);
         return;
       }
       if ((selectedComponent === 'CU' || selectedComponent === 'UE') && !selectedInterface) {
+        setAlertSeverity('warning');
         setAlertMessage('Please select an interface.');
         setAlertOpen(true);
         return;
@@ -308,7 +310,7 @@ const SniffTab = () => {
       <div style={{ position: 'relative' }}>
         <Snackbar
           open={alertOpen}
-          autoHideDuration={6000}
+          autoHideDuration={3000}
           onClose={() => setAlertOpen(false)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
         >

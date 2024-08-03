@@ -16,7 +16,7 @@ function BehindTheTechnologyPage() {
             <Text component={TextVariants.p}>
               http://kubeview.orca.edu/ 
             </Text>
-            <Text component={TextVariants.p} style={{ marginBottom: '36px' }}>
+            <Text component={TextVariants.p} style={{ marginBottom: '36px', textAlign: 'justify' }}>
               Kubeview provides a comprehensive visualization of the Kubernetes cluster topology, 
               showing how each component communicates and operates within the cluster. This tool is 
               essential for managing and optimizing cluster performance.
@@ -27,7 +27,7 @@ function BehindTheTechnologyPage() {
             <Text component={TextVariants.p}>
               http://pma.orca.edu/
             </Text>
-            <Text component={TextVariants.p}>
+            <Text component={TextVariants.p} style={{ marginBottom: '36px', textAlign: 'justify' }}>
               PhpMyAdmin offers a user-friendly interface for managing MySQL databases. It allows 
               for easy data manipulation, query execution, and database management, crucial for 
               maintaining accurate and efficient data operations.

@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Snackbar } from '@mui/material';
+import MuiAlert from '@mui/material/Alert';
 import api from '../services/apiService';
 import apiConfig from '../config/apiConfig';
+import './Terminal.css';
 
 const Terminal = () => {
   const [input, setInput] = useState('');
@@ -10,6 +13,9 @@ const Terminal = () => {
   const [websocketUrl, setWebsocketUrl] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
+  const [alertSeverity, setAlertSeverity] = useState('error');
   const terminalBodyRef = useRef(null);
   const websocketRef = useRef(null);
   const outputBuffer = useRef('');
@@ -40,13 +46,13 @@ const Terminal = () => {
       websocketRef.current = new WebSocket(websocketUrl);
 
       websocketRef.current.onopen = () => {
-        console.log('WebSocket connected');
+        // console.log('WebSocket connected');
         setIsConnecting(false);
       };
 
       websocketRef.current.onmessage = async (event) => {
         const data = JSON.parse(event.data);
-        console.log('WebSocket message received:', data);
+        // console.log('WebSocket message received:', data);
 
         if (data.command_output) {
           outputBuffer.current += data.command_output;
@@ -75,12 +81,15 @@ const Terminal = () => {
       };
 
       websocketRef.current.onclose = () => {
-        console.log('WebSocket disconnected');
+        // console.log('WebSocket disconnected');
         setIsProcessing(false);
       };
 
       websocketRef.current.onerror = (error) => {
         console.error('WebSocket error:', error);
+        setAlertMessage('WebSocket error occurred');
+        setAlertSeverity('error');
+        setAlertOpen(true);
         setIsProcessing(false);
       };
 
@@ -170,7 +179,7 @@ const Terminal = () => {
      &&&&&&&&&&&&&(    &&&&&. &&&&&&&   &&       &&&            &&&&&&&&&&&&&&&&&&
         /&&&&&%        %%%%%    %%%%%    &      &&&&&&&&&&&&&  &&&&&&       ,&&&&&
                                               &&&&&&&&&&&(                        `;
-  
+
   return (
     <div className="terminal-container">
       {isConnecting ? (
@@ -222,6 +231,21 @@ const Terminal = () => {
           </div>
         </>
       )}
+      <Snackbar
+        open={alertOpen}
+        autoHideDuration={3000}
+        onClose={() => setAlertOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <MuiAlert
+          elevation={6}
+          variant="filled"
+          onClose={() => setAlertOpen(false)}
+          severity={alertSeverity} // Use the alertSeverity state
+        >
+          {alertMessage}
+        </MuiAlert>
+      </Snackbar>
     </div>
   );
 };

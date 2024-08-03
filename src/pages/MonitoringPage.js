@@ -26,7 +26,7 @@ function MonitoringPage() {
         <GridItem span={12} rowSpan={6}>
           <Card ouiaId="BasicCard" style={{height: '550px', borderRadius: '8px'}}>
           <CardTitle style={{ backgroundColor: '#0891B2', color:'#fEffff', padding:'10px', marginTop: '-24px', marginLeft: '-24px', marginRight: '-24px', borderTopLeftRadius: '8px', borderTopRightRadius: '8px'}}>
-              Table Value
+              UE Key Performance Indicators
           </CardTitle>
             <CardBody>
               <MonitoringTable />

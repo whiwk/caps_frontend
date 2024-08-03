@@ -86,13 +86,13 @@ export const MonitoringTable = () => {
           websocketRef.current = ws;
 
           ws.onopen = () => {
-            console.log('WebSocket connected');
+            // console.log('WebSocket connected');
             ws.send(JSON.stringify({ pod_name: podName, namespace: namespace }));
           };
 
           ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            console.log('WebSocket message received:', data);
+            // console.log('WebSocket message received:', data);
 
             if (data.error) {
               console.error('WebSocket error:', data.error);
@@ -133,7 +133,7 @@ export const MonitoringTable = () => {
           };
 
           ws.onclose = () => {
-            console.log('WebSocket disconnected');
+            // console.log('WebSocket disconnected');
           };
 
           ws.onerror = (error) => {
@@ -167,8 +167,17 @@ export const MonitoringTable = () => {
 
     fetchData();
 
+    // Listen for navigation events to trigger a full reload
+    const handleBeforeUnload = (event) => {
+      event.preventDefault();
+      window.location.href = event.target.location.href;
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
     return () => {
       isMounted = false; // Cleanup function to set isMounted to false
+      window.removeEventListener('beforeunload', handleBeforeUnload); // Clean up the event listener
     };
   }, [repositories, setData, setUeStopped]);
 

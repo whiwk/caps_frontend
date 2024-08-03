@@ -23,7 +23,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
   const timerRef = useRef(null);
 
   useEffect(() => {
-    console.log(`SCTPProtocol received nodeName: ${nodeName}`); // Log the received nodeName
+    // console.log(`SCTPProtocol received nodeName: ${nodeName}`); // Log the received nodeName
 
     // Fetch the pod name and namespace
     const fetchPodAndNamespace = async () => {
@@ -49,7 +49,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
         defaultKeys.forEach(key => {
           const prefixedKey = `${type}.${key}`;
           initialProtocolData[key] = sessionStorage.getItem(prefixedKey) || 'Loading...';
-          console.log(`Loaded ${prefixedKey} from session storage: ${initialProtocolData[key]}`);
+          // console.log(`Loaded ${prefixedKey} from session storage: ${initialProtocolData[key]}`);
         });
 
         setProtocolData(initialProtocolData);
@@ -67,9 +67,9 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
           });
         }, 30000); // 30 seconds
 
-        console.log(`Component Type Detected: ${type}`);
-        console.log(`Pod Name: ${pod.name}`);
-        console.log(`Namespace: ${userNamespace}`);
+        // console.log(`Component Type Detected: ${type}`);
+        // console.log(`Pod Name: ${pod.name}`);
+        // console.log(`Namespace: ${userNamespace}`);
 
       } catch (error) {
         console.error('Error fetching pod name or namespace:', error);
@@ -87,7 +87,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
       const prefixedKey = `${componentType}.${key}`;
       parsedData[key] = dataValues[index] || '';
       sessionStorage.setItem(prefixedKey, dataValues[index] || ''); // Store each value in sessionStorage with prefix
-      console.log(`Stored ${prefixedKey} in session storage: ${dataValues[index]}`);
+      // console.log(`Stored ${prefixedKey} in session storage: ${dataValues[index]}`);
     });
 
     return parsedData;
@@ -99,7 +99,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
       websocketRef.current = new WebSocket(websocketUrl);
 
       websocketRef.current.onopen = () => {
-        console.log('WebSocket connected');
+        // console.log('WebSocket connected');
         // Send initial data to start the tcpdump command
         websocketRef.current.send(
           JSON.stringify({
@@ -112,7 +112,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
       websocketRef.current.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data);
-          console.log('WebSocket message received:', data);
+          // console.log('WebSocket message received:', data);
 
           if (data.data) {
             clearTimeout(timerRef.current); // Clear the timer when a message is received
@@ -128,7 +128,7 @@ const SCTPProtocol = ({ nodeName }) => { // Receive nodeName as a prop
       };
 
       websocketRef.current.onclose = () => {
-        console.log('WebSocket disconnected');
+        // console.log('WebSocket disconnected');
         clearTimeout(timerRef.current); // Clear the timer if WebSocket closes
       };
 

@@ -21,12 +21,12 @@ const MonitoringGraph = ({ data, ueStopped }) => {
   const [data7, setData7] = useState([]);
   const [timestamp, setTimestamp] = useState(new Date().toLocaleDateString('en-GB').split('/').join('/'));
   const [isStreaming, setIsStreaming] = useState(true);
-  const maxDomain1 = 4000;
-  const tickValues1 = [0, 1000, 2000, 3000, 4000];
-  const maxDomain2 = 2500;
-  const tickValues2 = [0, 500, 1000, 1500, 2000, 2500];
-  const maxDomain = 2000;
-  const tickValues = [0, 500, 1000, 1500, 2000];
+  const maxDomain1 = 1000;
+  const tickValues1 = [0, 250, 500, 750, 1000];
+  const maxDomain2 = 1000;
+  const tickValues2 = [0, 250, 500, 750, 1000];
+  const maxDomain = 200;
+  const tickValues = [0, 50, 100, 150, 200];
 
   const handleResize = useCallback(() => {
     if (containerRef.current && containerRef.current.clientWidth) {

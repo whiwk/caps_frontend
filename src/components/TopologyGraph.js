@@ -237,6 +237,7 @@ export const TopologyGraph = () => {
     const handleTopologyRefresh = async () => {
       setLoading(true);
       await fetchPods();
+      await fetchDeployments();
       setLoading(false);
     };
 
@@ -766,6 +767,8 @@ export const TopologyGraph = () => {
       } finally {
         setModalOpen(false);
         setActionLoading(false);
+        await fetchPods(); // Fetch pods after a successful action
+        await fetchDeployments(); // Fetch deployments after a successful action
       }
     };
 
@@ -1067,7 +1070,7 @@ export const TopologyGraph = () => {
         </Dialog>
         <Snackbar
           open={snackbarOpen}
-          autoHideDuration={3000}
+          autoHideDuration={1000}
           onClose={handleSnackbarClose}
         >
           <MuiAlert variant="filled" onClose={handleSnackbarClose} severity={snackbarSeverity}>
