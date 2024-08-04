@@ -114,3 +114,34 @@
   stroke: #a80303 !important; /* Customize the connector arrow stroke color */
   stroke-width: 2px !important; /* Customize the connector arrow stroke width */
 }
+
+.fixed-header-table {
+  position: relative;
+}
+
+.fixed-header-table thead th {
+  position: sticky;
+  top: 0;
+  background: #F2F2F2;
+  z-index: 1;
+}
+
+.sidebar-buttons {
+  display: flex;
+  justify-content: start;
+  padding: 10px 0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 2;
+  margin-right: 10px;
+}
+
+.logs-container {
+  overflow-y: auto;
+  max-height: calc(100vh - 120px);
+}
+
+.pf-topology-side-bar.shown {
+  overflow-y: hidden !important;
+}

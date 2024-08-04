@@ -795,8 +795,8 @@ export const TopologyGraph = () => {
     };
 
     const renderLogsTable = () => (
-      <TableContainer component={Paper}>
-        <Table>
+      <TableContainer component={Paper} className="logs-container">
+        <Table className="fixed-header-table">
           <TableHead>
             <TableRow>
               <TableCell align="center" style={{ fontWeight: 'bold', fontSize: '12px', backgroundColor: '#F2F2F2', width: '150px' }}>Timestamp</TableCell>
@@ -870,7 +870,7 @@ export const TopologyGraph = () => {
         onClose={() => setSelectedIds([])}
       >
         <Box p={2}>
-          <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box display="flex" justifyContent="space-between" alignItems="center" className="sidebar-buttons">
             <div>
               <Button
                 variant="contained"

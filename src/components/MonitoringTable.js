@@ -22,152 +22,166 @@ const initialRepositories = [
 
 export const MonitoringTable = () => {
   const [repositories, setRepositories] = useState(initialRepositories);
-  const { setData, setUeStopped } = useContext(DataContext); // Get setUeStopped from context
+  const { setData, setUeStopped } = useContext(DataContext);
   const [loading, setLoading] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
   const [alertSeverity, setAlertSeverity] = useState('info');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const websocketRef = useRef(null);
+  const websocketErrorCount = useRef(0);
+  const intervalRef = useRef(null);
+  const RECONNECT_INTERVAL = 5000; // Time in milliseconds
 
-  useEffect(() => {
-    let isMounted = true; // Track if the component is mounted
+  const closeWebSocket = () => {
+    if (websocketRef.current) {
+      websocketRef.current.close();
+      websocketRef.current = null;
+    }
+  };
 
+  const reconnectWebSocket = () => {
     const fetchData = async () => {
-      while (isMounted) {
-        setLoading(true);
-        try {
-          // Fetch the list of pods
-          const podsResponse = await api.get('kube/pods/');
-          const podsData = podsResponse.data.pods;
+      try {
+        const podsResponse = await api.get('kube/pods/');
+        const podsData = podsResponse.data.pods;
 
-          // Check if podsData is an array
-          if (!Array.isArray(podsData) || podsData.length === 0) {
-            throw new Error('No pods data found.');
-          }
-
-          // Find the pod with 'oai-nr-ue' in its name
-          const uePod = podsData.find(pod => pod.name.includes('oai-nr-ue'));
-
-          if (!uePod) {
-            throw new Error('No UE pod found for the user.');
-          }
-
-          // Check if the pod is running
-          if (uePod.state !== 'Running') {
-            setAlertMessage(`UE still not configured correctly`);
-            setAlertSeverity('warning');
-            setSnackbarOpen(true);
-
-            // Set repository values to zero
-            const zeroRepositories = initialRepositories.map(repo => ({ ...repo, value: '0', count: '0', totalTime: '0' }));
-            setRepositories(zeroRepositories);
-
-            // Prepare zero data for the graph
-            const zeroGraphData = zeroRepositories.map(repo => ({
-              name: repo.content,
-              value: 0
-            }));
-
-            setData(zeroGraphData); // Update the context with zero data
-            setUeStopped(true); // Update the context to indicate UE is stopped
-            setLoading(false);
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2 seconds before checking again
-            continue;
-          } else {
-            setSnackbarOpen(false); // Close Snackbar if pod is running
-            setUeStopped(false); // Update the context to indicate UE is running
-          }
-
-          const podName = uePod.name;
-          const namespace = uePod.namespace;
-
-          // Establish WebSocket connection and send initial data
-          const ws = new WebSocket(`${apiConfig.wsURL}ws/monitoring/`);
-          websocketRef.current = ws;
-
-          ws.onopen = () => {
-            // console.log('WebSocket connected');
-            ws.send(JSON.stringify({ pod_name: podName, namespace: namespace }));
-          };
-
-          ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            // console.log('WebSocket message received:', data);
-
-            if (data.error) {
-              console.error('WebSocket error:', data.error);
-              setAlertMessage(data.error);
-              setAlertSeverity('error');
-              setSnackbarOpen(true);
-              return;
-            }
-
-            if (data.monitoring_output) {
-              setRepositories((prevRepositories) => {
-                const updatedRepositories = prevRepositories.map(repo => {
-                  const regex = new RegExp(`\\s*${repo.content.replace('->', '\\->')}\\s*:\\s*([\\d\\.]+)\\s*us;\\s*(\\d+);\\s*([\\d\\.]+)\\s*us;`);
-                  const match = data.monitoring_output.match(regex);
-                  const value = match ? match[1] : repo.value;
-                  const count = match ? match[2] : repo.count;
-                  const totalTime = match ? match[3] : repo.totalTime;
-                  return {
-                    ...repo,
-                    value: value,
-                    count: count,
-                    totalTime: totalTime
-                  };
-                });
-
-                // Prepare data for the graph
-                const graphData = updatedRepositories.map(repo => ({
-                  name: repo.content,
-                  value: parseFloat(repo.value) || 0
-                }));
-
-                setData(graphData); // Update the context with the new data
-                return updatedRepositories;
-              });
-
-              setUeStopped(false); // Update the context to indicate UE is running
-            }
-          };
-
-          ws.onclose = () => {
-            // console.log('WebSocket disconnected');
-          };
-
-          ws.onerror = (error) => {
-            console.error('WebSocket error:', error);
-            setAlertMessage('WebSocket error');
-            setAlertSeverity('error');
-            setSnackbarOpen(true);
-          };
-
-          // Cleanup on component unmount
-          return () => {
-            if (ws) {
-              ws.close();
-            }
-          };
-        } catch (error) {
-          console.error('Error fetching UE log:', error);
-          setRepositories(repositories.map(repo => ({ ...repo, value: repo.value || null, count: repo.count || null, totalTime: repo.totalTime || null })));
-          setAlertMessage('Failed to fetch log data: ' + (error.response ? error.response.data.detail : 'UE currently stopped'));
-          setAlertSeverity('error');
-          setSnackbarOpen(true);
-          setUeStopped(true); // Update the context to indicate UE is stopped on error
-        } finally {
-          setLoading(false);
+        if (!Array.isArray(podsData) || podsData.length === 0) {
+          throw new Error('No pods data found.');
         }
 
-        // Wait for 2 seconds before fetching data again
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        const uePod = podsData.find(pod => pod.name.includes('oai-nr-ue'));
+
+        if (!uePod) {
+          throw new Error('No UE pod found for the user.');
+        }
+
+        if (uePod.state !== 'Running') {
+          setAlertMessage('UE still not configured correctly');
+          setAlertSeverity('warning');
+          setSnackbarOpen(true);
+
+          const zeroRepositories = initialRepositories.map(repo => ({ ...repo, value: '0', count: '0', totalTime: '0' }));
+          setRepositories(zeroRepositories);
+
+          const zeroGraphData = zeroRepositories.map(repo => ({
+            name: repo.content,
+            value: 0
+          }));
+
+          setData(zeroGraphData);
+          setUeStopped(true);
+          setLoading(false);
+          return;
+        } else {
+          setSnackbarOpen(false);
+          setUeStopped(false);
+        }
+
+        const podName = uePod.name;
+        const namespace = uePod.namespace;
+
+        closeWebSocket();
+
+        const ws = new WebSocket(`${apiConfig.wsURL}ws/monitoring/`);
+        websocketRef.current = ws;
+
+        ws.onopen = () => {
+          ws.send(JSON.stringify({ pod_name: podName, namespace: namespace }));
+          websocketErrorCount.current = 0;
+
+          intervalRef.current = setInterval(() => {
+            if (ws.readyState === WebSocket.OPEN) {
+              ws.send(JSON.stringify({ pod_name: podName, namespace: namespace }));
+            }
+          }, 5000);
+        };
+
+        ws.onmessage = (event) => {
+          const data = JSON.parse(event.data);
+
+          if (data.error) {
+            console.error('WebSocket error:', data.error);
+            setAlertMessage(data.error);
+            setAlertSeverity('error');
+            setSnackbarOpen(true);
+            websocketErrorCount.current++;
+            return;
+          }
+
+          if (data.monitoring_output) {
+            setRepositories((prevRepositories) => {
+              const updatedRepositories = prevRepositories.map(repo => {
+                const regex = new RegExp(`\\s*${repo.content.replace('->', '\\->')}\\s*:\\s*([\\d\\.]+)\\s*us;\\s*(\\d+);\\s*([\\d\\.]+)\\s*us;`);
+                const match = data.monitoring_output.match(regex);
+                const value = match ? match[1] : repo.value;
+                const count = match ? match[2] : repo.count;
+                const totalTime = match ? match[3] : repo.totalTime;
+                return {
+                  ...repo,
+                  value: value,
+                  count: count,
+                  totalTime: totalTime
+                };
+              });
+
+              const graphData = updatedRepositories.map(repo => ({
+                name: repo.content,
+                value: parseFloat(repo.value) || 0
+              }));
+
+              setData(graphData);
+              return updatedRepositories;
+            });
+
+            setUeStopped(false);
+            websocketErrorCount.current = 0;
+          }
+        };
+
+        ws.onclose = () => {
+          clearInterval(intervalRef.current);
+          setTimeout(reconnectWebSocket, RECONNECT_INTERVAL);
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+          if (websocketErrorCount.current < 3) {
+            setAlertMessage('Transient WebSocket error, attempting to reconnect...');
+            setAlertSeverity('warning');
+          } else {
+            setAlertMessage('Persistent WebSocket error');
+            setAlertSeverity('error');
+          }
+          setSnackbarOpen(true);
+          websocketErrorCount.current++;
+          ws.close(); // Ensure WebSocket is closed to trigger onclose
+        };
+
+      } catch (error) {
+        console.error('Error fetching UE log:', error);
+        setRepositories(repositories.map(repo => ({ ...repo, value: repo.value || null, count: repo.count || null, totalTime: repo.totalTime || null })));
+        setAlertMessage('Failed to fetch log data: ' + (error.response ? error.response.data.detail : 'UE currently stopped'));
+        setAlertSeverity('error');
+        setSnackbarOpen(true);
+        setUeStopped(true);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
+  };
 
-    // Listen for navigation events to trigger a full reload
+  useEffect(() => {
+    reconnectWebSocket();
+
+    return () => {
+      closeWebSocket();
+      clearInterval(intervalRef.current);
+    };
+  }, [setData, setUeStopped]);
+
+  useEffect(() => {
     const handleBeforeUnload = (event) => {
       event.preventDefault();
       window.location.href = event.target.location.href;
@@ -176,10 +190,11 @@ export const MonitoringTable = () => {
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
-      isMounted = false; // Cleanup function to set isMounted to false
-      window.removeEventListener('beforeunload', handleBeforeUnload); // Clean up the event listener
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      closeWebSocket();
+      clearInterval(intervalRef.current);
     };
-  }, [repositories, setData, setUeStopped]);
+  }, []);
 
   const columnNames = {
     content: 'Key Performance Indicator',
